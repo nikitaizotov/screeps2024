@@ -31,7 +31,7 @@ var roleHarvester = {
 
   transferEnergy: function (creep) {
     if (!creep.memory.path) {
-      const targets = creep.room.find(FIND_STRUCTURES, {
+      let targets = creep.room.find(FIND_STRUCTURES, {
         filter: (structure) => {
           return (structure.structureType === STRUCTURE_EXTENSION ||
             structure.structureType === STRUCTURE_SPAWN ||
@@ -40,7 +40,13 @@ var roleHarvester = {
         }
       });
 
-      creepService.getPathTotargets(creep, targets);
+      if (targets.length) {
+        creepService.getPathTotargets(creep, targets);
+      } else {
+        targets = creep.room.find(FIND_CONSTRUCTION_SITES);
+        creepService.getPathTotargets(creep, targets);
+      }
+
     } else {
       this.moveAndTransfer(creep);
     }
@@ -57,13 +63,23 @@ var roleHarvester = {
   moveAndTransfer: function (creep) {
     creepService.drawPath(creep);
     const target = Game.getObjectById(creep.memory.targetId);
-    const action = creep.transfer(target, RESOURCE_ENERGY);
+
+    let action;
+
+    if (target.progress === undefined) {
+      action = creep.transfer(target, RESOURCE_ENERGY);
+    } else {
+      action = creep.build(target);
+    }
 
     if (action === ERR_NOT_IN_RANGE) {
       const moveResult = creep.moveByPath(creep.memory.path);
       if (moveResult !== OK && moveResult !== ERR_TIRED) {
         console.log("Move by path failed, error:", moveResult);
       }
+    } else if (action === ERR_INVALID_TARGET || action === ERR_NO_BODYPART) {
+      creep.memory.path = null;
+      creep.memory.targetId = null;
     }
   }
 };

@@ -74,7 +74,9 @@ module.exports = {
     for (var name in Game.creeps) {
       var creep = Game.creeps[name];
 
-      creepService.findIdleCreep(creep);
+      if (Game.time % 5) {
+        creepService.findIdleCreep(creep);
+      }
 
       switch (creep.memory.role) {
         case roleHarvester.memoryKey:

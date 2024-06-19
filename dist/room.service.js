@@ -6,7 +6,9 @@ const roleRanged = require("role.ranged");
 const creepService = require("creep.service");
 
 module.exports = {
-  enabledRoles: [roleRanged, roleBuilder, roleUpgrader, roleHarvester],
+  enabledRoles: [roleHarvester, 
+    roleUpgrader, roleBuilder, roleRanged
+  ],
   routines: function () {
     this.cleanMemory();
     this.creepsRoutines();
@@ -63,6 +65,7 @@ module.exports = {
           })
         ) {
           console.log("Spawning a new creep: " + newName);
+          return;
         }
       }
     }
@@ -71,7 +74,7 @@ module.exports = {
     for (var name in Game.creeps) {
       var creep = Game.creeps[name];
 
-      creepService.findIdleCreeps(creep);
+      creepService.findIdleCreep(creep);
 
       switch (creep.memory.role) {
         case roleHarvester.memoryKey:
@@ -87,7 +90,7 @@ module.exports = {
           roleRanged.run(creep);
           break;
         default:
-          console.warn("Creep has unknown role");
+          console.log("Creep has unknown role", creep.memoryKey);
       }
     }
   },

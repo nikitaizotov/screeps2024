@@ -64,9 +64,13 @@ var roleHarvester = {
     creepService.drawPath(creep);
     const target = Game.getObjectById(creep.memory.targetId);
 
+    if (!target) {
+      return;
+    }
+
     let action;
 
-    if (target.progress === undefined) {
+    if (!target.progress && target.progress === undefined) {
       action = creep.transfer(target, RESOURCE_ENERGY);
     } else {
       action = creep.build(target);

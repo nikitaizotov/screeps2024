@@ -177,7 +177,7 @@ module.exports = {
   },
 
   isValidConstructionPosition: function (room, x, y) {
-    if (x <= 2 || y <= 2 || x >= 47 || y >= 47) return false; // Строительство не вплотную к стенам
+    if (x <= 2 || y <= 2 || x >= 47 || y >= 47) return false;
     if (this.roomTerrain[x][y] === TERRAIN_MASK_WALL) return false;
     if (room.lookForAt(LOOK_STRUCTURES, x, y).length > 0) return false;
     if (room.lookForAt(LOOK_CONSTRUCTION_SITES, x, y).length > 0) return false;

@@ -14,16 +14,29 @@ module.exports = {
   ],
 
   run: function () {
+    if (!Memory.structureCache) {
+      Memory.structureCache = {};
+    }
+    if (!Memory.cachedPaths) {
+      Memory.cachedPaths = [];
+    }
+    if (!Memory.exitZones) {
+      Memory.exitZones = {};
+    }
+    if (!Memory.roomTerrain) {
+      Memory.roomTerrain = {};
+    }
+
     if (Game.time % 15000 === 0) {
       this.planRoads();
     }
-    if (Game.time % 30 === 0) {
+    if (Game.time % 90 === 0) {
       this.processBuildOrder();
     }
   },
 
   planRoads: function () {
-    this.cachedPaths = [];
+    Memory.cachedPaths = [];
 
     let keyPoints = [];
 
@@ -73,7 +86,7 @@ module.exports = {
           }
         ).path;
 
-        this.cachedPaths.push(...path);
+        Memory.cachedPaths.push(...path);
 
         for (let pos of path) {
           Game.rooms[pos.roomName].createConstructionSite(
@@ -88,7 +101,16 @@ module.exports = {
 
   processBuildOrder: function () {
     const room = Game.rooms[Object.keys(Game.rooms)[0]];
-    this.exitZones = this.getExitZones(room);
+
+    if (!Memory.exitZones[room.name] || Game.time % 5000 === 0) {
+      Memory.exitZones[room.name] = this.getExitZones(room);
+    }
+    this.exitZones = Memory.exitZones[room.name];
+
+    if (!Memory.roomTerrain[room.name]) {
+      Memory.roomTerrain[room.name] = this.cacheRoomTerrain(room.name);
+    }
+    this.roomTerrain = Memory.roomTerrain[room.name];
 
     for (let i = 0; i < this.buildOrder.length; i++) {
       const structureType = this.buildOrder[i];
@@ -106,49 +128,35 @@ module.exports = {
 
   buildStructure: function (room, type, maxCount) {
     let structuresPlanned = 0;
-    let spawns = room.find(FIND_MY_SPAWNS);
-    if (spawns.length === 0) return;
+    const roomCenter = new RoomPosition(25, 25, room.name);
+    let exitZones = this.exitZones;
+    let cachedPaths = Memory.cachedPaths;
 
-    let spawnPos = spawns[0].pos;
+    for (let radius = 1; structuresPlanned < maxCount; radius += 2) {
+      for (let xOffset = -radius; xOffset <= radius; xOffset += 2) {
+        for (let yOffset = -radius; yOffset <= radius; yOffset += 2) {
+          let x = roomCenter.x + xOffset;
+          let y = roomCenter.y + yOffset;
 
-    for (let radius = 1; structuresPlanned < maxCount; radius += 4) {
-      for (let xOffset = -radius; xOffset <= radius; xOffset += 4) {
-        for (let yOffset = -radius; yOffset <= radius; yOffset += 4) {
-          let x = spawnPos.x + xOffset;
-          let y = spawnPos.y + yOffset;
-
-          if (this.isRestrictedZone(room, x, y)) {
+          if (this.isRestrictedZone(exitZones, cachedPaths, x, y)) {
             continue;
           }
 
-          let positions = [
-            { x: x, y: y },
-            { x: x + 1, y: y },
-            { x: x, y: y + 1 },
-            { x: x + 1, y: y + 1 },
-          ];
-
-          let canBuildGroup = positions.every((pos) =>
-            this.isValidConstructionPosition(room, pos.x, pos.y)
-          );
-
-          if (canBuildGroup) {
-            positions.forEach((pos) => {
-              if (room.createConstructionSite(pos.x, pos.y, type) === OK) {
-                structuresPlanned++;
-                if (structuresPlanned >= maxCount) {
-                  return;
-                }
+          if (this.isValidConstructionPosition(room, x, y)) {
+            if (room.createConstructionSite(x, y, type) === OK) {
+              structuresPlanned++;
+              if (structuresPlanned >= maxCount) {
+                return;
               }
-            });
+            }
           }
         }
       }
     }
   },
 
-  isRestrictedZone: function (room, x, y) {
-    for (let zone of this.exitZones) {
+  isRestrictedZone: function (exitZones, cachedPaths, x, y) {
+    for (let zone of exitZones) {
       if (
         x >= zone.xMin &&
         x <= zone.xMax &&
@@ -159,11 +167,9 @@ module.exports = {
       }
     }
 
-    for (let path of this.cachedPaths) {
-      for (let pos of path) {
-        if (Math.abs(pos.x - x) <= 1 && Math.abs(pos.y - y) <= 1) {
-          return true;
-        }
+    for (let pos of cachedPaths) {
+      if (Math.abs(pos.x - x) <= 1 && Math.abs(pos.y - y) <= 1) {
+        return true;
       }
     }
 
@@ -171,32 +177,26 @@ module.exports = {
   },
 
   isValidConstructionPosition: function (room, x, y) {
-    if (x <= 0 || y <= 0 || x >= 49 || y >= 49) return false;
-    if (room.lookForAt(LOOK_TERRAIN, x, y)[0] === "wall") return false;
+    if (x <= 2 || y <= 2 || x >= 47 || y >= 47) return false; // Строительство не вплотную к стенам
+    if (this.roomTerrain[x][y] === TERRAIN_MASK_WALL) return false;
     if (room.lookForAt(LOOK_STRUCTURES, x, y).length > 0) return false;
     if (room.lookForAt(LOOK_CONSTRUCTION_SITES, x, y).length > 0) return false;
 
     return true;
   },
 
-  getKeyPoints: function (room) {
-    let keyPoints = [];
+  cacheRoomTerrain: function (roomName) {
+    const terrain = new Room.Terrain(roomName);
+    let terrainData = [];
 
-    let sources = room.find(FIND_SOURCES);
-    for (let source of sources) {
-      keyPoints.push(source.pos);
+    for (let x = 0; x < 50; x++) {
+      terrainData[x] = [];
+      for (let y = 0; y < 50; y++) {
+        terrainData[x][y] = terrain.get(x, y);
+      }
     }
 
-    if (room.controller) {
-      keyPoints.push(room.controller.pos);
-    }
-
-    let spawns = room.find(FIND_MY_SPAWNS);
-    for (let spawn of spawns) {
-      keyPoints.push(spawn.pos);
-    }
-
-    return keyPoints;
+    return terrainData;
   },
 
   getExitZones: function (room) {

@@ -18,11 +18,13 @@ module.exports = {
     })[0];
 
     if (!target) {
+
       const hostileStructures = creep.room.find(FIND_HOSTILE_STRUCTURES, {
         filter: (structure) => {
-          return structure.structureType === STRUCTURE_TOWER ||
-                 structure.structureType === STRUCTURE_SPAWN ||
-                 structure.structureType === STRUCTURE_EXTENSION;
+          return !attackService.avoidPlayers.includes(structure.owner.username) &&
+            (structure.structureType === STRUCTURE_TOWER ||
+              structure.structureType === STRUCTURE_SPAWN ||
+              structure.structureType === STRUCTURE_EXTENSION);
         }
       });
 

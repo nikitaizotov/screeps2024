@@ -1,10 +1,10 @@
-const creepService = require('creep.service');
-const attackService = require('attack.service');
+const creepService = require("creep.service");
+const attackService = require("attack.service");
 
 module.exports = {
   creepsPerRoom: 3,
-  namePrefix: 'Ranged',
-  memoryKey: 'ranged',
+  namePrefix: "Ranged",
+  memoryKey: "ranged",
   bodyParts: [MOVE, MOVE, RANGED_ATTACK],
   run: function (creep) {
     if (creep.spawning) {
@@ -18,7 +18,7 @@ module.exports = {
       const check = controller.safeMode - creep.ticksToLive;
 
       if (!(check < 0)) {
-        const flag = Game.flags['MoveToFlag'];
+        const flag = Game.flags["MoveToFlag"];
         if (flag) {
           this.goToFlag(creep, flag);
         } else {
@@ -31,7 +31,7 @@ module.exports = {
     let target = creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS, {
       filter: (enemyCreep) => {
         return !attackService.avoidPlayers.includes(enemyCreep.owner.username);
-      }
+      },
     });
 
     if (!target) {
@@ -41,11 +41,16 @@ module.exports = {
     if (target) {
       if (creep.pos.inRangeTo(target, 3)) {
         creep.rangedAttack(target);
-        const path = PathFinder.search(creep.pos, { pos: target.pos, range: 4 }).path;
+        const path = PathFinder.search(creep.pos, {
+          pos: target.pos,
+          range: 4,
+        }).path;
         creep.moveByPath(path);
       } else {
         if (!creep.memory.path || creep.memory.targetId !== target.id) {
-          creep.memory.path = creep.pos.findPathTo(target, { ignoreCreeps: true });
+          creep.memory.path = creep.pos.findPathTo(target, {
+            ignoreCreeps: true,
+          });
           creep.memory.targetId = target.id;
         }
 
@@ -53,7 +58,7 @@ module.exports = {
         creep.moveByPath(creep.memory.path);
       }
     } else {
-      const flag = Game.flags['MoveToFlag'];
+      const flag = Game.flags["MoveToFlag"];
       if (flag) {
         this.goToFlag(creep, flag);
       } else {
@@ -62,13 +67,15 @@ module.exports = {
     }
   },
   goToFlag: function (creep, flag) {
-    if (!creep.memory.path || creep.memory.targetId !== flag.name) {
-      creep.memory.path = creep.pos.findPathTo(flag.pos, { ignoreCreeps: true });
-      creep.memory.targetId = flag.name;
-    }
+    let path;
 
+    if (!creep.memory.path) {
+      path = creep.pos.findPathTo(flag);
+    } else {
+      path = creep.memory.path;
+    }
+    creep.moveByPath(path);
     creepService.drawPath(creep);
-    creep.moveByPath(creep.memory.path);
   },
   randomlyPatrol: function (creep) {
     const directions = [
@@ -79,19 +86,22 @@ module.exports = {
       BOTTOM,
       BOTTOM_LEFT,
       LEFT,
-      TOP_LEFT
+      TOP_LEFT,
     ];
-    const randomDirection = directions[Math.floor(Math.random() * directions.length)];
+    const randomDirection =
+      directions[Math.floor(Math.random() * directions.length)];
     creep.move(randomDirection);
   },
   findStructuralTargets: function (creep) {
     const hostileStructures = creep.room.find(FIND_HOSTILE_STRUCTURES, {
       filter: (structure) => {
-        return !attackService.avoidPlayers.includes(structure.owner.username) &&
+        return (
+          !attackService.avoidPlayers.includes(structure.owner.username) &&
           (structure.structureType === STRUCTURE_TOWER ||
             structure.structureType === STRUCTURE_SPAWN ||
-            structure.structureType === STRUCTURE_EXTENSION);
-      }
+            structure.structureType === STRUCTURE_EXTENSION)
+        );
+      },
     });
 
     hostileStructures.sort((a, b) => {
@@ -104,5 +114,5 @@ module.exports = {
     });
 
     return hostileStructures[0];
-  }
+  },
 };

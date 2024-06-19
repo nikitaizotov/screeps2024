@@ -14,9 +14,9 @@ module.exports = {
 
     if (inPathPosIndex > -1) {
       pathToDraw = creep.memory.path.slice(inPathPosIndex);
-    } else {
-      pathToDraw = creep.memory.path;
     }
+
+    pathToDraw = pathToDraw.filter(step => step.roomName === creep.room.name);
 
     pathToDraw.forEach((step, index) => {
       const nextPos = new RoomPosition(step.x, step.y, creep.room.name);

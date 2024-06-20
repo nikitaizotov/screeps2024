@@ -1,9 +1,9 @@
-const creepService = require('creep.service');
+const creepService = require("creep.service");
 
 var roleHarvester = {
-  creepsPerRoom: 3,
-  namePrefix: 'Harvester',
-  memoryKey: 'harvester',
+  creepsPerRoom: 4,
+  namePrefix: "Harvester",
+  memoryKey: "harvester",
   bodyParts: [WORK, CARRY, MOVE],
 
   run: function (creep) {
@@ -11,15 +11,18 @@ var roleHarvester = {
       return;
     }
 
-    if ((creep.memory.transferring || creep.memory.transferring === undefined) && creep.store[RESOURCE_ENERGY] == 0) {
+    if (
+      (creep.memory.transferring || creep.memory.transferring === undefined) &&
+      creep.store[RESOURCE_ENERGY] == 0
+    ) {
       creep.memory.transferring = false;
       creep.memory.path = null;
-      creep.say('🔄 harvest');
+      creep.say("🔄 harvest");
     }
     if (!creep.memory.transferring && creep.store.getFreeCapacity() == 0) {
       creep.memory.transferring = true;
       creep.memory.path = null;
-      creep.say('⚡ transfer');
+      creep.say("⚡ transfer");
     }
 
     if (creep.memory.transferring) {
@@ -33,11 +36,13 @@ var roleHarvester = {
     if (!creep.memory.path) {
       let targets = creep.room.find(FIND_STRUCTURES, {
         filter: (structure) => {
-          return (structure.structureType === STRUCTURE_EXTENSION ||
-            structure.structureType === STRUCTURE_SPAWN ||
-            structure.structureType === STRUCTURE_TOWER) &&
-            structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
-        }
+          return (
+            (structure.structureType === STRUCTURE_EXTENSION ||
+              structure.structureType === STRUCTURE_SPAWN ||
+              structure.structureType === STRUCTURE_TOWER) &&
+            structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+          );
+        },
       });
 
       if (targets.length) {
@@ -46,7 +51,6 @@ var roleHarvester = {
         targets = creep.room.find(FIND_CONSTRUCTION_SITES);
         creepService.getPathTotargets(creep, targets);
       }
-
     } else {
       this.moveAndTransfer(creep);
     }
@@ -85,7 +89,7 @@ var roleHarvester = {
       creep.memory.path = null;
       creep.memory.targetId = null;
     }
-  }
+  },
 };
 
 module.exports = roleHarvester;

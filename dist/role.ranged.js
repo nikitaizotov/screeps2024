@@ -5,7 +5,7 @@ module.exports = {
   creepsPerRoom: 3,
   namePrefix: "Ranged",
   memoryKey: "ranged",
-  bodyParts: [MOVE, MOVE, RANGED_ATTACK],
+  bodyParts: [TOUGH, MOVE, MOVE, RANGED_ATTACK],
   run: function (creep) {
     if (creep.spawning) {
       return;

@@ -1,9 +1,9 @@
-const creepService = require('creep.service');
+const creepService = require("creep.service");
 
 var roleUpgrader = {
-  creepsPerRoom: 2,
-  namePrefix: 'Upgrader',
-  memoryKey: 'upgrader',
+  creepsPerRoom: 4,
+  namePrefix: "Upgrader",
+  memoryKey: "upgrader",
   bodyParts: [WORK, CARRY, MOVE],
   run: function (creep) {
     if (creep.spawning) {
@@ -12,14 +12,13 @@ var roleUpgrader = {
     if (creep.memory.upgrading && creep.store[RESOURCE_ENERGY] == 0) {
       creep.memory.upgrading = false;
       creep.memory.path = null;
-      creep.say('🔄 harvest');
+      creep.say("🔄 harvest");
     }
     if (!creep.memory.upgrading && creep.store.getFreeCapacity() == 0) {
       creep.memory.upgrading = true;
       creep.memory.path = null;
-      creep.say('⚡ upgrade');
+      creep.say("⚡ upgrade");
     }
-
 
     if (creep.memory.upgrading) {
       this.upgradeControllerJob(creep);
@@ -42,21 +41,25 @@ var roleUpgrader = {
     }
   },
   getPathToSource: function (creep) {
-    creep.say('Searchong')
+    creep.say("Searchong");
     let sources = creep.room.find(FIND_SOURCES);
 
     for (let source of sources) {
-      var path = PathFinder.search(creep.pos, { pos: source.pos, range: 1 }, {
-        roomCallback: function (roomName) {
-          let room = Game.rooms[roomName];
-          if (!room) return;
-          let costs = new PathFinder.CostMatrix;
-          room.find(FIND_CREEPS).forEach(function (creep) {
-            costs.set(creep.pos.x, creep.pos.y, 0xff);
-          });
-          return costs;
+      var path = PathFinder.search(
+        creep.pos,
+        { pos: source.pos, range: 1 },
+        {
+          roomCallback: function (roomName) {
+            let room = Game.rooms[roomName];
+            if (!room) return;
+            let costs = new PathFinder.CostMatrix();
+            room.find(FIND_CREEPS).forEach(function (creep) {
+              costs.set(creep.pos.x, creep.pos.y, 0xff);
+            });
+            return costs;
+          },
         }
-      });
+      );
 
       if (!path.incomplete) {
         creep.memory.path = creep.pos.findPathTo(source);
@@ -66,7 +69,7 @@ var roleUpgrader = {
     }
   },
   getPathToController: function (creep) {
-    creep.say('Searchong')
+    creep.say("Searchong");
     creep.memory.path = creep.pos.findPathTo(creep.room.controller);
   },
   moveAndHarvest: function (creep) {
@@ -75,7 +78,10 @@ var roleUpgrader = {
     if (creep.harvest(source) == ERR_NOT_IN_RANGE) {
       creepService.drawPath(creep);
       let moveResult = creep.moveByPath(creep.memory.path);
-      if (moveResult === ERR_NOT_FOUND || moveResult !== OK && moveResult !== ERR_TIRED) {
+      if (
+        moveResult === ERR_NOT_FOUND ||
+        (moveResult !== OK && moveResult !== ERR_TIRED)
+      ) {
         creepService.getPathToSource(creep);
       }
     }
@@ -91,7 +97,7 @@ var roleUpgrader = {
         this.getPathToController(creep);
       }
     }
-  }
+  },
 };
 
 module.exports = roleUpgrader;

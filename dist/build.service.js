@@ -77,9 +77,9 @@ module.exports = {
                 }
               });
 
-              room.find(FIND_CREEPS).forEach(function (creep) {
-                costs.set(creep.pos.x, creep.pos.y, 0xff);
-              });
+              // room.find(FIND_CREEPS).forEach(function (creep) {
+              //   costs.set(creep.pos.x, creep.pos.y, 0xff);
+              // });
 
               return costs;
             },
@@ -120,8 +120,8 @@ module.exports = {
       );
 
       if (availableCount > 0) {
-        this.buildStructure(room, structureType, availableCount);
-        break;
+        this.buildStructure(room, structureType, 1); // Build only one structure at a time
+        break; // Exit the loop after building one structure
       }
     }
   },

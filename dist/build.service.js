@@ -34,6 +34,7 @@ module.exports = {
     if (Game.time % 90 === 0) {
       this.processBuildOrder();
       this.connectFirstStructure();
+      this.buildRoadsAroundStructures();
     }
     // if (Game.time % 145 === 0) {
     //   this.checkFirstStructure();
@@ -326,6 +327,78 @@ module.exports = {
           }
         } catch (error) {
           console.log(`Error connectFirstStructure in ${roomName}: ${error}`);
+        }
+      }
+    }
+  },
+
+  buildRoadsAroundStructures: function () {
+    for (let roomName in Game.rooms) {
+      let room = Game.rooms[roomName];
+      if (room.controller && room.controller.my) {
+        try {
+          const structures = room.find(FIND_STRUCTURES, {
+            filter: (structure) => {
+              return (
+                structure.structureType !== STRUCTURE_ROAD &&
+                structure.structureType !== STRUCTURE_WALL &&
+                structure.structureType !== STRUCTURE_RAMPART
+              );
+            },
+          });
+
+          structures.forEach((structure) => {
+            let x = structure.pos.x;
+            let y = structure.pos.y;
+
+            // Координаты вокруг структуры
+            let positions = [
+              [x - 1, y - 1],
+              [x, y - 1],
+              [x + 1, y - 1],
+              [x - 1, y],
+              [x + 1, y],
+              [x - 1, y + 1],
+              [x, y + 1],
+              [x + 1, y + 1],
+            ];
+
+            positions.forEach((pos) => {
+              let [x, y] = pos;
+              // Проверяем, что координаты внутри границ комнаты
+              if (x >= 0 && x <= 49 && y >= 0 && y <= 49) {
+                let look = room.lookAt(x, y);
+                let isRoadPresent = look.some(
+                  (lookObject) =>
+                    lookObject.type === LOOK_STRUCTURES &&
+                    lookObject.structure.structureType === STRUCTURE_ROAD
+                );
+                let isConstructionSitePresent = look.some(
+                  (lookObject) =>
+                    lookObject.type === LOOK_CONSTRUCTION_SITES &&
+                    lookObject.constructionSite.structureType === STRUCTURE_ROAD
+                );
+                let isObstacle = look.some(
+                  (lookObject) =>
+                    lookObject.type === LOOK_TERRAIN &&
+                    lookObject.terrain === "wall"
+                );
+
+                // Если дороги нет и это не стена, ставим строительство дороги
+                if (
+                  !isRoadPresent &&
+                  !isConstructionSitePresent &&
+                  !isObstacle
+                ) {
+                  room.createConstructionSite(x, y, STRUCTURE_ROAD);
+                }
+              }
+            });
+          });
+        } catch {
+          console.log(
+            `Error buildRoadsAroundStructures in ${roomName}: ${error}`
+          );
         }
       }
     }

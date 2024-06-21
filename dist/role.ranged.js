@@ -2,7 +2,7 @@ const creepService = require("creep.service");
 const attackService = require("attack.service");
 
 module.exports = {
-  creepsPerRoom: 3,
+  creepsPerRoom: 1,
   namePrefix: "Ranged",
   memoryKey: "ranged",
   bodyParts: [TOUGH, MOVE, MOVE, RANGED_ATTACK],

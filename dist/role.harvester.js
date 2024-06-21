@@ -1,7 +1,7 @@
 const creepService = require("creep.service");
 
 var roleHarvester = {
-  creepsPerRoom: 4,
+  creepsPerRoom: 5,
   namePrefix: "Harvester",
   memoryKey: "harvester",
   bodyParts: [WORK, CARRY, MOVE],

@@ -33,7 +33,7 @@ module.exports = {
     }
     if (Game.time % 90 === 0) {
       this.processBuildOrder();
-      //this.checkFirstStructure();
+      this.connectFirstStructure();
     }
     // if (Game.time % 145 === 0) {
     //   this.checkFirstStructure();
@@ -263,19 +263,76 @@ module.exports = {
     }
   },
 
-  checkFirstStructure: function () {
-    // if (!this.firstStructurePos) return;
-    // const { x, y, roomName } = this.firstStructurePos;
-    // const room = Game.rooms[roomName];
-    // if (!room) return;
-    // const structures = room.lookForAt(LOOK_STRUCTURES, x, y);
-    // const constructionSites = room.lookForAt(LOOK_CONSTRUCTION_SITES, x, y);
-    // if (structures.length > 0 || constructionSites.length > 0) {
-    //   this.buildRoadsFromFirstStructure(room, new RoomPosition(x, y, roomName));
-    // }
+  connectFirstStructure: function () {
+    let exitZones = this.exitZones;
+    let cachedPaths = Memory.cachedPaths;
+
+    for (let roomName in Game.rooms) {
+      let room = Game.rooms[roomName];
+      if (room.controller && room.controller.my) {
+        const roomCenter = new RoomPosition(25, 25, room.name);
+        let maxRadius = 25;
+
+        try {
+          for (let radius = 1; radius <= maxRadius; radius++) {
+            let found = false;
+            for (let xOffset = -radius; xOffset <= radius; xOffset++) {
+              for (let yOffset = -radius; yOffset <= radius; yOffset++) {
+                if (
+                  Math.abs(xOffset) !== radius &&
+                  Math.abs(yOffset) !== radius
+                ) {
+                  continue;
+                }
+
+                let x = roomCenter.x + xOffset;
+                let y = roomCenter.y + yOffset;
+
+                if (x < 0 || x > 49 || y < 0 || y > 49) {
+                  continue;
+                }
+
+                if (this.isRestrictedZone(exitZones, cachedPaths, x, y)) {
+                  continue;
+                }
+
+                let constructionSites = room.lookForAt(
+                  LOOK_CONSTRUCTION_SITES,
+                  x,
+                  y
+                );
+
+                let structures = room.lookForAt(LOOK_STRUCTURES, x, y);
+
+                let hasExtensionConstructionSite = constructionSites.some(
+                  (site) => site.structureType === STRUCTURE_EXTENSION
+                );
+
+                let hasExtension = structures.some(
+                  (structure) => structure.structureType === STRUCTURE_EXTENSION
+                );
+
+                if (hasExtensionConstructionSite || hasExtension) {
+                  this.buildRoadsFromFirstStructure(
+                    room,
+                    new RoomPosition(x, y, roomName)
+                  );
+                  found = true;
+                  break;
+                }
+              }
+              if (found) break;
+            }
+          }
+        } catch (error) {
+          console.log(`Error connectFirstStructure in ${roomName}: ${error}`);
+        }
+      }
+    }
   },
 
   buildRoadsFromFirstStructure: function (room, startPos) {
+    console.log("buildRoadsFromFirstStructure");
     let sources = room.find(FIND_SOURCES);
     let controller = room.controller;
 

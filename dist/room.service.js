@@ -163,34 +163,38 @@ module.exports = {
    * @param {*} room
    */
   isSafeModeNeeded: function (room) {
-    // Check if room is mine.
-    if (room.controller && room.controller.my) {
-      // Check all structures in room excluding walls.
-      const structures = room.find(FIND_STRUCTURES, {
-        filter: (structure) => structure.structureType !== STRUCTURE_WALL,
-      });
+    try {
+      // Check if room is mine.
+      if (room.controller && room.controller.my) {
+        // Check all structures in room excluding walls.
+        const structures = room.find(FIND_STRUCTURES, {
+          filter: (structure) => structure.structureType !== STRUCTURE_WALL,
+        });
 
-      // Check, if structure were attacked.
-      const structuresDamaged = structures.some(
-        (structure) => structure.hits < structure.hitsMax
-      );
+        // Check, if structure were attacked.
+        const structuresDamaged = structures.some(
+          (structure) => structure.hits < structure.hitsMax
+        );
 
-      const hostiles = room.find(FIND_HOSTILE_CREEPS);
+        const hostiles = room.find(FIND_HOSTILE_CREEPS);
 
-      if (structuresDamaged && hostiles.length > 0) {
-        // Check, if there is a Safe Modes available.
-        if (room.controller.safeModeAvailable > 0) {
-          // Activate Safe Mode.
-          room.controller.activateSafeMode();
-          console.log(
-            `Activated Safe Mode in room ${roomName} because of attack.`
-          );
-        } else {
-          console.log(
-            `No available Safe Modes for activation in room ${roomName}.`
-          );
+        if (structuresDamaged && hostiles.length > 0) {
+          // Check, if there is a Safe Modes available.
+          if (room.controller.safeModeAvailable > 0) {
+            // Activate Safe Mode.
+            room.controller.activateSafeMode();
+            console.log(
+              `Activated Safe Mode in room ${roomName} because of attack.`
+            );
+          } else {
+            console.log(
+              `No available Safe Modes for activation in room ${roomName}.`
+            );
+          }
         }
       }
+    } catch (error) {
+      console.log(`Error in isSafeModeNeeded method, ${error}`);
     }
   },
 };

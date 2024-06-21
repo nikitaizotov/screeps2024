@@ -4,6 +4,7 @@ const roleBuilder = require("role.builder");
 const buildService = require("build.service");
 const roleRanged = require("role.ranged");
 const creepService = require("creep.service");
+const structureTower = require("structure.tower");
 
 module.exports = {
   enabledRoles: [roleHarvester, roleUpgrader, roleBuilder, roleRanged],
@@ -11,6 +12,7 @@ module.exports = {
     this.cleanMemory();
     this.creepsRoutines();
     buildService.run();
+    this.structureRoutines();
   },
   cleanMemory: function () {
     for (var name in Memory.creeps) {
@@ -25,56 +27,62 @@ module.exports = {
     this.moveCreeps();
   },
   spawnCreeps: function () {
-    const spawn = Game.spawns["Spawn1"];
-    const energyInExtensions = this.getTotalEnergyInExtensions(spawn.room);
+    for (let spawnName in Game.spawns) {
+      const spawn = Game.spawns[spawnName];
+      const energyInExtensions = this.getTotalEnergyInExtensions(spawn.room);
 
-    if (spawn.spawning) {
-      return;
-    }
-
-    const constructionSites = spawn.room.find(FIND_CONSTRUCTION_SITES);
-
-    for (let role of this.enabledRoles) {
-      const selectedCreeps = _.filter(
-        Game.creeps,
-        (creep) => creep.memory.role == role.memoryKey
-      );
-      const bodyParts = role.bodyParts;
-      const cost = bodyParts.reduce(
-        (sum, part) => sum + BODYPART_COST[part],
-        0
-      );
-      const canAfford = spawn.store[RESOURCE_ENERGY] >= cost;
-
-      if (
-        role.memoryKey === roleBuilder.memoryKey &&
-        !constructionSites.length
-      ) {
+      if (spawn.spawning) {
         continue;
       }
 
-      if (selectedCreeps.length < role.creepsPerRoom && canAfford) {
-        const newName = role.namePrefix + Game.time;
-        const totalEnergyInRoom =
-          energyInExtensions + spawn.store[RESOURCE_ENERGY];
-        const bodyPartsMultiplayer = parseInt(totalEnergyInRoom / cost);
-        const bodyParts = this.repeatArray(
-          role.bodyParts,
-          bodyPartsMultiplayer
+      const constructionSites = spawn.room.find(FIND_CONSTRUCTION_SITES);
+
+      for (let role of this.enabledRoles) {
+        const selectedCreeps = _.filter(
+          Game.creeps,
+          (creep) =>
+            creep.memory.role == role.memoryKey &&
+            creep.room.name == spawn.room.name
         );
+        const bodyParts = role.bodyParts;
+        const cost = bodyParts.reduce(
+          (sum, part) => sum + BODYPART_COST[part],
+          0
+        );
+        const canAfford = spawn.store[RESOURCE_ENERGY] >= cost;
 
         if (
-          !Game.spawns["Spawn1"].spawnCreep(bodyParts, newName, {
-            memory: {
-              role: role.memoryKey,
-              pathColor:
-                "#" +
-                ((Math.random() * 0xffffff) << 0).toString(16).padStart(6, "0"),
-            },
-          })
+          role.memoryKey === roleBuilder.memoryKey &&
+          !constructionSites.length
         ) {
-          console.log("Spawning a new creep: " + newName);
-          return;
+          continue;
+        }
+
+        if (selectedCreeps.length < role.creepsPerRoom && canAfford) {
+          const newName = role.namePrefix + Game.time;
+          const totalEnergyInRoom =
+            energyInExtensions + spawn.store[RESOURCE_ENERGY];
+          const bodyPartsMultiplayer = parseInt(totalEnergyInRoom / cost);
+          const bodyParts = this.repeatArray(
+            role.bodyParts,
+            bodyPartsMultiplayer
+          );
+
+          if (
+            !spawn.spawnCreep(bodyParts, newName, {
+              memory: {
+                role: role.memoryKey,
+                pathColor:
+                  "#" +
+                  ((Math.random() * 0xffffff) << 0)
+                    .toString(16)
+                    .padStart(6, "0"),
+              },
+            })
+          ) {
+            console.log("Spawning a new creep: " + newName);
+            return;
+          }
         }
       }
     }
@@ -123,5 +131,21 @@ module.exports = {
       repeatedArray = repeatedArray.concat(array);
     }
     return repeatedArray;
+  },
+  structureRoutines: function () {
+    for (let roomName in Game.rooms) {
+      const room = Game.rooms[roomName];
+      const spawns = room.find(FIND_MY_SPAWNS);
+
+      if (spawns.length > 0) {
+        const towers = room.find(FIND_MY_STRUCTURES, {
+          filter: { structureType: STRUCTURE_TOWER },
+        });
+
+        towers.forEach((tower) => {
+          structureTower.run(tower);
+        });
+      }
+    }
   },
 };

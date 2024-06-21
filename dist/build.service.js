@@ -33,6 +33,10 @@ module.exports = {
     if (Game.time % 90 === 0) {
       this.processBuildOrder();
     }
+
+    // if (Game.time % 5 === 0) {
+    //   this.blockExits();
+    // }
   },
 
   planRoads: function () {
@@ -120,8 +124,8 @@ module.exports = {
       );
 
       if (availableCount > 0) {
-        this.buildStructure(room, structureType, 1); // Build only one structure at a time
-        break; // Exit the loop after building one structure
+        this.buildStructure(room, structureType, 1);
+        break;
       }
     }
   },
@@ -234,5 +238,125 @@ module.exports = {
     }).length;
 
     return maxStructures - existingStructures - constructionSites;
+  },
+
+  blockExits: function () {
+    const exitTypes = [
+      FIND_EXIT_TOP,
+      FIND_EXIT_RIGHT,
+      FIND_EXIT_BOTTOM,
+      FIND_EXIT_LEFT,
+    ];
+
+    for (const roomName in Game.rooms) {
+      const room = Game.rooms[roomName];
+
+      for (const exitType of exitTypes) {
+        const exitPositions = room.find(exitType);
+        for (const pos of exitPositions) {
+          const blockPositions = this.getBlockingPositions(pos, exitType);
+          for (const blockPos of blockPositions) {
+            if (this.isValidBlockingPosition(room, blockPos)) {
+              const look = room.lookAt(blockPos.x, blockPos.y);
+              let canBuild = true;
+
+              for (const lookObject of look) {
+                if (
+                  lookObject.type === LOOK_STRUCTURES ||
+                  lookObject.type === LOOK_CONSTRUCTION_SITES
+                ) {
+                  canBuild = false;
+                  break;
+                }
+              }
+
+              if (canBuild) {
+                const result = room.createConstructionSite(
+                  blockPos.x,
+                  blockPos.y,
+                  STRUCTURE_WALL
+                );
+                if (result !== OK) {
+                  console.log(
+                    `Failed to create construction site at (${blockPos.x}, ${blockPos.y}): ${result}`
+                  );
+                }
+              }
+            }
+          }
+
+          // Add rampart in the center of the exit
+          const rampPos = new RoomPosition(pos.x, pos.y, room.name);
+          if (this.isValidRampartPosition(room, rampPos)) {
+            const existingRamp = room
+              .lookForAt(LOOK_STRUCTURES, rampPos)
+              .find((s) => s.structureType === STRUCTURE_RAMPART && s.my);
+            if (existingRamp) {
+              existingRamp.destroy();
+            }
+            const rampResult = room.createConstructionSite(
+              rampPos,
+              STRUCTURE_RAMPART
+            );
+            if (rampResult !== OK) {
+              console.log(
+                `Failed to create rampart at (${rampPos.x}, ${rampPos.y}): ${rampResult}`
+              );
+            }
+          }
+        }
+      }
+    }
+  },
+
+  getBlockingPositions: function (pos, exitType) {
+    const positions = [];
+
+    if (exitType === FIND_EXIT_TOP && pos.y < 48) {
+      positions.push({ x: pos.x, y: pos.y + 2 });
+      if (pos.x > 2) positions.push({ x: pos.x - 1, y: pos.y + 2 });
+      if (pos.x < 47) positions.push({ x: pos.x + 1, y: pos.y + 2 });
+      if (pos.x > 1) positions.push({ x: pos.x - 2, y: pos.y + 2 });
+      if (pos.x < 48) positions.push({ x: pos.x + 2, y: pos.y + 2 });
+    } else if (exitType === FIND_EXIT_RIGHT && pos.x > 1) {
+      positions.push({ x: pos.x - 2, y: pos.y });
+      if (pos.y > 2) positions.push({ x: pos.x - 2, y: pos.y - 1 });
+      if (pos.y < 47) positions.push({ x: pos.x - 2, y: pos.y + 1 });
+      if (pos.y > 1) positions.push({ x: pos.x - 2, y: pos.y - 2 });
+      if (pos.y < 48) positions.push({ x: pos.x - 2, y: pos.y + 2 });
+    } else if (exitType === FIND_EXIT_BOTTOM && pos.y > 1) {
+      positions.push({ x: pos.x, y: pos.y - 2 });
+      if (pos.x > 2) positions.push({ x: pos.x - 1, y: pos.y - 2 });
+      if (pos.x < 47) positions.push({ x: pos.x + 1, y: pos.y - 2 });
+      if (pos.x > 1) positions.push({ x: pos.x - 2, y: pos.y - 2 });
+      if (pos.x < 48) positions.push({ x: pos.x + 2, y: pos.y - 2 });
+    } else if (exitType === FIND_EXIT_LEFT && pos.x < 48) {
+      positions.push({ x: pos.x + 2, y: pos.y });
+      if (pos.y > 2) positions.push({ x: pos.x + 2, y: pos.y - 1 });
+      if (pos.y < 47) positions.push({ x: pos.x + 2, y: pos.y + 1 });
+      if (pos.y > 1) positions.push({ x: pos.x + 2, y: pos.y - 2 });
+      if (pos.y < 48) positions.push({ x: pos.x + 2, y: pos.y + 2 });
+    }
+
+    return positions;
+  },
+
+  isValidBlockingPosition: function (room, pos) {
+    if (pos.x < 1 || pos.x > 48 || pos.y < 1 || pos.y > 48) {
+      return false;
+    }
+    const terrain = Game.map.getRoomTerrain(room.name);
+    if (terrain.get(pos.x, pos.y) === TERRAIN_MASK_WALL) {
+      return false;
+    }
+    return true;
+  },
+
+  isValidRampartPosition: function (room, pos) {
+    if (pos.x < 1 || pos.x > 48 || pos.y < 1 || pos.y > 48) {
+      return false;
+    }
+    const terrain = Game.map.getRoomTerrain(room.name);
+    return terrain.get(pos.x, pos.y) !== TERRAIN_MASK_WALL;
   },
 };

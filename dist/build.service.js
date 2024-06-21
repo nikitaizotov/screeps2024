@@ -12,6 +12,7 @@ module.exports = {
     STRUCTURE_NUKER,
     STRUCTURE_POWER_SPAWN,
   ],
+  firstStructurePos: null,
 
   run: function () {
     if (!Memory.structureCache) {
@@ -32,7 +33,11 @@ module.exports = {
     }
     if (Game.time % 90 === 0) {
       this.processBuildOrder();
+      //this.checkFirstStructure();
     }
+    // if (Game.time % 145 === 0) {
+    //   this.checkFirstStructure();
+    // }
 
     // if (Game.time % 5 === 0) {
     //   this.blockExits();
@@ -40,67 +45,163 @@ module.exports = {
   },
 
   planRoads: function () {
-    Memory.cachedPaths = [];
-
-    let keyPoints = [];
-
-    for (let spawnName in Game.spawns) {
-      keyPoints.push(Game.spawns[spawnName].pos);
+    if (!Memory.cachedPaths) {
+      Memory.cachedPaths = [];
+    }
+    if (!Memory.connectedPoints) {
+      Memory.connectedPoints = {};
     }
 
-    let sources = Game.rooms[Object.keys(Game.rooms)[0]].find(FIND_SOURCES);
-    for (let source of sources) {
-      keyPoints.push(source.pos);
+    let rooms = Game.rooms;
+    let allSpawns = [];
+
+    // Collect all spawns in the game
+    for (let roomName in rooms) {
+      let room = rooms[roomName];
+      let spawns = room.find(FIND_MY_SPAWNS);
+      for (let spawn of spawns) {
+        allSpawns.push(spawn.pos);
+      }
     }
 
-    let controller = Game.rooms[Object.keys(Game.rooms)[0]].controller;
-    keyPoints.push(controller.pos);
+    function hashPos(pos) {
+      return `${pos.roomName}_${pos.x}_${pos.y}`;
+    }
 
-    for (let i = 0; i < keyPoints.length; i++) {
-      for (let j = i + 1; j < keyPoints.length; j++) {
-        let path = PathFinder.search(
-          keyPoints[i],
-          { pos: keyPoints[j], range: 1 },
-          {
-            plainCost: 2,
-            swampCost: 10,
-            roomCallback: function (roomName) {
-              let room = Game.rooms[roomName];
-              if (!room) return;
-              let costs = new PathFinder.CostMatrix();
+    function addConnection(pos1, pos2) {
+      let key1 = hashPos(pos1);
+      let key2 = hashPos(pos2);
+      if (!Memory.connectedPoints[key1]) {
+        Memory.connectedPoints[key1] = [];
+      }
+      Memory.connectedPoints[key1].push(key2);
+    }
 
-              room.find(FIND_STRUCTURES).forEach(function (struct) {
-                if (struct.structureType === STRUCTURE_ROAD) {
-                  costs.set(struct.pos.x, struct.pos.y, 1);
-                } else if (
-                  (struct.structureType !== STRUCTURE_CONTAINER &&
-                    struct.structureType !== STRUCTURE_RAMPART) ||
-                  !struct.my
-                ) {
-                  costs.set(struct.pos.x, struct.pos.y, 0xff);
-                }
-              });
+    function isConnected(pos1, pos2) {
+      let key1 = hashPos(pos1);
+      let key2 = hashPos(pos2);
+      return (
+        Memory.connectedPoints[key1] &&
+        Memory.connectedPoints[key1].includes(key2)
+      );
+    }
 
-              // room.find(FIND_CREEPS).forEach(function (creep) {
-              //   costs.set(creep.pos.x, creep.pos.y, 0xff);
-              // });
-
-              return costs;
-            },
-          }
-        ).path;
-
-        Memory.cachedPaths.push(...path);
-
-        for (let pos of path) {
-          Game.rooms[pos.roomName].createConstructionSite(
-            pos.x,
-            pos.y,
-            STRUCTURE_ROAD
+    function checkAndRepairRoad() {
+      for (let posData of Memory.cachedPaths) {
+        let pos = new RoomPosition(posData.x, posData.y, posData.roomName);
+        let room = Game.rooms[pos.roomName];
+        if (room) {
+          let structures = room.lookForAt(LOOK_STRUCTURES, pos.x, pos.y);
+          let hasRoad = structures.some(
+            (s) => s.structureType === STRUCTURE_ROAD
           );
+
+          if (!hasRoad) {
+            let constructionSites = room.lookForAt(
+              LOOK_CONSTRUCTION_SITES,
+              pos.x,
+              pos.y
+            );
+            let hasConstructionSite = constructionSites.some(
+              (s) => s.structureType === STRUCTURE_ROAD
+            );
+
+            if (!hasConstructionSite) {
+              room.createConstructionSite(pos.x, pos.y, STRUCTURE_ROAD);
+            }
+          }
         }
       }
     }
+
+    function planRoadBetween(pos1, pos2) {
+      if (isConnected(pos1, pos2)) return;
+
+      let path = PathFinder.search(
+        pos1,
+        { pos: pos2, range: 1 },
+        {
+          plainCost: 2,
+          swampCost: 10,
+          roomCallback: function (roomName) {
+            let room = Game.rooms[roomName];
+            if (!room) return;
+            let costs = new PathFinder.CostMatrix();
+
+            room.find(FIND_STRUCTURES).forEach(function (struct) {
+              if (struct.structureType === STRUCTURE_ROAD) {
+                costs.set(struct.pos.x, struct.pos.y, 1);
+              } else if (
+                (struct.structureType !== STRUCTURE_CONTAINER &&
+                  struct.structureType !== STRUCTURE_RAMPART) ||
+                !struct.my
+              ) {
+                costs.set(struct.pos.x, struct.pos.y, 0xff);
+              }
+            });
+
+            return costs;
+          },
+        }
+      ).path;
+
+      Memory.cachedPaths.push(
+        ...path.map((pos) => ({ x: pos.x, y: pos.y, roomName: pos.roomName }))
+      );
+
+      for (let pos of path) {
+        Game.rooms[pos.roomName].createConstructionSite(
+          pos.x,
+          pos.y,
+          STRUCTURE_ROAD
+        );
+      }
+
+      addConnection(pos1, pos2);
+    }
+
+    // Plan roads within each room
+    for (let roomName in rooms) {
+      let room = rooms[roomName];
+      let keyPoints = [];
+
+      // Add spawn positions
+      let spawns = room.find(FIND_MY_SPAWNS);
+      for (let spawn of spawns) {
+        keyPoints.push(spawn.pos);
+      }
+
+      // Add source positions
+      let sources = room.find(FIND_SOURCES);
+      for (let source of sources) {
+        keyPoints.push(source.pos);
+      }
+
+      // Add controller position
+      let controller = room.controller;
+      if (controller) {
+        keyPoints.push(controller.pos);
+      }
+
+      // Plan roads between key points in the same room
+      for (let i = 0; i < keyPoints.length; i++) {
+        for (let j = i + 1; j < keyPoints.length; j++) {
+          planRoadBetween(keyPoints[i], keyPoints[j]);
+        }
+      }
+    }
+
+    // Plan roads between spawns in different rooms
+    for (let i = 0; i < allSpawns.length; i++) {
+      for (let j = i + 1; j < allSpawns.length; j++) {
+        if (allSpawns[i].roomName !== allSpawns[j].roomName) {
+          planRoadBetween(allSpawns[i], allSpawns[j]);
+        }
+      }
+    }
+
+    // Check and repair existing roads
+    checkAndRepairRoad();
   },
 
   processBuildOrder: function () {
@@ -149,12 +250,69 @@ module.exports = {
           if (this.isValidConstructionPosition(room, x, y)) {
             if (room.createConstructionSite(x, y, type) === OK) {
               structuresPlanned++;
+              if (!this.firstStructurePos) {
+                this.firstStructurePos = { x: x, y: y, roomName: room.name };
+              }
               if (structuresPlanned >= maxCount) {
                 return;
               }
             }
           }
         }
+      }
+    }
+  },
+
+  checkFirstStructure: function () {
+    // if (!this.firstStructurePos) return;
+    // const { x, y, roomName } = this.firstStructurePos;
+    // const room = Game.rooms[roomName];
+    // if (!room) return;
+    // const structures = room.lookForAt(LOOK_STRUCTURES, x, y);
+    // const constructionSites = room.lookForAt(LOOK_CONSTRUCTION_SITES, x, y);
+    // if (structures.length > 0 || constructionSites.length > 0) {
+    //   this.buildRoadsFromFirstStructure(room, new RoomPosition(x, y, roomName));
+    // }
+  },
+
+  buildRoadsFromFirstStructure: function (room, startPos) {
+    let sources = room.find(FIND_SOURCES);
+    let controller = room.controller;
+
+    let targets = sources.map((source) => source.pos);
+    targets.push(controller.pos);
+
+    for (let target of targets) {
+      let path = PathFinder.search(
+        startPos,
+        { pos: target, range: 1 },
+        {
+          plainCost: 2,
+          swampCost: 10,
+          roomCallback: function (roomName) {
+            let room = Game.rooms[roomName];
+            if (!room) return;
+            let costs = new PathFinder.CostMatrix();
+
+            room.find(FIND_STRUCTURES).forEach(function (struct) {
+              if (struct.structureType === STRUCTURE_ROAD) {
+                costs.set(struct.pos.x, struct.pos.y, 1);
+              } else if (
+                (struct.structureType !== STRUCTURE_CONTAINER &&
+                  struct.structureType !== STRUCTURE_RAMPART) ||
+                !struct.my
+              ) {
+                costs.set(struct.pos.x, struct.pos.y, 0xff);
+              }
+            });
+
+            return costs;
+          },
+        }
+      ).path;
+
+      for (let pos of path) {
+        room.createConstructionSite(pos.x, pos.y, STRUCTURE_ROAD);
       }
     }
   },

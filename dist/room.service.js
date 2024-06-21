@@ -8,12 +8,14 @@ const structureTower = require("structure.tower");
 
 module.exports = {
   enabledRoles: [roleHarvester, roleUpgrader, roleBuilder, roleRanged],
+
   routines: function () {
     this.cleanMemory();
     this.creepsRoutines();
     buildService.run();
     this.structureRoutines();
   },
+
   cleanMemory: function () {
     for (var name in Memory.creeps) {
       if (!Game.creeps[name]) {
@@ -22,14 +24,17 @@ module.exports = {
       }
     }
   },
+
   creepsRoutines: function () {
     this.spawnCreeps();
     this.moveCreeps();
   },
+
   spawnCreeps: function () {
     for (let spawnName in Game.spawns) {
       const spawn = Game.spawns[spawnName];
       const energyInExtensions = this.getTotalEnergyInExtensions(spawn.room);
+      this.isSafeModeNeeded(spawn.room);
 
       if (spawn.spawning) {
         continue;
@@ -87,6 +92,7 @@ module.exports = {
       }
     }
   },
+
   moveCreeps: function () {
     for (var name in Game.creeps) {
       var creep = Game.creeps[name];
@@ -113,6 +119,7 @@ module.exports = {
       }
     }
   },
+
   getTotalEnergyInExtensions: function (room) {
     const extensions = room.find(FIND_MY_STRUCTURES, {
       filter: { structureType: STRUCTURE_EXTENSION },
@@ -125,6 +132,7 @@ module.exports = {
 
     return totalEnergy;
   },
+
   repeatArray: function (array, times) {
     let repeatedArray = [];
     for (let i = 0; i < times; i++) {
@@ -132,6 +140,7 @@ module.exports = {
     }
     return repeatedArray;
   },
+
   structureRoutines: function () {
     for (let roomName in Game.rooms) {
       const room = Game.rooms[roomName];
@@ -145,6 +154,42 @@ module.exports = {
         towers.forEach((tower) => {
           structureTower.run(tower);
         });
+      }
+    }
+  },
+
+  /**
+   * Will activate Safe Mode if needed and if there is Safe Mode to activate.
+   * @param {*} room
+   */
+  isSafeModeNeeded: function (room) {
+    // Check if room is mine.
+    if (room.controller && room.controller.my) {
+      // Check all structures in room excluding walls.
+      const structures = room.find(FIND_STRUCTURES, {
+        filter: (structure) => structure.structureType !== STRUCTURE_WALL,
+      });
+
+      // Check, if structure were attacked.
+      const structuresDamaged = structures.some(
+        (structure) => structure.hits < structure.hitsMax
+      );
+
+      const hostiles = room.find(FIND_HOSTILE_CREEPS);
+
+      if (structuresDamaged && hostiles.length > 0) {
+        // Check, if there is a Safe Modes available.
+        if (room.controller.safeModeAvailable > 0) {
+          // Activate Safe Mode.
+          room.controller.activateSafeMode();
+          console.log(
+            `Activated Safe Mode in room ${roomName} because of attack.`
+          );
+        } else {
+          console.log(
+            `No available Safe Modes for activation in room ${roomName}.`
+          );
+        }
       }
     }
   },

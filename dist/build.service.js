@@ -161,30 +161,30 @@ module.exports = {
       addConnection(pos1, pos2);
     }
 
-    // Plan roads within each room
+    // Plan roads within each room.
     for (let roomName in rooms) {
       let room = rooms[roomName];
       let keyPoints = [];
 
-      // Add spawn positions
+      // Add spawn positions.
       let spawns = room.find(FIND_MY_SPAWNS);
       for (let spawn of spawns) {
         keyPoints.push(spawn.pos);
       }
 
-      // Add source positions
+      // Add source positions.
       let sources = room.find(FIND_SOURCES);
       for (let source of sources) {
         keyPoints.push(source.pos);
       }
 
-      // Add controller position
+      // Add controller position.
       let controller = room.controller;
       if (controller) {
         keyPoints.push(controller.pos);
       }
 
-      // Plan roads between key points in the same room
+      // Plan roads between key points in the same room.
       for (let i = 0; i < keyPoints.length; i++) {
         for (let j = i + 1; j < keyPoints.length; j++) {
           planRoadBetween(keyPoints[i], keyPoints[j]);
@@ -192,7 +192,7 @@ module.exports = {
       }
     }
 
-    // Plan roads between spawns in different rooms
+    // Plan roads between spawns in different rooms.
     for (let i = 0; i < allSpawns.length; i++) {
       for (let j = i + 1; j < allSpawns.length; j++) {
         if (allSpawns[i].roomName !== allSpawns[j].roomName) {
@@ -201,7 +201,7 @@ module.exports = {
       }
     }
 
-    // Check and repair existing roads
+    // Check and repair existing roads.
     checkAndRepairRoad();
   },
 
@@ -351,7 +351,7 @@ module.exports = {
             let x = structure.pos.x;
             let y = structure.pos.y;
 
-            // Координаты вокруг структуры
+            // Coordinates around the structure.
             let positions = [
               [x - 1, y - 1],
               [x, y - 1],
@@ -365,7 +365,7 @@ module.exports = {
 
             positions.forEach((pos) => {
               let [x, y] = pos;
-              // Проверяем, что координаты внутри границ комнаты
+              // Check, if coordinates is inside the room.
               if (x >= 0 && x <= 49 && y >= 0 && y <= 49) {
                 let look = room.lookAt(x, y);
                 let isRoadPresent = look.some(
@@ -384,7 +384,7 @@ module.exports = {
                     lookObject.terrain === "wall"
                 );
 
-                // Если дороги нет и это не стена, ставим строительство дороги
+                // If it is no road and this is not a wall, creating road.
                 if (
                   !isRoadPresent &&
                   !isConstructionSitePresent &&
@@ -573,7 +573,7 @@ module.exports = {
             }
           }
 
-          // Add rampart in the center of the exit
+          // Add rampart in the center of the exit.
           const rampPos = new RoomPosition(pos.x, pos.y, room.name);
           if (this.isValidRampartPosition(room, rampPos)) {
             const existingRamp = room

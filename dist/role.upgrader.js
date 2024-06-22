@@ -41,7 +41,7 @@ var roleUpgrader = {
     }
   },
   getPathToSource: function (creep) {
-    creep.say("Searchong");
+    creep.say("Searching");
     let sources = creep.room.find(FIND_SOURCES);
 
     for (let source of sources) {
@@ -69,7 +69,7 @@ var roleUpgrader = {
     }
   },
   getPathToController: function (creep) {
-    creep.say("Searchong");
+    creep.say("Searching");
     creep.memory.path = creep.pos.findPathTo(creep.room.controller);
   },
   moveAndHarvest: function (creep) {

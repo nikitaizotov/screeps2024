@@ -49,7 +49,17 @@ var roleHarvester = {
         creepService.getPathTotargets(creep, targets);
       } else {
         targets = creep.room.find(FIND_CONSTRUCTION_SITES);
-        creepService.getPathTotargets(creep, targets);
+
+        if (targets.length && targets.length > 0) {
+          creepService.getPathTotargets(creep, targets);
+        } else {
+          const controller = creep.room.controller;
+          creep.memory.path = creep.pos.findPathTo(creep.room.controller);
+          if (controller) {
+            creep.memory.path = creep.pos.findPathTo(creep.room.controller);
+            creep.memory.targetId = controller.id;
+          }
+        }
       }
     } else {
       this.moveAndTransfer(creep);
@@ -76,6 +86,8 @@ var roleHarvester = {
 
     if (!target.progress && target.progress === undefined) {
       action = creep.transfer(target, RESOURCE_ENERGY);
+    } else if (target.structureType === STRUCTURE_CONTROLLER) {
+      action = creep.upgradeController(target);
     } else {
       action = creep.build(target);
     }

@@ -5,9 +5,16 @@ const buildService = require("build.service");
 const roleRanged = require("role.ranged");
 const creepService = require("creep.service");
 const structureTower = require("structure.tower");
+const roleWallAndRampBuilder = require("role.WallAndRampartBuilder");
 
 module.exports = {
-  enabledRoles: [roleHarvester, roleUpgrader, roleBuilder, roleRanged],
+  enabledRoles: [
+    roleHarvester,
+    roleUpgrader,
+    roleBuilder,
+    roleRanged,
+    roleWallAndRampBuilder,
+  ],
 
   routines: function () {
     this.cleanMemory();
@@ -40,8 +47,6 @@ module.exports = {
         continue;
       }
 
-      const constructionSites = spawn.room.find(FIND_CONSTRUCTION_SITES);
-
       for (let role of this.enabledRoles) {
         const selectedCreeps = _.filter(
           Game.creeps,
@@ -56,11 +61,28 @@ module.exports = {
         );
         const canAfford = spawn.store[RESOURCE_ENERGY] >= cost;
 
-        if (
-          role.memoryKey === roleBuilder.memoryKey &&
-          !constructionSites.length
-        ) {
-          continue;
+        if (role.memoryKey === roleBuilder.memoryKey) {
+          const constructionSites = spawn.room.find(FIND_CONSTRUCTION_SITES);
+
+          if (!constructionSites.length) {
+            continue;
+          }
+        }
+
+        if (role.memoryKey === roleWallAndRampBuilder.memoryKey) {
+          const isReparableWallsAndRamps = spawn.room.find(FIND_STRUCTURES, {
+            filter: (structure) => {
+              return (
+                (structure.structureType === STRUCTURE_WALL ||
+                  structure.structureType === STRUCTURE_RAMPART) &&
+                structure.hits < structure.hitsMax
+              );
+            },
+          });
+
+          if (!isReparableWallsAndRamps.length) {
+            continue;
+          }
         }
 
         if (selectedCreeps.length < role.creepsPerRoom && canAfford) {
@@ -113,6 +135,9 @@ module.exports = {
           break;
         case roleRanged.memoryKey:
           roleRanged.run(creep);
+          break;
+        case roleWallAndRampBuilder.memoryKey:
+          roleWallAndRampBuilder.run(creep);
           break;
         default:
           console.log("Creep has unknown role", creep.memoryKey);

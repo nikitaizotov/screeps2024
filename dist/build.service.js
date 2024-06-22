@@ -40,9 +40,9 @@ module.exports = {
     //   this.checkFirstStructure();
     // }
 
-    // if (Game.time % 5 === 0) {
-    //   this.blockExits();
-    // }
+    if (Game.time % 333 === 0) {
+      this.blockExits();
+    }
   },
 
   planRoads: function () {
@@ -528,74 +528,74 @@ module.exports = {
     return maxStructures - existingStructures - constructionSites;
   },
 
-  blockExits: function () {
-    const exitTypes = [
-      FIND_EXIT_TOP,
-      FIND_EXIT_RIGHT,
-      FIND_EXIT_BOTTOM,
-      FIND_EXIT_LEFT,
-    ];
+  // blockExits: function () {
+  //   const exitTypes = [
+  //     FIND_EXIT_TOP,
+  //     FIND_EXIT_RIGHT,
+  //     FIND_EXIT_BOTTOM,
+  //     FIND_EXIT_LEFT,
+  //   ];
 
-    for (const roomName in Game.rooms) {
-      const room = Game.rooms[roomName];
+  //   for (const roomName in Game.rooms) {
+  //     const room = Game.rooms[roomName];
 
-      for (const exitType of exitTypes) {
-        const exitPositions = room.find(exitType);
-        for (const pos of exitPositions) {
-          const blockPositions = this.getBlockingPositions(pos, exitType);
-          for (const blockPos of blockPositions) {
-            if (this.isValidBlockingPosition(room, blockPos)) {
-              const look = room.lookAt(blockPos.x, blockPos.y);
-              let canBuild = true;
+  //     for (const exitType of exitTypes) {
+  //       const exitPositions = room.find(exitType);
+  //       for (const pos of exitPositions) {
+  //         const blockPositions = this.getBlockingPositions(pos, exitType);
+  //         for (const blockPos of blockPositions) {
+  //           if (this.isValidBlockingPosition(room, blockPos)) {
+  //             const look = room.lookAt(blockPos.x, blockPos.y);
+  //             let canBuild = true;
 
-              for (const lookObject of look) {
-                if (
-                  lookObject.type === LOOK_STRUCTURES ||
-                  lookObject.type === LOOK_CONSTRUCTION_SITES
-                ) {
-                  canBuild = false;
-                  break;
-                }
-              }
+  //             for (const lookObject of look) {
+  //               if (
+  //                 lookObject.type === LOOK_STRUCTURES ||
+  //                 lookObject.type === LOOK_CONSTRUCTION_SITES
+  //               ) {
+  //                 canBuild = false;
+  //                 break;
+  //               }
+  //             }
 
-              if (canBuild) {
-                const result = room.createConstructionSite(
-                  blockPos.x,
-                  blockPos.y,
-                  STRUCTURE_WALL
-                );
-                if (result !== OK) {
-                  console.log(
-                    `Failed to create construction site at (${blockPos.x}, ${blockPos.y}): ${result}`
-                  );
-                }
-              }
-            }
-          }
+  //             if (canBuild) {
+  //               const result = room.createConstructionSite(
+  //                 blockPos.x,
+  //                 blockPos.y,
+  //                 STRUCTURE_WALL
+  //               );
+  //               if (result !== OK) {
+  //                 console.log(
+  //                   `Failed to create construction site at (${blockPos.x}, ${blockPos.y}): ${result}`
+  //                 );
+  //               }
+  //             }
+  //           }
+  //         }
 
-          // Add rampart in the center of the exit.
-          const rampPos = new RoomPosition(pos.x, pos.y, room.name);
-          if (this.isValidRampartPosition(room, rampPos)) {
-            const existingRamp = room
-              .lookForAt(LOOK_STRUCTURES, rampPos)
-              .find((s) => s.structureType === STRUCTURE_RAMPART && s.my);
-            if (existingRamp) {
-              existingRamp.destroy();
-            }
-            const rampResult = room.createConstructionSite(
-              rampPos,
-              STRUCTURE_RAMPART
-            );
-            if (rampResult !== OK) {
-              console.log(
-                `Failed to create rampart at (${rampPos.x}, ${rampPos.y}): ${rampResult}`
-              );
-            }
-          }
-        }
-      }
-    }
-  },
+  //         // Add rampart in the center of the exit.
+  //         const rampPos = new RoomPosition(pos.x, pos.y, room.name);
+  //         if (this.isValidRampartPosition(room, rampPos)) {
+  //           const existingRamp = room
+  //             .lookForAt(LOOK_STRUCTURES, rampPos)
+  //             .find((s) => s.structureType === STRUCTURE_RAMPART && s.my);
+  //           if (existingRamp) {
+  //             existingRamp.destroy();
+  //           }
+  //           const rampResult = room.createConstructionSite(
+  //             rampPos,
+  //             STRUCTURE_RAMPART
+  //           );
+  //           if (rampResult !== OK) {
+  //             console.log(
+  //               `Failed to create rampart at (${rampPos.x}, ${rampPos.y}): ${rampResult}`
+  //             );
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // },
 
   getBlockingPositions: function (pos, exitType) {
     const positions = [];
@@ -646,5 +646,134 @@ module.exports = {
     }
     const terrain = Game.map.getRoomTerrain(room.name);
     return terrain.get(pos.x, pos.y) !== TERRAIN_MASK_WALL;
+  },
+
+  /**
+   * Builds walls and ramparts near exits.
+   * TODO: can build a rampart with a wall next to it. Additional checks required.
+   */
+  blockExits: function () {
+    const exitTypes = [
+      FIND_EXIT_TOP,
+      FIND_EXIT_RIGHT,
+      FIND_EXIT_BOTTOM,
+      FIND_EXIT_LEFT,
+    ];
+
+    for (let roomName in Game.rooms) {
+      const room = Game.rooms[roomName];
+      for (const exitType of exitTypes) {
+        const exitPositions = room.find(exitType);
+
+        if (exitPositions.length > 0) {
+          let clusters = [];
+          let currentCluster = [];
+
+          for (let i = 0; i < exitPositions.length; i++) {
+            const pos = exitPositions[i];
+            if (
+              currentCluster.length === 0 ||
+              (Math.abs(pos.x - currentCluster[currentCluster.length - 1].x) <=
+                1 &&
+                Math.abs(pos.y - currentCluster[currentCluster.length - 1].y) <=
+                  1)
+            ) {
+              currentCluster.push(pos);
+            } else {
+              clusters.push(currentCluster);
+              currentCluster = [pos];
+            }
+          }
+
+          if (currentCluster.length > 0) {
+            clusters.push(currentCluster);
+          }
+
+          for (let cluster of clusters) {
+            const midIndex = Math.floor(cluster.length / 2);
+            const midExit = cluster[midIndex];
+            let midX = midExit.x;
+            let midY = midExit.y;
+
+            switch (exitType) {
+              case FIND_EXIT_TOP:
+                midY += 2;
+                break;
+              case FIND_EXIT_RIGHT:
+                midX -= 2;
+                break;
+              case FIND_EXIT_BOTTOM:
+                midY -= 2;
+                break;
+              case FIND_EXIT_LEFT:
+                midX += 2;
+                break;
+            }
+
+            if (
+              room.lookForAt(LOOK_STRUCTURES, midX, midY).length === 0 &&
+              room.lookForAt(LOOK_CONSTRUCTION_SITES, midX, midY).length === 0
+            ) {
+              room.createConstructionSite(midX, midY, STRUCTURE_RAMPART);
+            }
+
+            for (let exitPosition of cluster) {
+              const x = exitPosition.x;
+              const y = exitPosition.y;
+
+              const wallPositions = [];
+              switch (exitType) {
+                case FIND_EXIT_TOP:
+                  wallPositions.push({ x: x - 2, y: y + 1 });
+                  wallPositions.push({ x: x - 2, y: y + 2 });
+                  wallPositions.push({ x: x - 1, y: y + 2 });
+                  wallPositions.push({ x: x, y: y + 2 });
+                  wallPositions.push({ x: x + 1, y: y + 2 });
+                  wallPositions.push({ x: x + 2, y: y + 2 });
+                  wallPositions.push({ x: x + 2, y: y + 1 });
+                  break;
+                case FIND_EXIT_RIGHT:
+                  wallPositions.push({ x: x - 1, y: y - 2 });
+                  wallPositions.push({ x: x - 2, y: y - 2 });
+                  wallPositions.push({ x: x - 2, y: y - 1 });
+                  wallPositions.push({ x: x - 2, y: y });
+                  wallPositions.push({ x: x - 2, y: y + 1 });
+                  wallPositions.push({ x: x - 2, y: y + 2 });
+                  wallPositions.push({ x: x - 1, y: y + 2 });
+                  break;
+                case FIND_EXIT_BOTTOM:
+                  wallPositions.push({ x: x - 2, y: y - 1 });
+                  wallPositions.push({ x: x - 2, y: y - 2 });
+                  wallPositions.push({ x: x - 1, y: y - 2 });
+                  wallPositions.push({ x: x, y: y - 2 });
+                  wallPositions.push({ x: x + 1, y: y - 2 });
+                  wallPositions.push({ x: x + 2, y: y - 2 });
+                  wallPositions.push({ x: x + 2, y: y - 1 });
+                  break;
+                case FIND_EXIT_LEFT:
+                  wallPositions.push({ x: x + 1, y: y - 2 });
+                  wallPositions.push({ x: x + 2, y: y - 2 });
+                  wallPositions.push({ x: x + 2, y: y - 1 });
+                  wallPositions.push({ x: x + 2, y: y });
+                  wallPositions.push({ x: x + 2, y: y + 1 });
+                  wallPositions.push({ x: x + 2, y: y + 2 });
+                  wallPositions.push({ x: x + 1, y: y + 2 });
+                  break;
+              }
+
+              for (const pos of wallPositions) {
+                if (
+                  room.lookForAt(LOOK_STRUCTURES, pos.x, pos.y).length === 0 &&
+                  room.lookForAt(LOOK_CONSTRUCTION_SITES, pos.x, pos.y)
+                    .length === 0
+                ) {
+                  room.createConstructionSite(pos.x, pos.y, STRUCTURE_WALL);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   },
 };

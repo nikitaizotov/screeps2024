@@ -1,3 +1,5 @@
+const attackService = require("attack.service");
+
 module.exports = {
   run: function (tower) {
     if (tower) {
@@ -25,7 +27,10 @@ module.exports = {
           const closestDamagedStructure = tower.pos.findClosestByRange(
             FIND_STRUCTURES,
             {
-              filter: (structure) => structure.hits < structure.hitsMax,
+              filter: (structure) =>
+                structure.hits < structure.hitsMax &&
+                structure.structureType !== STRUCTURE_WALL &&
+                structure.structureType !== STRUCTURE_RAMPART,
             }
           );
 

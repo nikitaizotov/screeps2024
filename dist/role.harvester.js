@@ -1,7 +1,7 @@
 const creepService = require("creep.service");
 
 var roleHarvester = {
-  creepsPerRoom: 7,
+  creepsPerRoom: 5,
   namePrefix: "Harvester",
   memoryKey: "harvester",
   bodyParts: [WORK, CARRY, MOVE],
@@ -35,31 +35,73 @@ var roleHarvester = {
   },
 
   transferEnergy: function (creep) {
+    const target = Game.getObjectById(creep.memory.targetId);
+
+    if (
+      !target ||
+      (target.store && target.store.getFreeCapacity(RESOURCE_ENERGY) === 0)
+    ) {
+      creep.memory.path = null;
+      creep.memory.targetId = null;
+    }
+
     if (!creep.memory.path || !creep.memory.targetId) {
-      const targets = creep.room
-        .find(FIND_STRUCTURES, {
-          filter: (structure) => {
-            return (
-              (structure.structureType === STRUCTURE_SPAWN ||
-                structure.structureType === STRUCTURE_EXTENSION ||
-                structure.structureType === STRUCTURE_TOWER) &&
-              structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
-            );
-          },
-        })
-        .filter(
-          (target) => !this.isAnotherCreepHeadingTo(target.id, creep.room.name)
-        );
+      const targets = this.getPriorityTargets(creep.room);
 
       if (targets.length) {
-        creepService.getPathTotargets(creep, targets);
+        const newTarget = targets[0];
+        creep.memory.targetId = newTarget.id;
+        creep.memory.path = creep.pos.findPathTo(newTarget);
       } else {
-        // Switch to the next task if no energy consumers found.
+        // Переход к следующей задаче, если не найдено потребителей энергии.
         this.switchToNextTask(creep);
       }
     } else {
       this.moveAndTransfer(creep);
     }
+  },
+
+  getPriorityTargets: function (room) {
+    const targets = room.find(FIND_STRUCTURES, {
+      filter: (structure) => {
+        return (
+          (structure.structureType === STRUCTURE_SPAWN ||
+            structure.structureType === STRUCTURE_TOWER ||
+            structure.structureType === STRUCTURE_EXTENSION) &&
+          structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+        );
+      },
+    });
+
+    const spawns = targets.filter((t) => t.structureType === STRUCTURE_SPAWN);
+    const towers = targets.filter((t) => t.structureType === STRUCTURE_TOWER);
+    const extensions = targets.filter(
+      (t) => t.structureType === STRUCTURE_EXTENSION
+    );
+
+    const sortedTargets = [...spawns, ...towers];
+
+    extensions.forEach((extension) => {
+      if (!this.isExtensionSatisfied(extension, room)) {
+        sortedTargets.push(extension);
+      }
+    });
+
+    return sortedTargets;
+  },
+
+  isExtensionSatisfied: function (extension, room) {
+    const incomingEnergy = _.sum(
+      room.find(FIND_MY_CREEPS, {
+        filter: (c) =>
+          c.memory.targetId === extension.id && c.memory.transferring,
+      }),
+      (c) => c.store[RESOURCE_ENERGY]
+    );
+
+    return (
+      extension.store.getFreeCapacity(RESOURCE_ENERGY) - incomingEnergy <= 0
+    );
   },
 
   harvestEnergy: function (creep) {
@@ -71,8 +113,8 @@ var roleHarvester = {
   },
 
   moveAndTransfer: function (creep) {
-    creepService.drawPath(creep);
     const target = Game.getObjectById(creep.memory.targetId);
+    creepService.drawPath(creep);
 
     if (
       !target ||
@@ -80,7 +122,7 @@ var roleHarvester = {
     ) {
       creep.memory.path = null;
       creep.memory.targetId = null;
-      // Switch to the next task if the target is invalid or filled.
+      // Переход к следующей задаче, если цель недействительна или заполнена.
       this.switchToNextTask(creep);
       return;
     }
@@ -101,7 +143,7 @@ var roleHarvester = {
         console.log("Move by path failed, error:", moveResult);
         creep.memory.path = null;
         creep.memory.targetId = null;
-        // Switch to the next task if movement fails.
+        // Переход к следующей задаче, если движение не удалось.
         this.switchToNextTask(creep);
       }
     } else if (
@@ -111,33 +153,32 @@ var roleHarvester = {
     ) {
       creep.memory.path = null;
       creep.memory.targetId = null;
-      // Switch to the next task if the action is not successful.
+      // Переход к следующей задаче, если действие не удалось.
       this.switchToNextTask(creep);
     }
   },
 
   switchToNextTask: function (creep) {
-    const constructionSites = creep.room.find(FIND_CONSTRUCTION_SITES);
+    const targets = this.getPriorityTargets(creep.room);
 
-    if (constructionSites.length > 0) {
-      creepService.getPathTotargets(creep, constructionSites);
+    if (targets.length) {
+      const newTarget = targets[0];
+      creep.memory.targetId = newTarget.id;
+      creep.memory.path = creep.pos.findPathTo(newTarget);
     } else {
-      const controller = creep.room.controller;
-      if (controller) {
-        creep.memory.path = creep.pos.findPathTo(controller);
-        creep.memory.targetId = controller.id;
+      const constructionSites = creep.room.find(FIND_CONSTRUCTION_SITES);
+      if (constructionSites.length > 0) {
+        const newTarget = constructionSites[0];
+        creep.memory.targetId = newTarget.id;
+        creep.memory.path = creep.pos.findPathTo(newTarget);
+      } else {
+        const controller = creep.room.controller;
+        if (controller) {
+          creep.memory.targetId = controller.id;
+          creep.memory.path = creep.pos.findPathTo(controller);
+        }
       }
     }
-  },
-
-  isAnotherCreepHeadingTo: function (targetId, roomName) {
-    return _.some(Game.creeps, (otherCreep) => {
-      return (
-        otherCreep.memory.targetId === targetId &&
-        otherCreep.room.name === roomName &&
-        otherCreep.memory.transferring
-      );
-    });
   },
 };
 

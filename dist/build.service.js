@@ -33,17 +33,17 @@ module.exports = {
         this.planRoads();
       }
 
-      // if (Game.time % 90 === 0) {
-      //   this.processBuildOrder();
-      // }
+      if (Game.time % 90 === 0) {
+        this.processBuildOrder();
+      }
 
-      // if (Game.time % 111 === 0) {
-      //   this.connectFirstStructure();
-      // }
+      if (Game.time % 111 === 0) {
+        this.connectFirstStructure();
+      }
 
-      // if (Game.time % 222 === 0) {
-      //   this.blockExits();
-      // }
+      if (Game.time % 222 === 0) {
+        this.blockExits();
+      }
     } catch (error) {
       console.error(`Error in run: ${error.message}`);
     }

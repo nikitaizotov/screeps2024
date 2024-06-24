@@ -6,6 +6,7 @@ const roleRanged = require("role.ranged");
 const creepService = require("creep.service");
 const structureTower = require("structure.tower");
 const roleWallAndRampBuilder = require("role.WallAndRampartBuilder");
+const roleScout = require("role.scout");
 
 module.exports = {
   enabledRoles: [
@@ -14,172 +15,202 @@ module.exports = {
     roleBuilder,
     roleRanged,
     roleWallAndRampBuilder,
+    roleScout,
   ],
 
   routines: function () {
-    this.cleanMemory();
-    this.creepsRoutines();
-    buildService.run();
-    this.structureRoutines();
+    try {
+      this.cleanMemory();
+      this.creepsRoutines();
+      buildService.run();
+      this.structureRoutines();
+    } catch (error) {
+      console.error(`Error in routines: ${error.message}`);
+    }
   },
 
   cleanMemory: function () {
-    for (var name in Memory.creeps) {
-      if (!Game.creeps[name]) {
-        delete Memory.creeps[name];
-        console.log("Clearing non-existing creep memory:", name);
+    try {
+      for (var name in Memory.creeps) {
+        if (!Game.creeps[name]) {
+          delete Memory.creeps[name];
+          console.log("Clearing non-existing creep memory:", name);
+        }
       }
+    } catch (error) {
+      console.error(`Error in cleanMemory: ${error.message}`);
     }
   },
 
   creepsRoutines: function () {
-    this.spawnCreeps();
-    this.moveCreeps();
+    try {
+      this.spawnCreeps();
+      this.moveCreeps();
+    } catch (error) {
+      console.error(`Error in creepsRoutines: ${error.message}`);
+    }
   },
 
   spawnCreeps: function () {
-    for (let spawnName in Game.spawns) {
-      const spawn = Game.spawns[spawnName];
-      const energyInExtensions = this.getTotalEnergyInExtensions(spawn.room);
-      this.isSafeModeNeeded(spawn.room);
+    try {
+      for (let spawnName in Game.spawns) {
+        const spawn = Game.spawns[spawnName];
+        const energyInExtensions = this.getTotalEnergyInExtensions(spawn.room);
+        this.isSafeModeNeeded(spawn.room);
 
-      if (spawn.spawning) {
-        continue;
-      }
-
-      for (let role of this.enabledRoles) {
-        const selectedCreeps = _.filter(
-          Game.creeps,
-          (creep) =>
-            creep.memory.role == role.memoryKey &&
-            creep.room.name == spawn.room.name
-        );
-        const bodyParts = role.bodyParts;
-        const cost = bodyParts.reduce(
-          (sum, part) => sum + BODYPART_COST[part],
-          0
-        );
-        const canAfford = spawn.store[RESOURCE_ENERGY] >= cost;
-
-        if (role.memoryKey === roleBuilder.memoryKey) {
-          const constructionSites = spawn.room.find(FIND_CONSTRUCTION_SITES);
-
-          if (!constructionSites.length) {
-            continue;
-          }
+        if (spawn.spawning) {
+          continue;
         }
 
-        if (role.memoryKey === roleWallAndRampBuilder.memoryKey) {
-          const isReparableWallsAndRamps = spawn.room.find(FIND_STRUCTURES, {
-            filter: (structure) => {
-              return (
-                (structure.structureType === STRUCTURE_WALL ||
-                  structure.structureType === STRUCTURE_RAMPART) &&
-                structure.hits < structure.hitsMax
-              );
-            },
-          });
-
-          if (!isReparableWallsAndRamps.length) {
-            continue;
-          }
-        }
-
-        if (selectedCreeps.length < role.creepsPerRoom && canAfford) {
-          const newName = role.namePrefix + Game.time;
-          const totalEnergyInRoom =
-            energyInExtensions + spawn.store[RESOURCE_ENERGY];
-          const bodyPartsMultiplayer = parseInt(totalEnergyInRoom / cost);
-          const bodyParts = this.repeatArray(
-            role.bodyParts,
-            bodyPartsMultiplayer
+        for (let role of this.enabledRoles) {
+          const selectedCreeps = _.filter(
+            Game.creeps,
+            (creep) =>
+              creep.memory.role == role.memoryKey &&
+              creep.room.name == spawn.room.name
           );
+          const bodyParts = role.bodyParts;
+          const cost = bodyParts.reduce(
+            (sum, part) => sum + BODYPART_COST[part],
+            0
+          );
+          const canAfford = spawn.store[RESOURCE_ENERGY] >= cost;
+
+          if (role.memoryKey === roleBuilder.memoryKey) {
+            const constructionSites = spawn.room.find(FIND_CONSTRUCTION_SITES);
+
+            if (!constructionSites.length) {
+              continue;
+            }
+          }
+
+          if (role.memoryKey === roleWallAndRampBuilder.memoryKey) {
+            const isReparableWallsAndRamps = spawn.room.find(FIND_STRUCTURES, {
+              filter: (structure) => {
+                return (
+                  (structure.structureType === STRUCTURE_WALL ||
+                    structure.structureType === STRUCTURE_RAMPART) &&
+                  structure.hits < structure.hitsMax
+                );
+              },
+            });
+
+            if (!isReparableWallsAndRamps.length) {
+              continue;
+            }
+          }
 
           if (
-            !spawn.spawnCreep(bodyParts, newName, {
-              memory: {
-                role: role.memoryKey,
-                pathColor:
-                  "#" +
-                  ((Math.random() * 0xffffff) << 0)
-                    .toString(16)
-                    .padStart(6, "0"),
-              },
-            })
+            role.memoryKey === roleScout.memoryKey &&
+            (spawn.room.controller.level < 5 || selectedCreeps.length > 0)
           ) {
-            console.log("Spawning a new creep: " + newName);
-            return;
+            continue;
+          }
+
+          if (selectedCreeps.length < role.creepsPerRoom && canAfford) {
+            const newName = role.namePrefix + Game.time;
+            const totalEnergyInRoom =
+              energyInExtensions + spawn.store[RESOURCE_ENERGY];
+            const bodyPartsMultiplayer = parseInt(totalEnergyInRoom / cost);
+            const bodyParts = this.repeatArray(
+              role.bodyParts,
+              bodyPartsMultiplayer
+            );
+
+            if (
+              !spawn.spawnCreep(bodyParts, newName, {
+                memory: {
+                  role: role.memoryKey,
+                  pathColor:
+                    "#" +
+                    ((Math.random() * 0xffffff) << 0)
+                      .toString(16)
+                      .padStart(6, "0"),
+                },
+              })
+            ) {
+              console.log("Spawning a new creep: " + newName);
+              return;
+            }
           }
         }
       }
+    } catch (error) {
+      console.error(`Error in spawnCreeps: ${error.message}`);
     }
   },
 
   moveCreeps: function () {
-    for (var name in Game.creeps) {
-      var creep = Game.creeps[name];
+    try {
+      for (const name in Game.creeps) {
+        const creep = Game.creeps[name];
+        if (Game.time % 5 === 0) {
+          creepService.findIdleCreep(creep);
+        }
 
-      if (Game.time % 5) {
-        creepService.findIdleCreep(creep);
+        const role = this.enabledRoles.find(
+          (role) => role.memoryKey === creep.memory.role
+        );
+        if (role) {
+          role.run(creep);
+        } else {
+          console.log("Creep has unknown role", creep.memory.role);
+        }
       }
-
-      switch (creep.memory.role) {
-        case roleHarvester.memoryKey:
-          roleHarvester.run(creep);
-          break;
-        case roleUpgrader.memoryKey:
-          roleUpgrader.run(creep);
-          break;
-        case roleBuilder.memoryKey:
-          roleBuilder.run(creep);
-          break;
-        case roleRanged.memoryKey:
-          roleRanged.run(creep);
-          break;
-        case roleWallAndRampBuilder.memoryKey:
-          roleWallAndRampBuilder.run(creep);
-          break;
-        default:
-          console.log("Creep has unknown role", creep.memoryKey);
-      }
+    } catch (error) {
+      console.error(`Error in moveCreeps: ${error.message}`);
     }
   },
 
   getTotalEnergyInExtensions: function (room) {
-    const extensions = room.find(FIND_MY_STRUCTURES, {
-      filter: { structureType: STRUCTURE_EXTENSION },
-    });
+    try {
+      const extensions = room.find(FIND_MY_STRUCTURES, {
+        filter: { structureType: STRUCTURE_EXTENSION },
+      });
 
-    const totalEnergy = extensions.reduce(
-      (sum, extension) => sum + extension.energy,
-      0
-    );
+      const totalEnergy = extensions.reduce(
+        (sum, extension) => sum + extension.energy,
+        0
+      );
 
-    return totalEnergy;
+      return totalEnergy;
+    } catch (error) {
+      console.error(`Error in getTotalEnergyInExtensions: ${error.message}`);
+      return 0;
+    }
   },
 
   repeatArray: function (array, times) {
-    let repeatedArray = [];
-    for (let i = 0; i < times; i++) {
-      repeatedArray = repeatedArray.concat(array);
+    try {
+      let repeatedArray = [];
+      for (let i = 0; i < times; i++) {
+        repeatedArray = repeatedArray.concat(array);
+      }
+      return repeatedArray;
+    } catch (error) {
+      console.error(`Error in repeatArray: ${error.message}`);
+      return array;
     }
-    return repeatedArray;
   },
 
   structureRoutines: function () {
-    for (let roomName in Game.rooms) {
-      const room = Game.rooms[roomName];
-      const spawns = room.find(FIND_MY_SPAWNS);
+    try {
+      for (let roomName in Game.rooms) {
+        const room = Game.rooms[roomName];
+        const spawns = room.find(FIND_MY_SPAWNS);
 
-      if (spawns.length > 0) {
-        const towers = room.find(FIND_MY_STRUCTURES, {
-          filter: { structureType: STRUCTURE_TOWER },
-        });
+        if (spawns.length > 0) {
+          const towers = room.find(FIND_MY_STRUCTURES, {
+            filter: { structureType: STRUCTURE_TOWER },
+          });
 
-        towers.forEach((tower) => {
-          structureTower.run(tower);
-        });
+          towers.forEach((tower) => {
+            structureTower.run(tower);
+          });
+        }
       }
+    } catch (error) {
+      console.error(`Error in structureRoutines: ${error.message}`);
     }
   },
 
@@ -212,11 +243,11 @@ module.exports = {
             // Activate Safe Mode.
             room.controller.activateSafeMode();
             console.log(
-              `Activated Safe Mode in room ${roomName} because of attack.`
+              `Activated Safe Mode in room ${room.name} because of attack.`
             );
           } else {
             console.log(
-              `No available Safe Modes for activation in room ${roomName}.`
+              `No available Safe Modes for activation in room ${room.name}.`
             );
           }
         }

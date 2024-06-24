@@ -53,7 +53,7 @@ module.exports = {
     let rooms = Game.rooms;
     let allSpawns = [];
 
-    // Collect all spawns in the game
+    // Collect all spawns in the game.
     for (let roomName in rooms) {
       let room = rooms[roomName];
       if (room.controller && room.controller.my) {
@@ -220,16 +220,21 @@ module.exports = {
         }
         this.roomTerrain = Memory.roomTerrain[room.name];
 
-        for (let i = 0; i < this.buildOrder.length; i++) {
-          const structureType = this.buildOrder[i];
-          const availableCount = this.getAvailableStructureCount(
-            room,
-            structureType
-          );
+        if (room.find(FIND_MY_SPAWNS).length === 0) {
+          // Build spawn if there is no spawn in the room.
+          this.buildStructure(room, STRUCTURE_SPAWN, 1);
+        } else {
+          for (let i = 0; i < this.buildOrder.length; i++) {
+            const structureType = this.buildOrder[i];
+            const availableCount = this.getAvailableStructureCount(
+              room,
+              structureType
+            );
 
-          if (availableCount > 0) {
-            this.buildStructure(room, structureType, 1);
-            break;
+            if (availableCount > 0) {
+              this.buildStructure(room, structureType, 1);
+              break;
+            }
           }
         }
       }
@@ -265,6 +270,12 @@ module.exports = {
           }
         }
       }
+    }
+  },
+
+  buildSpawn: function (room) {
+    if (room.find(FIND_MY_SPAWNS).length === 0) {
+      this.buildStructure(room, STRUCTURE_SPAWN, 1);
     }
   },
 
@@ -369,7 +380,7 @@ module.exports = {
 
             positions.forEach((pos) => {
               let [x, y] = pos;
-              // Check, if coordinates is inside the room.
+              // Check if coordinates are inside the room.
               if (x >= 0 && x <= 49 && y >= 0 && y <= 49) {
                 let look = room.lookAt(x, y);
                 let isRoadPresent = look.some(
@@ -388,7 +399,7 @@ module.exports = {
                     lookObject.terrain === "wall"
                 );
 
-                // If it is no road and this is not a wall, creating road.
+                // If there is no road and this is not a wall, create road.
                 if (
                   !isRoadPresent &&
                   !isConstructionSitePresent &&

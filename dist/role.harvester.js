@@ -36,35 +36,26 @@ var roleHarvester = {
 
   transferEnergy: function (creep) {
     if (!creep.memory.path || !creep.memory.targetId) {
-      let targets = creep.room.find(FIND_STRUCTURES, {
-        filter: (structure) => {
-          return (
-            (structure.structureType === STRUCTURE_SPAWN ||
-              structure.structureType === STRUCTURE_EXTENSION ||
-              structure.structureType === STRUCTURE_TOWER) &&
-            structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
-            !this.isAnotherCreepHeadingTo(structure.id, creep.room.name)
-          );
-        },
-      });
-
-      if (targets.length === 0) {
-        targets = creep.room.find(FIND_STRUCTURES, {
+      const targets = creep.room
+        .find(FIND_STRUCTURES, {
           filter: (structure) => {
             return (
-              structure.structureType === STRUCTURE_SPAWN ||
-              structure.structureType === STRUCTURE_EXTENSION ||
-              (structure.structureType === STRUCTURE_TOWER &&
-                structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
+              (structure.structureType === STRUCTURE_SPAWN ||
+                structure.structureType === STRUCTURE_EXTENSION ||
+                structure.structureType === STRUCTURE_TOWER) &&
+              structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
             );
           },
-        });
-      }
+        })
+        .filter(
+          (target) => !this.isAnotherCreepHeadingTo(target.id, creep.room.name)
+        );
 
       if (targets.length) {
         creepService.getPathTotargets(creep, targets);
       } else {
-        this.switchToNextTask(creep); // Switch to the next task if no energy consumers found
+        // Switch to the next task if no energy consumers found.
+        this.switchToNextTask(creep);
       }
     } else {
       this.moveAndTransfer(creep);
@@ -83,10 +74,14 @@ var roleHarvester = {
     creepService.drawPath(creep);
     const target = Game.getObjectById(creep.memory.targetId);
 
-    if (!target) {
+    if (
+      !target ||
+      (target.store && target.store.getFreeCapacity(RESOURCE_ENERGY) === 0)
+    ) {
       creep.memory.path = null;
       creep.memory.targetId = null;
-      this.switchToNextTask(creep); // Switch to the next task if the target is invalid
+      // Switch to the next task if the target is invalid or filled.
+      this.switchToNextTask(creep);
       return;
     }
 
@@ -106,7 +101,8 @@ var roleHarvester = {
         console.log("Move by path failed, error:", moveResult);
         creep.memory.path = null;
         creep.memory.targetId = null;
-        this.switchToNextTask(creep); // Switch to the next task if movement fails
+        // Switch to the next task if movement fails.
+        this.switchToNextTask(creep);
       }
     } else if (
       action === ERR_FULL ||
@@ -115,7 +111,8 @@ var roleHarvester = {
     ) {
       creep.memory.path = null;
       creep.memory.targetId = null;
-      this.switchToNextTask(creep); // Switch to the next task if the action is not successful
+      // Switch to the next task if the action is not successful.
+      this.switchToNextTask(creep);
     }
     creep.say(action);
   },

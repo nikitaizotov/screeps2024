@@ -114,7 +114,6 @@ var roleHarvester = {
       // Switch to the next task if the action is not successful.
       this.switchToNextTask(creep);
     }
-    creep.say(action);
   },
 
   switchToNextTask: function (creep) {

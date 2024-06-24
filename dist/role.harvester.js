@@ -6,11 +6,13 @@ var roleHarvester = {
   memoryKey: "harvester",
   bodyParts: [WORK, CARRY, MOVE],
 
+  // Main function to run the harvester role.
   run: function (creep) {
     if (creep.spawning) {
       return;
     }
 
+    // Check if the creep should start harvesting.
     if (
       (creep.memory.transferring || creep.memory.transferring === undefined) &&
       creep.store[RESOURCE_ENERGY] == 0
@@ -20,6 +22,7 @@ var roleHarvester = {
       creep.memory.targetId = null;
       creep.say("🔄 harvest");
     }
+    // Check if the creep should start transferring energy.
     if (!creep.memory.transferring && creep.store.getFreeCapacity() == 0) {
       creep.memory.transferring = true;
       creep.memory.path = null;
@@ -27,6 +30,7 @@ var roleHarvester = {
       creep.say("⚡ transfer");
     }
 
+    // Execute the appropriate action based on the creep's state.
     if (creep.memory.transferring) {
       this.transferEnergy(creep);
     } else {
@@ -34,9 +38,11 @@ var roleHarvester = {
     }
   },
 
+  // Function to transfer energy to the appropriate structure.
   transferEnergy: function (creep) {
     const target = Game.getObjectById(creep.memory.targetId);
 
+    // Reset target if it's invalid or full.
     if (
       !target ||
       (target.store && target.store.getFreeCapacity(RESOURCE_ENERGY) === 0)
@@ -45,6 +51,7 @@ var roleHarvester = {
       creep.memory.targetId = null;
     }
 
+    // Find new target if needed.
     if (!creep.memory.path || !creep.memory.targetId) {
       const targets = this.getPriorityTargets(creep.room);
 
@@ -53,14 +60,16 @@ var roleHarvester = {
         creep.memory.targetId = newTarget.id;
         creep.memory.path = creep.pos.findPathTo(newTarget);
       } else {
-        // Переход к следующей задаче, если не найдено потребителей энергии.
+        // Switch to the next task if no energy consumers found.
         this.switchToNextTask(creep);
       }
     } else {
+      creepService.drawPath(creep);
       this.moveAndTransfer(creep);
     }
   },
 
+  // Function to get priority targets for energy transfer.
   getPriorityTargets: function (room) {
     const targets = room.find(FIND_STRUCTURES, {
       filter: (structure) => {
@@ -90,6 +99,7 @@ var roleHarvester = {
     return sortedTargets;
   },
 
+  // Function to check if an extension is satisfied.
   isExtensionSatisfied: function (extension, room) {
     const incomingEnergy = _.sum(
       room.find(FIND_MY_CREEPS, {
@@ -104,6 +114,7 @@ var roleHarvester = {
     );
   },
 
+  // Function to harvest energy from sources.
   harvestEnergy: function (creep) {
     if (!creep.memory.path || !creep.memory.targetId) {
       creepService.getPathToSource(creep);
@@ -112,9 +123,9 @@ var roleHarvester = {
     }
   },
 
+  // Function to move to the target and transfer energy.
   moveAndTransfer: function (creep) {
     const target = Game.getObjectById(creep.memory.targetId);
-    creepService.drawPath(creep);
 
     if (
       !target ||
@@ -122,13 +133,14 @@ var roleHarvester = {
     ) {
       creep.memory.path = null;
       creep.memory.targetId = null;
-      // Переход к следующей задаче, если цель недействительна или заполнена.
+      // Switch to the next task if the target is invalid or filled.
       this.switchToNextTask(creep);
       return;
     }
 
     let action;
 
+    // Transfer energy to the target.
     if (target.store && target.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
       action = creep.transfer(target, RESOURCE_ENERGY);
     } else if (target.structureType === STRUCTURE_CONTROLLER) {
@@ -137,13 +149,14 @@ var roleHarvester = {
       action = creep.build(target);
     }
 
+    // Move towards the target if not in range.
     if (action === ERR_NOT_IN_RANGE) {
       const moveResult = creep.moveByPath(creep.memory.path);
       if (moveResult !== OK && moveResult !== ERR_TIRED) {
         console.log("Move by path failed, error:", moveResult);
         creep.memory.path = null;
         creep.memory.targetId = null;
-        // Переход к следующей задаче, если движение не удалось.
+        // Switch to the next task if movement fails.
         this.switchToNextTask(creep);
       }
     } else if (
@@ -151,13 +164,32 @@ var roleHarvester = {
       action === ERR_INVALID_TARGET ||
       action === ERR_NO_BODYPART
     ) {
+      // Clear the memory of all creeps targeting this structure if it is filled.
+      if (target.structureType !== STRUCTURE_EXTENSION) {
+        this.clearTargetMemory(target.id, creep.room.name);
+      }
       creep.memory.path = null;
       creep.memory.targetId = null;
-      // Переход к следующей задаче, если действие не удалось.
+      // Switch to the next task if the action fails.
       this.switchToNextTask(creep);
     }
   },
 
+  // Function to clear target memory for all creeps.
+  clearTargetMemory: function (targetId, roomName) {
+    _.forEach(Game.creeps, (creep) => {
+      if (
+        creep.memory.targetId === targetId &&
+        creep.room.name === roomName &&
+        creep.memory.transferring
+      ) {
+        creep.memory.path = null;
+        creep.memory.targetId = null;
+      }
+    });
+  },
+
+  // Function to switch to the next task.
   switchToNextTask: function (creep) {
     const targets = this.getPriorityTargets(creep.room);
 

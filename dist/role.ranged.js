@@ -28,11 +28,20 @@ module.exports = {
       }
     }
 
-    let target = creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS, {
-      filter: (enemyCreep) => {
-        return !attackService.avoidPlayers.includes(enemyCreep.owner.username);
-      },
-    });
+    const tower = this.findClosestTower(creep);
+    let target = this.findRangedEnemiesCloserThanTower(creep, tower);
+
+    if (!target && tower) {
+      target = tower;
+    }
+
+    if (!target) {
+      target = this.findDangerousEnemies(creep);
+    }
+
+    if (!target) {
+      target = this.findAllEnemies(creep);
+    }
 
     if (!target) {
       target = this.findStructuralTargets(creep);
@@ -91,6 +100,46 @@ module.exports = {
     const randomDirection =
       directions[Math.floor(Math.random() * directions.length)];
     creep.move(randomDirection);
+  },
+  findClosestTower: function (creep) {
+    return creep.pos.findClosestByPath(FIND_HOSTILE_STRUCTURES, {
+      filter: (structure) => {
+        return (
+          !attackService.avoidPlayers.includes(structure.owner.username) &&
+          structure.structureType === STRUCTURE_TOWER
+        );
+      },
+    });
+  },
+  findRangedEnemiesCloserThanTower: function (creep, tower) {
+    return creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS, {
+      filter: (enemyCreep) => {
+        return (
+          !attackService.avoidPlayers.includes(enemyCreep.owner.username) &&
+          enemyCreep.getActiveBodyparts(RANGED_ATTACK) > 0 &&
+          (!tower ||
+            creep.pos.getRangeTo(enemyCreep) < creep.pos.getRangeTo(tower))
+        );
+      },
+    });
+  },
+  findDangerousEnemies: function (creep) {
+    return creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS, {
+      filter: (enemyCreep) => {
+        return (
+          !attackService.avoidPlayers.includes(enemyCreep.owner.username) &&
+          (enemyCreep.getActiveBodyparts(ATTACK) > 0 ||
+            enemyCreep.getActiveBodyparts(RANGED_ATTACK) > 0)
+        );
+      },
+    });
+  },
+  findAllEnemies: function (creep) {
+    return creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS, {
+      filter: (enemyCreep) => {
+        return !attackService.avoidPlayers.includes(enemyCreep.owner.username);
+      },
+    });
   },
   findStructuralTargets: function (creep) {
     const hostileStructures = creep.room.find(FIND_HOSTILE_STRUCTURES, {

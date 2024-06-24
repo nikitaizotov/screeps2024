@@ -1,7 +1,7 @@
 const creepService = require("creep.service");
 
 var roleHarvester = {
-  creepsPerRoom: 5,
+  creepsPerRoom: 7,
   namePrefix: "Harvester",
   memoryKey: "harvester",
   bodyParts: [WORK, CARRY, MOVE],
@@ -40,23 +40,37 @@ var roleHarvester = {
             (structure.structureType === STRUCTURE_EXTENSION ||
               structure.structureType === STRUCTURE_SPAWN ||
               structure.structureType === STRUCTURE_TOWER) &&
-            structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+            structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
+            !this.isAnotherCreepHeadingTo(structure.id, creep.room.name)
           );
         },
       });
+
+      if (targets.length === 0) {
+        // If no unique targets are found, consider all valid targets
+        targets = creep.room.find(FIND_STRUCTURES, {
+          filter: (structure) => {
+            return (
+              structure.structureType === STRUCTURE_EXTENSION ||
+              structure.structureType === STRUCTURE_SPAWN ||
+              (structure.structureType === STRUCTURE_TOWER &&
+                structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
+            );
+          },
+        });
+      }
 
       if (targets.length) {
         creepService.getPathTotargets(creep, targets);
       } else {
         targets = creep.room.find(FIND_CONSTRUCTION_SITES);
 
-        if (targets.length && targets.length > 0) {
+        if (targets.length) {
           creepService.getPathTotargets(creep, targets);
         } else {
           const controller = creep.room.controller;
-          creep.memory.path = creep.pos.findPathTo(creep.room.controller);
           if (controller) {
-            creep.memory.path = creep.pos.findPathTo(creep.room.controller);
+            creep.memory.path = creep.pos.findPathTo(controller);
             creep.memory.targetId = controller.id;
           }
         }
@@ -101,6 +115,17 @@ var roleHarvester = {
       creep.memory.path = null;
       creep.memory.targetId = null;
     }
+    creep.say(action);
+  },
+
+  isAnotherCreepHeadingTo: function (targetId, roomName) {
+    return _.some(Game.creeps, (otherCreep) => {
+      return (
+        otherCreep.memory.targetId === targetId &&
+        otherCreep.room.name === roomName &&
+        otherCreep.memory.transferring
+      );
+    });
   },
 };
 

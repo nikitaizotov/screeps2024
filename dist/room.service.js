@@ -100,11 +100,17 @@ module.exports = {
             }
           }
 
-          if (
-            role.memoryKey === roleScout.memoryKey &&
-            (spawn.room.controller.level < 5 || selectedCreeps.length > 0)
-          ) {
-            continue;
+          if (role.memoryKey === roleScout.memoryKey) {
+            const scoutsInRoom = _.filter(
+              Game.creeps,
+              (creep) =>
+                creep.memory.role == role.memoryKey &&
+                creep.memory.spawnRoom == spawn.room.name
+            );
+
+            if (spawn.room.controller.level < 5 || scoutsInRoom.length > 0) {
+              continue;
+            }
           }
 
           if (selectedCreeps.length < role.creepsPerRoom && canAfford) {
@@ -121,6 +127,7 @@ module.exports = {
               !spawn.spawnCreep(bodyParts, newName, {
                 memory: {
                   role: role.memoryKey,
+                  spawnRoom: spawn.room.name,
                   pathColor:
                     "#" +
                     ((Math.random() * 0xffffff) << 0)

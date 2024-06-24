@@ -55,7 +55,6 @@ var roleWallAndRampBuilder = {
           (a, b) =>
             a.hits - b.hits || creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b)
         );
-        console.log("Found targets for repair:", targets);
         creepService.getPathTotargets(creep, [targets[0]]);
       } else {
         console.log("No targets for repair found");

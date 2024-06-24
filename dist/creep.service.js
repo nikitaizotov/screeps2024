@@ -154,7 +154,6 @@ module.exports = {
     if (bestTarget) {
       creep.memory.path = creep.pos.findPathTo(bestTarget);
       creep.memory.targetId = bestTarget.id;
-      console.log("path found, bestTarget.id =", bestTarget.id);
     } else {
       creep.say("No path found!");
     }

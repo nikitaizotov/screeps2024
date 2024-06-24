@@ -193,7 +193,9 @@ module.exports = {
       if (room.controller && room.controller.my) {
         // Check all structures in room excluding walls.
         const structures = room.find(FIND_STRUCTURES, {
-          filter: (structure) => structure.structureType !== STRUCTURE_WALL,
+          filter: (structure) =>
+            structure.structureType !== STRUCTURE_WALL &&
+            structure.structureType !== STRUCTURE_RAMPART,
         });
 
         // Check, if structure were attacked.

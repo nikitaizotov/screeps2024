@@ -648,10 +648,6 @@ module.exports = {
     return terrain.get(pos.x, pos.y) !== TERRAIN_MASK_WALL;
   },
 
-  /**
-   * Builds walls and ramparts near exits.
-   * TODO: can build a rampart with a wall next to it. Additional checks required.
-   */
   blockExits: function () {
     const exitTypes = [
       FIND_EXIT_TOP,

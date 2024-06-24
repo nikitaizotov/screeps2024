@@ -1,7 +1,7 @@
 const creepService = require("creep.service");
 
 var roleUpgrader = {
-  creepsPerRoom: 4,
+  creepsPerRoom: 2,
   namePrefix: "Upgrader",
   memoryKey: "upgrader",
   bodyParts: [WORK, CARRY, MOVE],

@@ -35,68 +35,137 @@ module.exports = {
       currentPos = nextPos;
     });
   },
+  ///////////////////////////////////////////
   getPathToSource: function (creep) {
-    //creep.say('Searching');
-    let sources = creep.room.find(FIND_SOURCES);
+    const sources = creep.room.find(FIND_SOURCES);
     let bestPath = null;
     let bestSource = null;
     let minCost = Infinity;
+    let bestTargetPosition = null;
 
-    for (let source of sources) {
-      let openPositions = this.getOpenPositions(source.pos);
-      //let creepsAtSource = source.pos.findInRange(FIND_CREEPS, 1).length;
-      let creepsAtSource = source.pos
+    for (const source of sources) {
+      const openPositions = this.getOpenPositions(source.pos);
+      const creepsAtSource = source.pos
         .findInRange(FIND_CREEPS, 1)
         .filter((c) => c.id !== creep.id).length;
 
-      if (creepsAtSource >= openPositions.length) {
+      const creepsHeadingToSource = _.filter(
+        Game.creeps,
+        (c) => c.memory.targetId === source.id && c.id !== creep.id
+      );
+
+      let creepsAtArrival = creepsAtSource;
+      for (const c of creepsHeadingToSource) {
+        const pathToSource = PathFinder.search(c.pos, {
+          pos: source.pos,
+          range: 1,
+        });
+        const pathToSourceCurrentCreep = PathFinder.search(creep.pos, {
+          pos: source.pos,
+          range: 1,
+        });
+
+        if (pathToSource.path.length <= pathToSourceCurrentCreep.path.length) {
+          creepsAtArrival++;
+        }
+      }
+
+      if (creepsAtArrival >= openPositions.length) {
         continue;
       }
 
-      var path = PathFinder.search(
-        creep.pos,
-        { pos: source.pos, range: 1 },
-        {
-          plainCost: 2,
-          swampCost: 10,
-          roomCallback: function (roomName) {
-            let room = Game.rooms[roomName];
-            if (!room) return;
-            let costs = new PathFinder.CostMatrix();
+      for (const pos of openPositions) {
+        const occupied = _.some(
+          Game.creeps,
+          (c) =>
+            c.memory.targetPos &&
+            c.memory.targetPos.x === pos.x &&
+            c.memory.targetPos.y === pos.y &&
+            c.id !== creep.id
+        );
 
-            room.find(FIND_STRUCTURES).forEach(function (struct) {
-              if (struct.structureType === STRUCTURE_ROAD) {
-                costs.set(struct.pos.x, struct.pos.y, 1);
-              } else if (
-                (struct.structureType !== STRUCTURE_CONTAINER &&
-                  struct.structureType !== STRUCTURE_RAMPART) ||
-                !struct.my
-              ) {
-                costs.set(struct.pos.x, struct.pos.y, 0xff);
-              }
-            });
-
-            room.find(FIND_CREEPS).forEach(function (creep) {
-              costs.set(creep.pos.x, creep.pos.y, 0xff);
-            });
-
-            return costs;
-          },
+        if (occupied) {
+          continue;
         }
-      );
 
-      if (!path.incomplete && path.cost < minCost) {
-        minCost = path.cost;
-        bestPath = path;
-        bestSource = source;
+        const path = PathFinder.search(
+          creep.pos,
+          { pos: pos, range: 0 },
+          {
+            plainCost: 2,
+            swampCost: 10,
+            roomCallback: function (roomName) {
+              const room = Game.rooms[roomName];
+              if (!room) return;
+              const costs = new PathFinder.CostMatrix();
+
+              room.find(FIND_STRUCTURES).forEach(function (struct) {
+                if (struct.structureType === STRUCTURE_ROAD) {
+                  costs.set(struct.pos.x, struct.pos.y, 1);
+                } else if (
+                  (struct.structureType !== STRUCTURE_CONTAINER &&
+                    struct.structureType !== STRUCTURE_RAMPART) ||
+                  !struct.my
+                ) {
+                  costs.set(struct.pos.x, struct.pos.y, 0xff);
+                }
+              });
+
+              room.find(FIND_CREEPS).forEach(function (creep) {
+                costs.set(creep.pos.x, creep.pos.y, 0xff);
+              });
+
+              return costs;
+            },
+          }
+        );
+
+        if (!path.incomplete && path.cost < minCost) {
+          minCost = path.cost;
+          bestPath = path;
+          bestSource = source;
+          bestTargetPosition = pos;
+        }
       }
     }
 
-    if (bestSource) {
-      creep.memory.path = creep.pos.findPathTo(bestSource);
+    if (bestSource && bestTargetPosition) {
+      creep.memory.path = creep.pos.findPathTo(bestTargetPosition);
       creep.memory.targetId = bestSource.id;
+      creep.memory.targetPos = bestTargetPosition;
+    } else {
+      const closestSource = creep.pos.findClosestByPath(sources);
+
+      if (closestSource) {
+        const closestOpenPosition = this.getOpenPositions(
+          closestSource.pos
+        ).sort((a, b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b))[0];
+
+        if (closestOpenPosition) {
+          creep.memory.path = creep.pos.findPathTo(closestOpenPosition);
+          creep.memory.targetId = closestSource.id;
+          creep.memory.targetPos = closestOpenPosition;
+        }
+      }
     }
   },
+
+  getOpenPositions: function (roomPosition) {
+    const terrain = Game.map.getRoomTerrain(roomPosition.roomName);
+    const openPositions = [];
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        if (dx === 0 && dy === 0) continue; // Skip the source position itself
+        const x = roomPosition.x + dx;
+        const y = roomPosition.y + dy;
+        if (terrain.get(x, y) !== TERRAIN_MASK_WALL) {
+          openPositions.push(new RoomPosition(x, y, roomPosition.roomName));
+        }
+      }
+    }
+    return openPositions;
+  },
+  ////////////////////////////////////////////////
 
   getPathTotargets: function (creep, targets) {
     //creep.say('Searching');

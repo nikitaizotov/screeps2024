@@ -195,7 +195,8 @@ module.exports = {
         const structures = room.find(FIND_STRUCTURES, {
           filter: (structure) =>
             structure.structureType !== STRUCTURE_WALL &&
-            structure.structureType !== STRUCTURE_RAMPART,
+            structure.structureType !== STRUCTURE_RAMPART &&
+            structure.structureType !== STRUCTURE_ROAD,
         });
 
         // Check, if structure were attacked.

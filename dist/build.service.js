@@ -36,9 +36,6 @@ module.exports = {
       this.connectFirstStructure();
       this.buildRoadsAroundStructures();
     }
-    // if (Game.time % 145 === 0) {
-    //   this.checkFirstStructure();
-    // }
 
     if (Game.time % 333 === 0) {
       this.blockExits();
@@ -59,9 +56,11 @@ module.exports = {
     // Collect all spawns in the game
     for (let roomName in rooms) {
       let room = rooms[roomName];
-      let spawns = room.find(FIND_MY_SPAWNS);
-      for (let spawn of spawns) {
-        allSpawns.push(spawn.pos);
+      if (room.controller && room.controller.my) {
+        let spawns = room.find(FIND_MY_SPAWNS);
+        for (let spawn of spawns) {
+          allSpawns.push(spawn.pos);
+        }
       }
     }
 
@@ -91,7 +90,7 @@ module.exports = {
       for (let posData of Memory.cachedPaths) {
         let pos = new RoomPosition(posData.x, posData.y, posData.roomName);
         let room = Game.rooms[pos.roomName];
-        if (room) {
+        if (room && room.controller && room.controller.my) {
           let structures = room.lookForAt(LOOK_STRUCTURES, pos.x, pos.y);
           let hasRoad = structures.some(
             (s) => s.structureType === STRUCTURE_ROAD
@@ -126,7 +125,7 @@ module.exports = {
           swampCost: 10,
           roomCallback: function (roomName) {
             let room = Game.rooms[roomName];
-            if (!room) return;
+            if (!room || !room.controller || !room.controller.my) return;
             let costs = new PathFinder.CostMatrix();
 
             room.find(FIND_STRUCTURES).forEach(function (struct) {
@@ -164,30 +163,32 @@ module.exports = {
     // Plan roads within each room.
     for (let roomName in rooms) {
       let room = rooms[roomName];
-      let keyPoints = [];
+      if (room.controller && room.controller.my) {
+        let keyPoints = [];
 
-      // Add spawn positions.
-      let spawns = room.find(FIND_MY_SPAWNS);
-      for (let spawn of spawns) {
-        keyPoints.push(spawn.pos);
-      }
+        // Add spawn positions.
+        let spawns = room.find(FIND_MY_SPAWNS);
+        for (let spawn of spawns) {
+          keyPoints.push(spawn.pos);
+        }
 
-      // Add source positions.
-      let sources = room.find(FIND_SOURCES);
-      for (let source of sources) {
-        keyPoints.push(source.pos);
-      }
+        // Add source positions.
+        let sources = room.find(FIND_SOURCES);
+        for (let source of sources) {
+          keyPoints.push(source.pos);
+        }
 
-      // Add controller position.
-      let controller = room.controller;
-      if (controller) {
-        keyPoints.push(controller.pos);
-      }
+        // Add controller position.
+        let controller = room.controller;
+        if (controller) {
+          keyPoints.push(controller.pos);
+        }
 
-      // Plan roads between key points in the same room.
-      for (let i = 0; i < keyPoints.length; i++) {
-        for (let j = i + 1; j < keyPoints.length; j++) {
-          planRoadBetween(keyPoints[i], keyPoints[j]);
+        // Plan roads between key points in the same room.
+        for (let i = 0; i < keyPoints.length; i++) {
+          for (let j = i + 1; j < keyPoints.length; j++) {
+            planRoadBetween(keyPoints[i], keyPoints[j]);
+          }
         }
       }
     }
@@ -206,28 +207,31 @@ module.exports = {
   },
 
   processBuildOrder: function () {
-    const room = Game.rooms[Object.keys(Game.rooms)[0]];
+    for (let roomName in Game.rooms) {
+      const room = Game.rooms[roomName];
+      if (room.controller && room.controller.my) {
+        if (!Memory.exitZones[room.name] || Game.time % 5000 === 0) {
+          Memory.exitZones[room.name] = this.getExitZones(room);
+        }
+        this.exitZones = Memory.exitZones[room.name];
 
-    if (!Memory.exitZones[room.name] || Game.time % 5000 === 0) {
-      Memory.exitZones[room.name] = this.getExitZones(room);
-    }
-    this.exitZones = Memory.exitZones[room.name];
+        if (!Memory.roomTerrain[room.name]) {
+          Memory.roomTerrain[room.name] = this.cacheRoomTerrain(room.name);
+        }
+        this.roomTerrain = Memory.roomTerrain[room.name];
 
-    if (!Memory.roomTerrain[room.name]) {
-      Memory.roomTerrain[room.name] = this.cacheRoomTerrain(room.name);
-    }
-    this.roomTerrain = Memory.roomTerrain[room.name];
+        for (let i = 0; i < this.buildOrder.length; i++) {
+          const structureType = this.buildOrder[i];
+          const availableCount = this.getAvailableStructureCount(
+            room,
+            structureType
+          );
 
-    for (let i = 0; i < this.buildOrder.length; i++) {
-      const structureType = this.buildOrder[i];
-      const availableCount = this.getAvailableStructureCount(
-        room,
-        structureType
-      );
-
-      if (availableCount > 0) {
-        this.buildStructure(room, structureType, 1);
-        break;
+          if (availableCount > 0) {
+            this.buildStructure(room, structureType, 1);
+            break;
+          }
+        }
       }
     }
   },
@@ -421,7 +425,7 @@ module.exports = {
           swampCost: 10,
           roomCallback: function (roomName) {
             let room = Game.rooms[roomName];
-            if (!room) return;
+            if (!room || !room.controller || !room.controller.my) return;
             let costs = new PathFinder.CostMatrix();
 
             room.find(FIND_STRUCTURES).forEach(function (struct) {
@@ -528,126 +532,6 @@ module.exports = {
     return maxStructures - existingStructures - constructionSites;
   },
 
-  // blockExits: function () {
-  //   const exitTypes = [
-  //     FIND_EXIT_TOP,
-  //     FIND_EXIT_RIGHT,
-  //     FIND_EXIT_BOTTOM,
-  //     FIND_EXIT_LEFT,
-  //   ];
-
-  //   for (const roomName in Game.rooms) {
-  //     const room = Game.rooms[roomName];
-
-  //     for (const exitType of exitTypes) {
-  //       const exitPositions = room.find(exitType);
-  //       for (const pos of exitPositions) {
-  //         const blockPositions = this.getBlockingPositions(pos, exitType);
-  //         for (const blockPos of blockPositions) {
-  //           if (this.isValidBlockingPosition(room, blockPos)) {
-  //             const look = room.lookAt(blockPos.x, blockPos.y);
-  //             let canBuild = true;
-
-  //             for (const lookObject of look) {
-  //               if (
-  //                 lookObject.type === LOOK_STRUCTURES ||
-  //                 lookObject.type === LOOK_CONSTRUCTION_SITES
-  //               ) {
-  //                 canBuild = false;
-  //                 break;
-  //               }
-  //             }
-
-  //             if (canBuild) {
-  //               const result = room.createConstructionSite(
-  //                 blockPos.x,
-  //                 blockPos.y,
-  //                 STRUCTURE_WALL
-  //               );
-  //               if (result !== OK) {
-  //                 console.log(
-  //                   `Failed to create construction site at (${blockPos.x}, ${blockPos.y}): ${result}`
-  //                 );
-  //               }
-  //             }
-  //           }
-  //         }
-
-  //         // Add rampart in the center of the exit.
-  //         const rampPos = new RoomPosition(pos.x, pos.y, room.name);
-  //         if (this.isValidRampartPosition(room, rampPos)) {
-  //           const existingRamp = room
-  //             .lookForAt(LOOK_STRUCTURES, rampPos)
-  //             .find((s) => s.structureType === STRUCTURE_RAMPART && s.my);
-  //           if (existingRamp) {
-  //             existingRamp.destroy();
-  //           }
-  //           const rampResult = room.createConstructionSite(
-  //             rampPos,
-  //             STRUCTURE_RAMPART
-  //           );
-  //           if (rampResult !== OK) {
-  //             console.log(
-  //               `Failed to create rampart at (${rampPos.x}, ${rampPos.y}): ${rampResult}`
-  //             );
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // },
-
-  getBlockingPositions: function (pos, exitType) {
-    const positions = [];
-
-    if (exitType === FIND_EXIT_TOP && pos.y < 48) {
-      positions.push({ x: pos.x, y: pos.y + 2 });
-      if (pos.x > 2) positions.push({ x: pos.x - 1, y: pos.y + 2 });
-      if (pos.x < 47) positions.push({ x: pos.x + 1, y: pos.y + 2 });
-      if (pos.x > 1) positions.push({ x: pos.x - 2, y: pos.y + 2 });
-      if (pos.x < 48) positions.push({ x: pos.x + 2, y: pos.y + 2 });
-    } else if (exitType === FIND_EXIT_RIGHT && pos.x > 1) {
-      positions.push({ x: pos.x - 2, y: pos.y });
-      if (pos.y > 2) positions.push({ x: pos.x - 2, y: pos.y - 1 });
-      if (pos.y < 47) positions.push({ x: pos.x - 2, y: pos.y + 1 });
-      if (pos.y > 1) positions.push({ x: pos.x - 2, y: pos.y - 2 });
-      if (pos.y < 48) positions.push({ x: pos.x - 2, y: pos.y + 2 });
-    } else if (exitType === FIND_EXIT_BOTTOM && pos.y > 1) {
-      positions.push({ x: pos.x, y: pos.y - 2 });
-      if (pos.x > 2) positions.push({ x: pos.x - 1, y: pos.y - 2 });
-      if (pos.x < 47) positions.push({ x: pos.x + 1, y: pos.y - 2 });
-      if (pos.x > 1) positions.push({ x: pos.x - 2, y: pos.y - 2 });
-      if (pos.x < 48) positions.push({ x: pos.x + 2, y: pos.y - 2 });
-    } else if (exitType === FIND_EXIT_LEFT && pos.x < 48) {
-      positions.push({ x: pos.x + 2, y: pos.y });
-      if (pos.y > 2) positions.push({ x: pos.x + 2, y: pos.y - 1 });
-      if (pos.y < 47) positions.push({ x: pos.x + 2, y: pos.y + 1 });
-      if (pos.y > 1) positions.push({ x: pos.x + 2, y: pos.y - 2 });
-      if (pos.y < 48) positions.push({ x: pos.x + 2, y: pos.y + 2 });
-    }
-
-    return positions;
-  },
-
-  isValidBlockingPosition: function (room, pos) {
-    if (pos.x < 1 || pos.x > 48 || pos.y < 1 || pos.y > 48) {
-      return false;
-    }
-    const terrain = Game.map.getRoomTerrain(room.name);
-    if (terrain.get(pos.x, pos.y) === TERRAIN_MASK_WALL) {
-      return false;
-    }
-    return true;
-  },
-
-  isValidRampartPosition: function (room, pos) {
-    if (pos.x < 1 || pos.x > 48 || pos.y < 1 || pos.y > 48) {
-      return false;
-    }
-    const terrain = Game.map.getRoomTerrain(room.name);
-    return terrain.get(pos.x, pos.y) !== TERRAIN_MASK_WALL;
-  },
-
   blockExits: function () {
     const exitTypes = [
       FIND_EXIT_TOP,
@@ -658,112 +542,117 @@ module.exports = {
 
     for (let roomName in Game.rooms) {
       const room = Game.rooms[roomName];
-      for (const exitType of exitTypes) {
-        const exitPositions = room.find(exitType);
+      if (room.controller && room.controller.my) {
+        for (const exitType of exitTypes) {
+          const exitPositions = room.find(exitType);
 
-        if (exitPositions.length > 0) {
-          let clusters = [];
-          let currentCluster = [];
+          if (exitPositions.length > 0) {
+            let clusters = [];
+            let currentCluster = [];
 
-          for (let i = 0; i < exitPositions.length; i++) {
-            const pos = exitPositions[i];
-            if (
-              currentCluster.length === 0 ||
-              (Math.abs(pos.x - currentCluster[currentCluster.length - 1].x) <=
-                1 &&
-                Math.abs(pos.y - currentCluster[currentCluster.length - 1].y) <=
-                  1)
-            ) {
-              currentCluster.push(pos);
-            } else {
+            for (let i = 0; i < exitPositions.length; i++) {
+              const pos = exitPositions[i];
+              if (
+                currentCluster.length === 0 ||
+                (Math.abs(
+                  pos.x - currentCluster[currentCluster.length - 1].x
+                ) <= 1 &&
+                  Math.abs(
+                    pos.y - currentCluster[currentCluster.length - 1].y
+                  ) <= 1)
+              ) {
+                currentCluster.push(pos);
+              } else {
+                clusters.push(currentCluster);
+                currentCluster = [pos];
+              }
+            }
+
+            if (currentCluster.length > 0) {
               clusters.push(currentCluster);
-              currentCluster = [pos];
-            }
-          }
-
-          if (currentCluster.length > 0) {
-            clusters.push(currentCluster);
-          }
-
-          for (let cluster of clusters) {
-            const midIndex = Math.floor(cluster.length / 2);
-            const midExit = cluster[midIndex];
-            let midX = midExit.x;
-            let midY = midExit.y;
-
-            switch (exitType) {
-              case FIND_EXIT_TOP:
-                midY += 2;
-                break;
-              case FIND_EXIT_RIGHT:
-                midX -= 2;
-                break;
-              case FIND_EXIT_BOTTOM:
-                midY -= 2;
-                break;
-              case FIND_EXIT_LEFT:
-                midX += 2;
-                break;
             }
 
-            if (
-              room.lookForAt(LOOK_STRUCTURES, midX, midY).length === 0 &&
-              room.lookForAt(LOOK_CONSTRUCTION_SITES, midX, midY).length === 0
-            ) {
-              room.createConstructionSite(midX, midY, STRUCTURE_RAMPART);
-            }
+            for (let cluster of clusters) {
+              const midIndex = Math.floor(cluster.length / 2);
+              const midExit = cluster[midIndex];
+              let midX = midExit.x;
+              let midY = midExit.y;
 
-            for (let exitPosition of cluster) {
-              const x = exitPosition.x;
-              const y = exitPosition.y;
-
-              const wallPositions = [];
               switch (exitType) {
                 case FIND_EXIT_TOP:
-                  wallPositions.push({ x: x - 2, y: y + 1 });
-                  wallPositions.push({ x: x - 2, y: y + 2 });
-                  wallPositions.push({ x: x - 1, y: y + 2 });
-                  wallPositions.push({ x: x, y: y + 2 });
-                  wallPositions.push({ x: x + 1, y: y + 2 });
-                  wallPositions.push({ x: x + 2, y: y + 2 });
-                  wallPositions.push({ x: x + 2, y: y + 1 });
+                  midY += 2;
                   break;
                 case FIND_EXIT_RIGHT:
-                  wallPositions.push({ x: x - 1, y: y - 2 });
-                  wallPositions.push({ x: x - 2, y: y - 2 });
-                  wallPositions.push({ x: x - 2, y: y - 1 });
-                  wallPositions.push({ x: x - 2, y: y });
-                  wallPositions.push({ x: x - 2, y: y + 1 });
-                  wallPositions.push({ x: x - 2, y: y + 2 });
-                  wallPositions.push({ x: x - 1, y: y + 2 });
+                  midX -= 2;
                   break;
                 case FIND_EXIT_BOTTOM:
-                  wallPositions.push({ x: x - 2, y: y - 1 });
-                  wallPositions.push({ x: x - 2, y: y - 2 });
-                  wallPositions.push({ x: x - 1, y: y - 2 });
-                  wallPositions.push({ x: x, y: y - 2 });
-                  wallPositions.push({ x: x + 1, y: y - 2 });
-                  wallPositions.push({ x: x + 2, y: y - 2 });
-                  wallPositions.push({ x: x + 2, y: y - 1 });
+                  midY -= 2;
                   break;
                 case FIND_EXIT_LEFT:
-                  wallPositions.push({ x: x + 1, y: y - 2 });
-                  wallPositions.push({ x: x + 2, y: y - 2 });
-                  wallPositions.push({ x: x + 2, y: y - 1 });
-                  wallPositions.push({ x: x + 2, y: y });
-                  wallPositions.push({ x: x + 2, y: y + 1 });
-                  wallPositions.push({ x: x + 2, y: y + 2 });
-                  wallPositions.push({ x: x + 1, y: y + 2 });
+                  midX += 2;
                   break;
               }
 
-              for (const pos of wallPositions) {
-                if (
-                  room.lookForAt(LOOK_STRUCTURES, pos.x, pos.y).length === 0 &&
-                  room.lookForAt(LOOK_CONSTRUCTION_SITES, pos.x, pos.y)
-                    .length === 0
-                ) {
-                  room.createConstructionSite(pos.x, pos.y, STRUCTURE_WALL);
+              if (
+                room.lookForAt(LOOK_STRUCTURES, midX, midY).length === 0 &&
+                room.lookForAt(LOOK_CONSTRUCTION_SITES, midX, midY).length === 0
+              ) {
+                room.createConstructionSite(midX, midY, STRUCTURE_RAMPART);
+              }
+
+              for (let exitPosition of cluster) {
+                const x = exitPosition.x;
+                const y = exitPosition.y;
+
+                const wallPositions = [];
+                switch (exitType) {
+                  case FIND_EXIT_TOP:
+                    wallPositions.push({ x: x - 2, y: y + 1 });
+                    wallPositions.push({ x: x - 2, y: y + 2 });
+                    wallPositions.push({ x: x - 1, y: y + 2 });
+                    wallPositions.push({ x: x, y: y + 2 });
+                    wallPositions.push({ x: x + 1, y: y + 2 });
+                    wallPositions.push({ x: x + 2, y: y + 2 });
+                    wallPositions.push({ x: x + 2, y: y + 1 });
+                    break;
+                  case FIND_EXIT_RIGHT:
+                    wallPositions.push({ x: x - 1, y: y - 2 });
+                    wallPositions.push({ x: x - 2, y: y - 2 });
+                    wallPositions.push({ x: x - 2, y: y - 1 });
+                    wallPositions.push({ x: x - 2, y: y });
+                    wallPositions.push({ x: x - 2, y: y + 1 });
+                    wallPositions.push({ x: x - 2, y: y + 2 });
+                    wallPositions.push({ x: x - 1, y: y + 2 });
+                    break;
+                  case FIND_EXIT_BOTTOM:
+                    wallPositions.push({ x: x - 2, y: y - 1 });
+                    wallPositions.push({ x: x - 2, y: y - 2 });
+                    wallPositions.push({ x: x - 1, y: y - 2 });
+                    wallPositions.push({ x: x, y: y - 2 });
+                    wallPositions.push({ x: x + 1, y: y - 2 });
+                    wallPositions.push({ x: x + 2, y: y - 2 });
+                    wallPositions.push({ x: x + 2, y: y - 1 });
+                    break;
+                  case FIND_EXIT_LEFT:
+                    wallPositions.push({ x: x + 1, y: y - 2 });
+                    wallPositions.push({ x: x + 2, y: y - 2 });
+                    wallPositions.push({ x: x + 2, y: y - 1 });
+                    wallPositions.push({ x: x + 2, y: y });
+                    wallPositions.push({ x: x + 2, y: y + 1 });
+                    wallPositions.push({ x: x + 2, y: y + 2 });
+                    wallPositions.push({ x: x + 1, y: y + 2 });
+                    break;
+                }
+
+                for (const pos of wallPositions) {
+                  if (
+                    room.lookForAt(LOOK_STRUCTURES, pos.x, pos.y).length ===
+                      0 &&
+                    room.lookForAt(LOOK_CONSTRUCTION_SITES, pos.x, pos.y)
+                      .length === 0
+                  ) {
+                    room.createConstructionSite(pos.x, pos.y, STRUCTURE_WALL);
+                  }
                 }
               }
             }

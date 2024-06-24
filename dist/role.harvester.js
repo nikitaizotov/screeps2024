@@ -92,7 +92,7 @@ var roleHarvester = {
 
     let action;
 
-    if (!target.progress && target.progress === undefined) {
+    if (target.store && target.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
       action = creep.transfer(target, RESOURCE_ENERGY);
     } else if (target.structureType === STRUCTURE_CONTROLLER) {
       action = creep.upgradeController(target);

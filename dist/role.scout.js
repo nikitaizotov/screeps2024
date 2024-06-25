@@ -5,7 +5,7 @@ module.exports = {
   creepsPerRoom: 1,
   namePrefix: "Scout",
   memoryKey: "scout",
-  bodyParts: [MOVE, MOVE, MOVE, CLAIM],
+  bodyParts: [MOVE, MOVE, MOVE, WORK, CARRY, CLAIM],
 
   run: function (creep) {
     try {
@@ -36,7 +36,8 @@ module.exports = {
             const claimResult = creep.claimController(controller);
             if (claimResult === OK) {
               // Build spawn after claiming the controller.
-              buildService.buildSpawn(room);
+              creep.memory.buildingSpawn = true;
+              creep.memory.targetId = null; // Clear target to avoid conflicts
             }
           } else {
             if (!creep.memory.path || creep.memory.targetId !== controller.id) {
@@ -51,13 +52,51 @@ module.exports = {
         }
       }
 
+      // If building spawn, gather resources and build.
+      if (creep.memory.buildingSpawn) {
+        if (creep.store[RESOURCE_ENERGY] === 0) {
+          this.harvestEnergy(creep);
+        } else {
+          const constructionSite = room.find(FIND_CONSTRUCTION_SITES, {
+            filter: (site) => site.structureType === STRUCTURE_SPAWN,
+          })[0];
+
+          if (constructionSite) {
+            if (creep.build(constructionSite) === ERR_NOT_IN_RANGE) {
+              creep.moveTo(constructionSite);
+            }
+          } else {
+            const result = room.createConstructionSite(
+              creep.pos.x,
+              creep.pos.y,
+              STRUCTURE_SPAWN
+            );
+            if (result === OK) {
+              console.log("Construction site for spawn created successfully.");
+            } else {
+              console.log(
+                "Error creating construction site for spawn:",
+                result
+              );
+            }
+          }
+
+          // Check if spawn is completed and reset memory
+          if (room.find(FIND_MY_SPAWNS).length > 0) {
+            creep.memory.buildingSpawn = false;
+            this.exploreRoom(creep); // Continue exploring
+          }
+        }
+        return;
+      }
+
       // Explore the current room and update memory.
       this.exploreRoom(creep);
 
       // Move to the next room in the path if available.
       if (creep.memory.path && creep.memory.path.length > 0) {
         const nextRoomName = creep.memory.path.shift();
-        creep.moveByPath(creep.memory.path);
+        creep.moveTo(new RoomPosition(25, 25, nextRoomName));
       } else {
         // Find a new room to scout.
         this.findNextRoom(creep);
@@ -134,6 +173,15 @@ module.exports = {
       }
     } catch (error) {
       console.error(`Error in findNextRoom: ${error.message}`);
+    }
+  },
+
+  harvestEnergy: function (creep) {
+    const source = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
+    if (source) {
+      if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
+        creep.moveTo(source);
+      }
     }
   },
 };

@@ -98,7 +98,7 @@ var roleHarvester = {
       .filter((tower) => !this.isTargetedByOtherCreeps(tower))
       .sort((a, b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b));
 
-    return [...sortedExtensions, ...sortedSpawns, ...sortedTowers];
+    return [...sortedSpawns, ...sortedExtensions, ...sortedTowers];
   },
 
   // Function to check if a target is already targeted by other creeps.

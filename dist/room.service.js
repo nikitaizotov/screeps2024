@@ -74,7 +74,8 @@ module.exports = {
             (sum, part) => sum + BODYPART_COST[part],
             0
           );
-          const canAfford = spawn.store[RESOURCE_ENERGY] >= cost;
+          const canAfford =
+            energyInExtensions + spawn.store[RESOURCE_ENERGY] >= cost;
 
           if (role.memoryKey === roleBuilder.memoryKey) {
             const constructionSites = spawn.room.find(FIND_CONSTRUCTION_SITES);

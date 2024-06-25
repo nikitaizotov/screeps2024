@@ -53,7 +53,7 @@ var roleHarvester = {
 
     // Find new target if needed.
     if (!creep.memory.path || !creep.memory.targetId) {
-      const targets = this.getPriorityTargets(creep.room);
+      const targets = this.getPriorityTargets(creep.room, creep);
 
       if (targets.length) {
         const newTarget = targets[0];
@@ -70,7 +70,7 @@ var roleHarvester = {
   },
 
   // Function to get priority targets for energy transfer.
-  getPriorityTargets: function (room) {
+  getPriorityTargets: function (room, creep) {
     const targets = room.find(FIND_STRUCTURES, {
       filter: (structure) => {
         return (
@@ -88,9 +88,25 @@ var roleHarvester = {
     );
     const towers = targets.filter((t) => t.structureType === STRUCTURE_TOWER);
 
-    const sortedTargets = [...spawns, ...extensions, ...towers];
+    const sortedExtensions = extensions
+      .filter((ext) => !this.isTargetedByOtherCreeps(ext))
+      .sort((a, b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b));
+    const sortedSpawns = spawns
+      .filter((spawn) => !this.isTargetedByOtherCreeps(spawn))
+      .sort((a, b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b));
+    const sortedTowers = towers
+      .filter((tower) => !this.isTargetedByOtherCreeps(tower))
+      .sort((a, b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b));
 
-    return sortedTargets;
+    return [...sortedExtensions, ...sortedSpawns, ...sortedTowers];
+  },
+
+  // Function to check if a target is already targeted by other creeps.
+  isTargetedByOtherCreeps: function (target) {
+    return _.some(
+      Game.creeps,
+      (c) => c.memory.targetId === target.id && c.memory.transferring
+    );
   },
 
   // Function to check if a spawn is satisfied.
@@ -209,7 +225,7 @@ var roleHarvester = {
 
   // Function to switch to the next task.
   switchToNextTask: function (creep) {
-    const targets = this.getPriorityTargets(creep.room);
+    const targets = this.getPriorityTargets(creep.room, creep);
 
     if (targets.length) {
       const newTarget = targets[0];

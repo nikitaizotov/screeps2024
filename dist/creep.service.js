@@ -86,7 +86,8 @@ module.exports = {
         );
 
         if (occupied) {
-          return; // Skip this position as it is already occupied
+          // Skip this position as it is already occupied.
+          return;
         }
 
         let path = PathFinder.search(
@@ -157,7 +158,8 @@ module.exports = {
 
     for (let dx = -1; dx <= 1; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
-        if (dx === 0 && dy === 0) continue; // Пропустить позицию самого ресурса
+        // Skip position of a source itself.
+        if (dx === 0 && dy === 0) continue;
         const x = roomPosition.x + dx;
         const y = roomPosition.y + dy;
 
@@ -248,7 +250,7 @@ module.exports = {
     let source = Game.getObjectById(creep.memory.targetId);
 
     if (!source) {
-      // Если источник не найден, сбросить цель и поиск пути
+      // If source not found, unset all data and search for a new path.
       creep.memory.targetId = null;
       creep.memory.path = null;
       this.getPathToSource(creep);
@@ -259,12 +261,12 @@ module.exports = {
       this.drawPath(creep);
 
       if (this.isCreepIsStuck(creep)) {
-        // Если крип застрял, пересчитать путь
+        // If creep is stuck, search for a path.
         this.getPathToSource(creep);
       } else {
         let moveResult = creep.moveByPath(creep.memory.path);
 
-        // Если путь не найден или возникла другая ошибка, пересчитать путь
+        // If path is not found or other error occurs, search for a new path.
         if (
           moveResult === ERR_NOT_FOUND ||
           moveResult === ERR_INVALID_ARGS ||

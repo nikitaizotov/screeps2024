@@ -94,9 +94,9 @@ var roleHarvester = {
     const sortedSpawns = spawns
       .filter((spawn) => !this.isTargetedByOtherCreeps(spawn))
       .sort((a, b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b));
-    const sortedTowers = towers
-      .filter((tower) => !this.isTargetedByOtherCreeps(tower))
-      .sort((a, b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b));
+    const sortedTowers = towers.sort(
+      (a, b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b)
+    );
 
     return [...sortedSpawns, ...sortedExtensions, ...sortedTowers];
   },

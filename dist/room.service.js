@@ -118,7 +118,10 @@ module.exports = {
             const newName = role.namePrefix + Game.time;
             const totalEnergyInRoom =
               energyInExtensions + spawn.store[RESOURCE_ENERGY];
-            const bodyPartsMultiplayer = parseInt(totalEnergyInRoom / cost);
+            const bodyPartsMultiplayer =
+              role.memoryKey !== roleScout.memoryKey
+                ? parseInt(totalEnergyInRoom / cost)
+                : 1;
             const bodyParts = this.repeatArray(
               role.bodyParts,
               bodyPartsMultiplayer

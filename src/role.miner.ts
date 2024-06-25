@@ -12,65 +12,39 @@ const roleMiner: CreepRole = {
       return;
     }
 
-    if (!creep.memory.targetContainer) {
+    if (!creep.memory.targetContainer || !creep.memory.targetSource) {
       this.findContainer(creep);
     }
 
-    if (creep.memory.targetContainer) {
+    if (creep.memory.targetContainer && creep.memory.targetSource) {
       const targetContainer = Game.getObjectById(
         creep.memory.targetContainer
       ) as StructureContainer | null;
+      const targetSource = Game.getObjectById(
+        creep.memory.targetSource
+      ) as Source | null;
 
-      if (targetContainer) {
-        if (!creep.memory.targetSource) {
-          const source = this.getClosestSource(targetContainer.pos);
-          if (source) {
-            creep.memory.targetSource = source.id;
-          }
-        }
+      if (targetContainer && targetSource) {
+        const positionBetween = this.getPositionBetween(
+          targetSource.pos,
+          targetContainer.pos
+        );
 
-        if (creep.memory.targetSource) {
-          const source = Game.getObjectById(
-            creep.memory.targetSource
-          ) as Source | null;
-          if (source) {
-            if (!creep.pos.inRangeTo(targetContainer.pos, 1)) {
-              if (
-                !creep.memory.path ||
-                creep.memory.targetId !== targetContainer.id
-              ) {
-                creep.memory.path = creep.pos.findPathTo(targetContainer, {
-                  ignoreCreeps: true,
-                });
-                creep.memory.targetId = targetContainer.id;
-              }
-              creep.moveByPath(creep.memory.path);
-              creepService.drawPath(creep);
-            } else if (!creep.pos.inRangeTo(source.pos, 1)) {
-              if (!creep.memory.path || creep.memory.targetId !== source.id) {
-                creep.memory.path = creep.pos.findPathTo(source, {
-                  ignoreCreeps: true,
-                });
-                creep.memory.targetId = source.id;
-              }
-              creep.moveByPath(creep.memory.path);
-              creepService.drawPath(creep);
-            } else {
-              if (creep.store.getFreeCapacity() > 0) {
-                creep.harvest(source);
-              } else {
-                creep.transfer(targetContainer, RESOURCE_ENERGY);
-              }
-            }
+        if (positionBetween && !creep.pos.isEqualTo(positionBetween)) {
+          creep.moveTo(positionBetween);
+        } else {
+          if (creep.store.getFreeCapacity() > 0) {
+            creep.harvest(targetSource);
           } else {
-            creep.memory.targetSource = null;
+            creep.transfer(targetContainer, RESOURCE_ENERGY);
           }
         }
       } else {
         creep.memory.targetContainer = null;
+        creep.memory.targetSource = null;
       }
     } else {
-      console.log(`${creep.name} has no target container`);
+      console.log(`${creep.name} has no target container or source`);
     }
   },
 
@@ -91,32 +65,43 @@ const roleMiner: CreepRole = {
       );
 
       if (creeps.length === 0) {
-        console.log(`${creep.name} selected target container: ${container.id}`);
-        creep.memory.targetContainer = container.id;
-        break;
+        const source = container.pos.findInRange(FIND_SOURCES, 1)[0];
+        if (source) {
+          creep.memory.targetContainer = container.id;
+          creep.memory.targetSourceId = source.id;
+          console.log(
+            `${creep.name} selected target container: ${container.id}`
+          );
+          break;
+        }
       }
     }
   },
 
-  getClosestSource(pos: RoomPosition): Source | null {
-    const room = Game.rooms[pos.roomName];
-    if (!room) {
-      return null;
-    }
+  getPositionBetween(
+    pos1: RoomPosition,
+    pos2: RoomPosition
+  ): RoomPosition | null {
+    const x = (pos1.x + pos2.x) / 2;
+    const y = (pos1.y + pos2.y) / 2;
+    const roomName = pos1.roomName;
 
-    const sources = room.find(FIND_SOURCES);
-    let closestSource: Source | null = null;
-    let minDistance = Infinity;
+    const terrain = Game.map.getRoomTerrain(roomName);
 
-    for (const source of sources) {
-      const distance = pos.getRangeTo(source);
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestSource = source;
+    const positions = [
+      new RoomPosition(Math.floor(x), Math.floor(y), roomName),
+      new RoomPosition(Math.ceil(x), Math.ceil(y), roomName),
+      new RoomPosition(Math.floor(x), Math.ceil(y), roomName),
+      new RoomPosition(Math.ceil(x), Math.floor(y), roomName),
+    ];
+
+    for (const pos of positions) {
+      if (terrain.get(pos.x, pos.y) !== TERRAIN_MASK_WALL) {
+        return pos;
       }
     }
 
-    return closestSource;
+    return null;
   },
 };
 

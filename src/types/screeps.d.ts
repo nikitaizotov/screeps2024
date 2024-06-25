@@ -20,6 +20,10 @@ interface CreepMemory {
   nextRooms?: string[];
   repairing?: boolean;
   upgrading?: boolean;
+  containerId?: Id<StructureContainer> | null;
+  targetContainer?: Id<StructureContainer> | null;
+  targetSource?: Id<StructureContainer> | null;
+  containerPos?: RoomPosition | null;
 }
 
 interface Memory {

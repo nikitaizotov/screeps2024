@@ -1,6 +1,7 @@
 import creepService from "./creep.service";
+import { CreepRole } from "./role.interface";
 
-const roleBuilder = {
+const roleBuilder: CreepRole = {
   creepsPerRoom: 1,
   namePrefix: "Builder",
   memoryKey: "builder",

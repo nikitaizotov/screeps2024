@@ -1,7 +1,8 @@
 import _ from "lodash";
 import creepService from "./creep.service";
+import { CreepRole } from "./role.interface";
 
-const roleHarvester = {
+const roleHarvester: CreepRole = {
   creepsPerRoom: 5,
   namePrefix: "Harvester",
   memoryKey: "harvester",

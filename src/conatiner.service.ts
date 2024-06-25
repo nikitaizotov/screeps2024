@@ -6,9 +6,9 @@ const containerService = {
       for (let source of sources) {
         const bestPosition = this.findBestContainerPosition(room, source.pos);
         if (bestPosition) {
-          console.log(
-            `Best position for container near source at ${source.pos}: ${bestPosition}`
-          );
+          // console.log(
+          //   `Best position for container near source at ${source.pos}: ${bestPosition}`
+          // );
           room.createConstructionSite(
             bestPosition.x,
             bestPosition.y,

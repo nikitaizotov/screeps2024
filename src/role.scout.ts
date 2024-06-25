@@ -1,5 +1,6 @@
 import buildService from "./build.service";
 import creepService from "./creep.service";
+import { CreepRole } from "./role.interface";
 
 interface ScoutRoomMemory {
   scouted: boolean;
@@ -15,7 +16,7 @@ interface Memory {
 
 declare const Memory: Memory;
 
-export const scoutRole = {
+export const scoutRole: CreepRole = {
   creepsPerRoom: 1,
   namePrefix: "Scout",
   memoryKey: "scout",

@@ -9,9 +9,11 @@ import roleBuilder from "./role.builder";
 import buildService from "./build.service";
 import creepService from "./creep.service";
 import utilsService from "./utils.service";
+import roleMiner from "./role.miner";
 
 const roomService = {
   enabledRoles: [
+    roleMiner,
     roleHarvester,
     roleUpgrader,
     roleBuilder,
@@ -73,17 +75,34 @@ const roomService = {
               creep.memory.role == role.memoryKey &&
               creep.room.name == spawn.room.name
           );
+          const baseBodyParts: BodyPartConstant[] = role.baseBodyParts || [];
           const bodyParts: BodyPartConstant[] = role.bodyParts;
-          const cost = bodyParts.reduce(
+          const baseCost = baseBodyParts.reduce(
             (sum, part) => sum + BODYPART_COST[part],
             0
           );
+          const bodyPartsCost = bodyParts.reduce(
+            (sum, part) => sum + BODYPART_COST[part],
+            0
+          );
+          const totalCost = baseCost + bodyPartsCost;
           const canAfford =
-            energyInExtensions + spawn.store[RESOURCE_ENERGY] >= cost;
+            energyInExtensions + spawn.store[RESOURCE_ENERGY] >= totalCost;
 
           if (role.memoryKey === roleBuilder.memoryKey) {
             const constructionSites = spawn.room.find(FIND_CONSTRUCTION_SITES);
             if (!constructionSites.length) {
+              continue;
+            }
+          }
+
+          if (role.memoryKey === roleMiner.memoryKey) {
+            const containers = spawn.room.find(FIND_STRUCTURES, {
+              filter: (structure) =>
+                structure.structureType === STRUCTURE_CONTAINER,
+            });
+
+            if (containers.length <= selectedCreeps.length) {
               continue;
             }
           }
@@ -123,12 +142,12 @@ const roomService = {
               energyInExtensions + spawn.store[RESOURCE_ENERGY];
             const bodyPartsMultiplier =
               role.memoryKey !== roleScout.memoryKey
-                ? Math.floor(totalEnergyInRoom / cost)
+                ? Math.floor((totalEnergyInRoom - baseCost) / bodyPartsCost)
                 : 1;
-            const finalBodyParts = utilsService.repeatArray(
-              role.bodyParts,
-              bodyPartsMultiplier
-            );
+            const finalBodyParts = [
+              ...baseBodyParts,
+              ...utilsService.repeatArray(bodyParts, bodyPartsMultiplier),
+            ];
 
             if (
               spawn.spawnCreep(finalBodyParts, newName, {

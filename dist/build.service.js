@@ -45,7 +45,7 @@ module.exports = {
         this.blockExits();
       }
     } catch (error) {
-      console.error(`Error in run: ${error.message}`);
+      console.log(`Error in run: ${error.message}`);
     }
   },
 
@@ -213,7 +213,7 @@ module.exports = {
       // Check and repair existing roads.
       checkAndRepairRoad();
     } catch (error) {
-      console.error(`Error in planRoads: ${error.message}`);
+      console.log(`Error in planRoads: ${error.message}`);
     }
   },
 
@@ -277,7 +277,7 @@ module.exports = {
         }
       }
     } catch (error) {
-      console.error(`Error in processBuildOrder: ${error.message}`);
+      console.log(`Error in processBuildOrder: ${error.message}`);
     }
   },
 
@@ -327,7 +327,7 @@ module.exports = {
         }
       }
     } catch (error) {
-      console.error(`Error in buildStructure: ${error.message}`);
+      console.log(`Error in buildStructure: ${error.message}`);
     }
   },
 
@@ -337,7 +337,7 @@ module.exports = {
         this.buildStructure(room, STRUCTURE_SPAWN, 1);
       }
     } catch (error) {
-      console.error(`Error in buildSpawn: ${error.message}`);
+      console.log(`Error in buildSpawn: ${error.message}`);
     }
   },
 
@@ -410,7 +410,7 @@ module.exports = {
         }
       }
     } catch (error) {
-      console.error(`Error in connectFirstStructure: ${error.message}`);
+      console.log(`Error in connectFirstStructure: ${error.message}`);
     }
   },
 
@@ -487,7 +487,7 @@ module.exports = {
         }
       }
     } catch (error) {
-      console.error(`Error in buildRoadsAroundStructures: ${error.message}`);
+      console.log(`Error in buildRoadsAroundStructures: ${error.message}`);
     }
   },
 
@@ -534,7 +534,7 @@ module.exports = {
         }
       }
     } catch (error) {
-      console.error(`Error in buildRoadsFromFirstStructure: ${error.message}`);
+      console.log(`Error in buildRoadsFromFirstStructure: ${error.message}`);
     }
   },
 
@@ -559,7 +559,7 @@ module.exports = {
 
       return false;
     } catch (error) {
-      console.error(`Error in isRestrictedZone: ${error.message}`);
+      console.log(`Error in isRestrictedZone: ${error.message}`);
       return false;
     }
   },
@@ -581,7 +581,7 @@ module.exports = {
 
       return true;
     } catch (error) {
-      console.error(`Error in isValidConstructionPosition: ${error.message}`);
+      console.log(`Error in isValidConstructionPosition: ${error.message}`);
       return false;
     }
   },
@@ -600,7 +600,7 @@ module.exports = {
 
       return terrainData;
     } catch (error) {
-      console.error(`Error in cacheRoomTerrain: ${error.message}`);
+      console.log(`Error in cacheRoomTerrain: ${error.message}`);
       return [];
     }
   },
@@ -629,7 +629,7 @@ module.exports = {
 
       return exitZones;
     } catch (error) {
-      console.error(`Error in getExitZones: ${error.message}`);
+      console.log(`Error in getExitZones: ${error.message}`);
       return [];
     }
   },
@@ -653,7 +653,7 @@ module.exports = {
 
       return maxStructures - existingCount - constructionCount;
     } catch (error) {
-      console.error(`Error in getAvailableStructureCount: ${error.message}`);
+      console.log(`Error in getAvailableStructureCount: ${error.message}`);
       return 0;
     }
   },
@@ -794,7 +794,7 @@ module.exports = {
         }
       }
     } catch (error) {
-      console.error(`Error in blockExits: ${error.message}`);
+      console.log(`Error in blockExits: ${error.message}`);
     }
   },
 };

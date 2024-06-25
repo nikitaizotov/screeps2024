@@ -35,7 +35,7 @@ module.exports = {
           if (creep.pos.inRangeTo(controller, 1)) {
             const claimResult = creep.claimController(controller);
             if (claimResult === OK) {
-              // Build spawn after claiming the controller.
+              // Use buildService to build spawn after claiming the controller.
               creep.memory.buildingSpawn = true;
               creep.memory.targetId = null; // Clear target to avoid conflicts
             }
@@ -66,11 +66,7 @@ module.exports = {
               creep.moveTo(constructionSite);
             }
           } else {
-            const result = room.createConstructionSite(
-              creep.pos.x,
-              creep.pos.y,
-              STRUCTURE_SPAWN
-            );
+            const result = buildService.buildSpawn(room); // Используем buildService для создания спауна
             if (result === OK) {
               console.log("Construction site for spawn created successfully.");
             } else {
@@ -102,7 +98,7 @@ module.exports = {
         this.findNextRoom(creep);
       }
     } catch (error) {
-      console.error(`Error in Scout run: ${error.message}`);
+      console.log(`Error in Scout run: ${error.message}`);
     }
   },
 
@@ -114,7 +110,7 @@ module.exports = {
       }
       creep.memory.initialized = true;
     } catch (error) {
-      console.error(`Error in initializeMemory: ${error.message}`);
+      console.log(`Error in initializeMemory: ${error.message}`);
     }
   },
 
@@ -123,7 +119,7 @@ module.exports = {
       // Check if we can claim more controllers based on GCL level.
       return Game.gcl.level > Object.keys(Game.rooms).length;
     } catch (error) {
-      console.error(`Error in canClaimController: ${error.message}`);
+      console.log(`Error in canClaimController: ${error.message}`);
       return false;
     }
   },
@@ -155,7 +151,7 @@ module.exports = {
         }
       }
     } catch (error) {
-      console.error(`Error in exploreRoom: ${error.message}`);
+      console.log(`Error in exploreRoom: ${error.message}`);
     }
   },
 
@@ -163,6 +159,11 @@ module.exports = {
     try {
       // Get exits from the current room and find the next room to scout.
       const exits = Game.map.describeExits(creep.room.name);
+
+      if (!exits) {
+        return;
+      }
+
       creep.memory.path = Object.values(exits).filter((roomName) => {
         return !Memory.scoutRooms[roomName];
       });
@@ -172,16 +173,15 @@ module.exports = {
         creep.memory.path = Object.values(exits);
       }
     } catch (error) {
-      console.error(`Error in findNextRoom: ${error.message}`);
+      console.log(`Error in findNextRoom: ${error.message}`);
     }
   },
 
   harvestEnergy: function (creep) {
-    const source = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
-    if (source) {
-      if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
-        creep.moveTo(source);
-      }
+    if (!creep.memory.path) {
+      creepService.getPathToSource(creep);
+    } else {
+      creepService.moveAndHarvest(creep);
     }
   },
 };

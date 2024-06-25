@@ -151,7 +151,7 @@ module.exports = {
     try {
       for (const name in Game.creeps) {
         const creep = Game.creeps[name];
-        if (Game.time % 5 === 0) {
+        if (Game.time % 1 === 0) {
           creepService.findIdleCreep(creep);
         }
 

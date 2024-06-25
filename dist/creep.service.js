@@ -35,7 +35,7 @@ module.exports = {
       currentPos = nextPos;
     });
   },
-  ///////////////////////////////////////////
+
   getPathToSource: function (creep) {
     const sources = creep.room.find(FIND_SOURCES);
     let bestPath = null;
@@ -45,22 +45,23 @@ module.exports = {
 
     for (const source of sources) {
       const openPositions = this.getOpenPositions(source.pos);
-      const creepsAtSource = source.pos
-        .findInRange(FIND_CREEPS, 1)
-        .filter((c) => c.id !== creep.id).length;
 
-      const creepsHeadingToSource = _.filter(
+      let creepsAtSource = source.pos
+        .findInRange(FIND_CREEPS, 1)
+        .filter((c) => c.id !== creep.id);
+      let creepsHeadingToSource = _.filter(
         Game.creeps,
         (c) => c.memory.targetId === source.id && c.id !== creep.id
       );
 
-      let creepsAtArrival = creepsAtSource;
-      for (const c of creepsHeadingToSource) {
-        const pathToSource = PathFinder.search(c.pos, {
+      let creepsAtArrival = creepsAtSource.length;
+
+      creepsHeadingToSource.forEach((c) => {
+        let pathToSource = PathFinder.search(c.pos, {
           pos: source.pos,
           range: 1,
         });
-        const pathToSourceCurrentCreep = PathFinder.search(creep.pos, {
+        let pathToSourceCurrentCreep = PathFinder.search(creep.pos, {
           pos: source.pos,
           range: 1,
         });
@@ -68,14 +69,14 @@ module.exports = {
         if (pathToSource.path.length <= pathToSourceCurrentCreep.path.length) {
           creepsAtArrival++;
         }
-      }
+      });
 
       if (creepsAtArrival >= openPositions.length) {
         continue;
       }
 
-      for (const pos of openPositions) {
-        const occupied = _.some(
+      openPositions.forEach((pos) => {
+        let occupied = _.some(
           Game.creeps,
           (c) =>
             c.memory.targetPos &&
@@ -85,34 +86,34 @@ module.exports = {
         );
 
         if (occupied) {
-          continue;
+          return; // Skip this position as it is already occupied
         }
 
-        const path = PathFinder.search(
+        let path = PathFinder.search(
           creep.pos,
           { pos: pos, range: 0 },
           {
             plainCost: 2,
             swampCost: 10,
-            roomCallback: function (roomName) {
-              const room = Game.rooms[roomName];
+            roomCallback: (roomName) => {
+              let room = Game.rooms[roomName];
               if (!room) return;
-              const costs = new PathFinder.CostMatrix();
 
-              room.find(FIND_STRUCTURES).forEach(function (struct) {
+              let costs = new PathFinder.CostMatrix();
+
+              room.find(FIND_STRUCTURES).forEach((struct) => {
                 if (struct.structureType === STRUCTURE_ROAD) {
                   costs.set(struct.pos.x, struct.pos.y, 1);
                 } else if (
-                  (struct.structureType !== STRUCTURE_CONTAINER &&
-                    struct.structureType !== STRUCTURE_RAMPART) ||
-                  !struct.my
+                  struct.structureType !== STRUCTURE_CONTAINER &&
+                  struct.structureType !== STRUCTURE_RAMPART
                 ) {
                   costs.set(struct.pos.x, struct.pos.y, 0xff);
                 }
               });
 
-              room.find(FIND_CREEPS).forEach(function (creep) {
-                costs.set(creep.pos.x, creep.pos.y, 0xff);
+              room.find(FIND_CREEPS).forEach((c) => {
+                costs.set(c.pos.x, c.pos.y, 0xff);
               });
 
               return costs;
@@ -126,7 +127,7 @@ module.exports = {
           bestSource = source;
           bestTargetPosition = pos;
         }
-      }
+      });
     }
 
     if (bestSource && bestTargetPosition) {
@@ -134,12 +135,12 @@ module.exports = {
       creep.memory.targetId = bestSource.id;
       creep.memory.targetPos = bestTargetPosition;
     } else {
-      const closestSource = creep.pos.findClosestByPath(sources);
+      let closestSource = creep.pos.findClosestByPath(sources);
 
       if (closestSource) {
-        const closestOpenPosition = this.getOpenPositions(
-          closestSource.pos
-        ).sort((a, b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b))[0];
+        let closestOpenPosition = this.getOpenPositions(closestSource.pos).sort(
+          (a, b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b)
+        )[0];
 
         if (closestOpenPosition) {
           creep.memory.path = creep.pos.findPathTo(closestOpenPosition);
@@ -153,20 +154,35 @@ module.exports = {
   getOpenPositions: function (roomPosition) {
     const terrain = Game.map.getRoomTerrain(roomPosition.roomName);
     const openPositions = [];
+
     for (let dx = -1; dx <= 1; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
-        if (dx === 0 && dy === 0) continue; // Skip the source position itself
+        if (dx === 0 && dy === 0) continue; // Пропустить позицию самого ресурса
         const x = roomPosition.x + dx;
         const y = roomPosition.y + dy;
+
         if (terrain.get(x, y) !== TERRAIN_MASK_WALL) {
-          openPositions.push(new RoomPosition(x, y, roomPosition.roomName));
+          const pos = new RoomPosition(x, y, roomPosition.roomName);
+          const isOccupied = pos.lookFor(LOOK_CREEPS).length > 0;
+          const isBlocked = pos
+            .lookFor(LOOK_STRUCTURES)
+            .some(
+              (struct) =>
+                struct.structureType !== STRUCTURE_ROAD &&
+                struct.structureType !== STRUCTURE_CONTAINER &&
+                struct.structureType !== STRUCTURE_RAMPART &&
+                struct.structureType !== STRUCTURE_STORAGE
+            );
+
+          if (!isOccupied && !isBlocked) {
+            openPositions.push(pos);
+          }
         }
       }
     }
+
     return openPositions;
   },
-  ////////////////////////////////////////////////
-
   getPathTotargets: function (creep, targets) {
     //creep.say('Searching');
     let bestPath = null;
@@ -231,38 +247,35 @@ module.exports = {
   moveAndHarvest: function (creep) {
     let source = Game.getObjectById(creep.memory.targetId);
 
-    if (creep.harvest(source) == ERR_NOT_IN_RANGE) {
-      this.drawPath(creep);
-      let moveResult = creep.moveByPath(creep.memory.path);
-      if (
-        moveResult === ERR_NOT_FOUND ||
-        (moveResult !== OK && moveResult !== ERR_TIRED)
-      ) {
-        this.getPathToSource(creep);
-      }
+    if (!source) {
+      // Если источник не найден, сбросить цель и поиск пути
+      creep.memory.targetId = null;
+      creep.memory.path = null;
+      this.getPathToSource(creep);
+      return;
     }
-  },
-  getOpenPositions: function (roomPosition) {
-    let terrain = Game.map.getRoomTerrain(roomPosition.roomName);
-    let openPositions = [];
-    for (let dx = -1; dx <= 1; dx++) {
-      for (let dy = -1; dy <= 1; dy++) {
+
+    if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
+      this.drawPath(creep);
+
+      if (this.isCreepIsStuck(creep)) {
+        // Если крип застрял, пересчитать путь
+        this.getPathToSource(creep);
+      } else {
+        let moveResult = creep.moveByPath(creep.memory.path);
+
+        // Если путь не найден или возникла другая ошибка, пересчитать путь
         if (
-          terrain.get(roomPosition.x + dx, roomPosition.y + dy) !==
-          TERRAIN_MASK_WALL
+          moveResult === ERR_NOT_FOUND ||
+          moveResult === ERR_INVALID_ARGS ||
+          moveResult === ERR_NO_PATH
         ) {
-          openPositions.push(
-            new RoomPosition(
-              roomPosition.x + dx,
-              roomPosition.y + dy,
-              roomPosition.roomName
-            )
-          );
+          this.getPathToSource(creep);
         }
       }
     }
-    return openPositions;
   },
+
   isCreepIsStuck: function (creep) {
     if (!creep.memory.lastPos) {
       creep.memory.lastPos = {
@@ -296,6 +309,7 @@ module.exports = {
 
     return false;
   },
+
   findIdleCreep: function (creep) {
     if (this.isCreepIsStuck(creep)) {
       creep.memory.targetId = null;

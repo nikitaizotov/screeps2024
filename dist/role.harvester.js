@@ -83,20 +83,26 @@ var roleHarvester = {
     });
 
     const spawns = targets.filter((t) => t.structureType === STRUCTURE_SPAWN);
-    const towers = targets.filter((t) => t.structureType === STRUCTURE_TOWER);
     const extensions = targets.filter(
       (t) => t.structureType === STRUCTURE_EXTENSION
     );
+    const towers = targets.filter((t) => t.structureType === STRUCTURE_TOWER);
 
-    const sortedTargets = [...spawns, ...towers];
-
-    extensions.forEach((extension) => {
-      if (!this.isExtensionSatisfied(extension, room)) {
-        sortedTargets.push(extension);
-      }
-    });
+    const sortedTargets = [...spawns, ...extensions, ...towers];
 
     return sortedTargets;
+  },
+
+  // Function to check if a spawn is satisfied.
+  isSpawnSatisfied: function (spawn, room) {
+    const incomingEnergy = _.sum(
+      room.find(FIND_MY_CREEPS, {
+        filter: (c) => c.memory.targetId === spawn.id && c.memory.transferring,
+      }),
+      (c) => c.store[RESOURCE_ENERGY]
+    );
+
+    return spawn.store.getFreeCapacity(RESOURCE_ENERGY) - incomingEnergy <= 0;
   },
 
   // Function to check if an extension is satisfied.
@@ -112,6 +118,18 @@ var roleHarvester = {
     return (
       extension.store.getFreeCapacity(RESOURCE_ENERGY) - incomingEnergy <= 0
     );
+  },
+
+  // Function to check if a tower is satisfied.
+  isTowerSatisfied: function (tower, room) {
+    const incomingEnergy = _.sum(
+      room.find(FIND_MY_CREEPS, {
+        filter: (c) => c.memory.targetId === tower.id && c.memory.transferring,
+      }),
+      (c) => c.store[RESOURCE_ENERGY]
+    );
+
+    return tower.store.getFreeCapacity(RESOURCE_ENERGY) - incomingEnergy <= 0;
   },
 
   // Function to harvest energy from sources.

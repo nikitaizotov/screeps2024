@@ -5,6 +5,7 @@ var roleBuilder = {
   namePrefix: "Builder",
   memoryKey: "builder",
   bodyParts: [WORK, CARRY, MOVE],
+
   run: function (creep) {
     if (creep.spawning) {
       return;
@@ -31,6 +32,7 @@ var roleBuilder = {
       this.harvestEnergy(creep);
     }
   },
+
   harvestEnergy: function (creep) {
     if (!creep.memory.path) {
       creepService.getPathToSource(creep);
@@ -38,6 +40,7 @@ var roleBuilder = {
       creepService.moveAndHarvest(creep);
     }
   },
+
   transferEnergy: function (creep) {
     if (!creep.memory.path) {
       let targets = creep.room.find(FIND_STRUCTURES, {
@@ -59,6 +62,7 @@ var roleBuilder = {
       this.moveAndTransfer(creep);
     }
   },
+
   moveAndTransfer: function (creep) {
     creepService.drawPath(creep);
     const target = Game.getObjectById(creep.memory.targetId);

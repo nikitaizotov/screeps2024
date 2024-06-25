@@ -14,7 +14,7 @@ module.exports = {
   ],
   firstStructurePos: null,
 
-  run: function () {
+  build: function () {
     try {
       if (!Memory.structureCache) {
         Memory.structureCache = {};
@@ -29,20 +29,27 @@ module.exports = {
         Memory.roomTerrain = {};
       }
 
-      if (Game.time % 15000 === 0) {
-        this.planRoads();
-      }
+      // if (Game.time % 15000 === 0) {
+      //   this.planRoads();
+      // }
 
-      if (Game.time % 90 === 0) {
-        this.processBuildOrder();
-      }
+      // if (Game.time % 90 === 0) {
+      //   this.processBuildOrder();
+      // }
 
-      if (Game.time % 111 === 0) {
-        this.connectFirstStructure();
-      }
+      // if (Game.time % 111 === 0) {
+      //   this.connectFirstStructure();
+      // }
 
-      if (Game.time % 222 === 0) {
-        this.blockExits();
+      // if (Game.time % 222 === 0) {
+      //   this.blockExits();
+      // }
+
+      const rooms = Game.rooms;
+      for (let roomName in rooms) {
+        const room = rooms[roomName];
+
+        this.buildContainers(room);
       }
     } catch (error) {
       console.log(`Error in run: ${error.message}`);

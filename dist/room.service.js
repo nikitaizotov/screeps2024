@@ -24,7 +24,7 @@ module.exports = {
     try {
       this.cleanMemory();
       this.creepsRoutines();
-      buildService.run();
+      buildService.build();
       this.structureRoutines();
     } catch (error) {
       console.log(`Error in routines: ${error.message}`);

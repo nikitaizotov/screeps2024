@@ -67,6 +67,10 @@ const buildService = {
         this.blockExits();
       }
 
+      if (Game.time % 244 === 0) {
+        this.buildRoadsAroundStructures();
+      }
+
       const rooms = Game.rooms;
       for (let roomName in rooms) {
         const room = rooms[roomName];

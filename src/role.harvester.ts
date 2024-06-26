@@ -252,18 +252,7 @@ const roleHarvester: CreepRole = {
       creep.memory.targetId = newTarget.id as Id<Structure<StructureConstant>>;
       creep.memory.path = creep.pos.findPathTo(newTarget);
     } else {
-      const constructionSites = creep.room.find(FIND_CONSTRUCTION_SITES);
-      if (constructionSites.length > 0) {
-        const newTarget = constructionSites[0];
-        creep.memory.targetId = newTarget.id as Id<ConstructionSite>;
-        creep.memory.path = creep.pos.findPathTo(newTarget);
-      } else {
-        const controller = creep.room.controller;
-        if (controller) {
-          creep.memory.targetId = controller.id;
-          creep.memory.path = creep.pos.findPathTo(controller);
-        }
-      }
+      creepService.findConstructionSite(creep);
     }
   },
 };

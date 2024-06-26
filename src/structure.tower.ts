@@ -36,6 +36,18 @@ const towerManager = {
 
           if (closestDamagedStructure) {
             tower.repair(closestDamagedStructure);
+
+            if (
+              closestDamagedStructure.hits === closestDamagedStructure.hitsMax
+            ) {
+              for (const creepName in Game.creeps) {
+                const creep = Game.creeps[creepName];
+                if (creep.memory.targetId === closestDamagedStructure.id) {
+                  creep.memory.targetId = null;
+                  creep.memory.path = undefined;
+                }
+              }
+            }
           }
         }
       }

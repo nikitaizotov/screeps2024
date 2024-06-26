@@ -7,7 +7,7 @@ const roleMiner: CreepRole = {
   namePrefix: "Miner",
   memoryKey: "miner",
   bodyParts: [WORK, WORK, WORK, WORK],
-  baseBodyParts: [MOVE, CARRY],
+  baseBodyParts: [WORK, MOVE, CARRY],
 
   run(creep: Creep): void {
     if (creep.spawning) {

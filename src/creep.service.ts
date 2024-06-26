@@ -58,6 +58,10 @@ const creepService = {
     for (const source of sources) {
       const openPositions = this.getOpenPositions(source.pos);
 
+      if (source.energy === 0) {
+        continue;
+      }
+
       let creepsAtSource = source.pos
         .findInRange(FIND_CREEPS, 1)
         .filter((c: Creep) => c.id !== creep.id);
@@ -159,6 +163,67 @@ const creepService = {
           creep.memory.targetId = closestSource.id;
           creep.memory.targetPos = closestOpenPosition;
         }
+      }
+    }
+  },
+
+  findConstructionSite: function (creep: Creep) {
+    const constructionSites = creep.room.find(FIND_CONSTRUCTION_SITES);
+    // if (constructionTargets.length > 0) {
+    //   creep.memory.targetId = constructionTargets[0].id as Id<
+    //     ConstructionSite<BuildableStructureConstant>
+    //   >;
+    //   creep.memory.path = creep.pos.findPathTo(constructionTargets[0].pos);
+    // }
+
+    // const constructionSites: AnyStructure[] = creep.room.find(FIND_STRUCTURES, {
+    //   filter: (structure) => {
+    //     return (
+    //       structure.hits < structure.hitsMax &&
+    //       structure.structureType !== STRUCTURE_WALL &&
+    //       structure.structureType !== STRUCTURE_RAMPART
+    //     );
+    //   },
+    // });
+    if (constructionSites.length > 0) {
+      let closestSite = creep.pos.findClosestByPath(constructionSites);
+
+      if (closestSite) {
+        creep.memory.path = creep.pos.findPathTo(closestSite);
+        creep.memory.targetId = closestSite.id;
+      }
+    } else {
+      const controller = creep.room.controller;
+      if (controller) {
+        creep.memory.targetId = controller.id;
+        creep.memory.path = creep.pos.findPathTo(controller);
+      }
+    }
+  },
+
+  getDamagedStructures: function (creep: Creep): void {
+    const targets: AnyStructure[] = creep.room.find(FIND_STRUCTURES, {
+      filter: (structure) => {
+        return (
+          structure.hits < structure.hitsMax &&
+          structure.structureType !== STRUCTURE_WALL &&
+          structure.structureType !== STRUCTURE_RAMPART
+        );
+      },
+    });
+
+    if (targets.length > 0) {
+      let closestSite = creep.pos.findClosestByPath(targets);
+
+      if (closestSite) {
+        creep.memory.path = creep.pos.findPathTo(closestSite);
+        creep.memory.targetId = closestSite.id;
+      }
+    } else {
+      const controller = creep.room.controller;
+      if (controller) {
+        creep.memory.targetId = controller.id;
+        creep.memory.path = creep.pos.findPathTo(controller);
       }
     }
   },

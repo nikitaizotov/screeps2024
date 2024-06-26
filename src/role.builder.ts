@@ -45,28 +45,10 @@ const roleBuilder: CreepRole = {
 
   transferEnergy(creep: Creep): void {
     if (!creep.memory.path) {
-      let targets: AnyStructure[] = creep.room.find(FIND_STRUCTURES, {
-        filter: (structure) => {
-          return (
-            structure.hits < structure.hitsMax &&
-            structure.structureType !== STRUCTURE_WALL &&
-            structure.structureType !== STRUCTURE_RAMPART
-          );
-        },
-      });
+      creepService.findConstructionSite(creep);
 
-      targets = _.sortBy(targets, (target) => creep.pos.getRangeTo(target));
-
-      if (targets.length === 0) {
-        const constructionTargets = creep.room.find(FIND_CONSTRUCTION_SITES);
-        if (constructionTargets.length > 0) {
-          creep.memory.targetId = constructionTargets[0].id as Id<
-            ConstructionSite<BuildableStructureConstant>
-          >;
-          creep.memory.path = creep.pos.findPathTo(constructionTargets[0].pos);
-        }
-      } else {
-        creepService.getPathTotargets(creep, targets);
+      if (!creep.memory.path) {
+        creepService.getDamagedStructures(creep);
       }
     } else {
       this.moveAndTransfer(creep);
@@ -74,32 +56,23 @@ const roleBuilder: CreepRole = {
   },
 
   moveAndTransfer(creep: Creep): void {
-    creepService.drawPath(creep);
-    const target = Game.getObjectById(
-      creep.memory.targetId as Id<Structure | ConstructionSite>
-    );
+    const target: any = Game.getObjectById(creep.memory.targetId as any);
 
     if (!target) {
-      creep.memory.path = undefined;
-      creep.memory.targetId = null;
       return;
     }
 
-    let action: ScreepsReturnCode | undefined;
+    creepService.drawPath(creep);
+
+    let action: any = creep.repair(target);
 
     if ("progress" in target) {
       action = creep.build(target);
-    } else {
-      if (target.hitsMax > target.hits) {
-        action = creep.repair(target);
-      } else {
-        creep.memory.path = undefined;
-        creep.memory.targetId = null;
-      }
     }
 
     if (action === ERR_NOT_IN_RANGE) {
       const moveResult = creep.moveByPath(creep.memory.path as PathStep[]);
+
       if (moveResult !== OK && moveResult !== ERR_TIRED) {
         console.log("Move by path failed, error:", moveResult);
         creep.memory.path = undefined;

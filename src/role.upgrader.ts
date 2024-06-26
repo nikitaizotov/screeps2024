@@ -82,16 +82,24 @@ const roleUpgrader: CreepRole = {
   },
 
   moveAndHarvest(creep: Creep): void {
-    const source = Game.getObjectById(creep.memory.targetId as Id<Source>);
+    const objectToCheck = Game.getObjectById(
+      creep.memory.targetId as Id<StructureContainer>
+    );
 
-    if (source && creep.harvest(source) === ERR_NOT_IN_RANGE) {
-      creepService.drawPath(creep);
-      const moveResult = creep.moveByPath(creep.memory.path as PathStep[]);
-      if (
-        moveResult === ERR_NOT_FOUND ||
-        (moveResult !== OK && moveResult !== ERR_TIRED)
-      ) {
-        creepService.getPathToSource(creep);
+    if (objectToCheck && objectToCheck.structureType === STRUCTURE_CONTAINER) {
+      creepService.moveAndCollectFromContainer(creep, objectToCheck);
+    } else {
+      const source = Game.getObjectById(creep.memory.targetId as Id<Source>);
+
+      if (source && creep.harvest(source) === ERR_NOT_IN_RANGE) {
+        creepService.drawPath(creep);
+        const moveResult = creep.moveByPath(creep.memory.path as PathStep[]);
+        if (
+          moveResult === ERR_NOT_FOUND ||
+          (moveResult !== OK && moveResult !== ERR_TIRED)
+        ) {
+          creepService.getPathToSource(creep);
+        }
       }
     }
   },

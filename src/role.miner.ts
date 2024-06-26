@@ -1,3 +1,4 @@
+import _ from "lodash";
 import creepService from "./creep.service";
 import { CreepRole } from "./role.interface";
 
@@ -5,99 +6,98 @@ const roleMiner: CreepRole = {
   creepsPerRoom: 99,
   namePrefix: "Miner",
   memoryKey: "miner",
-  bodyParts: [WORK, WORK, WORK, WORK, CARRY, MOVE],
+  bodyParts: [WORK, WORK, WORK, WORK],
+  baseBodyParts: [MOVE, CARRY],
 
   run(creep: Creep): void {
     if (creep.spawning) {
       return;
     }
 
-    if (!creep.memory.targetContainer || !creep.memory.targetSource) {
-      this.findContainer(creep);
-    }
-
-    if (creep.memory.targetContainer && creep.memory.targetSource) {
-      const targetContainer = Game.getObjectById(
-        creep.memory.targetContainer
-      ) as StructureContainer | null;
-      const targetSource = Game.getObjectById(
-        creep.memory.targetSource
-      ) as Source | null;
-
-      if (targetContainer && targetSource) {
-        const positionBetween = this.getPositionBetween(
-          targetSource.pos,
-          targetContainer.pos
-        );
-
-        if (positionBetween && !creep.pos.isEqualTo(positionBetween)) {
-          creep.moveTo(positionBetween);
-        } else {
-          if (creep.store.getFreeCapacity() > 0) {
-            creep.harvest(targetSource);
-          } else {
-            creep.transfer(targetContainer, RESOURCE_ENERGY);
-          }
-        }
+    if (!creep.memory.working) {
+      if (!creep.memory.targetPos || !creep.memory.path) {
+        this.findContainerAndSource(creep);
       } else {
-        creep.memory.targetContainer = null;
-        creep.memory.targetSource = null;
+        creepService.drawPath(creep);
+        creep.moveByPath(creep.memory.path);
+
+        if (
+          creep.pos.x === creep.memory.targetPos.x &&
+          creep.pos.y === creep.memory.targetPos.y &&
+          creep.pos.roomName === creep.memory.targetPos.roomName
+        ) {
+          creep.memory.working = true;
+        }
       }
     } else {
-      console.log(`${creep.name} has no target container or source`);
+      if (creep.store.getFreeCapacity() > 0) {
+        const targetSource = Game.getObjectById(
+          creep.memory.targetSourceId as any
+        ) as Source | null;
+        creep.harvest(targetSource as Source);
+      } else {
+        const targetContainer = Game.getObjectById(
+          creep.memory.targetContainerId as any
+        ) as StructureContainer | null;
+        creep.transfer(targetContainer as StructureContainer, RESOURCE_ENERGY);
+      }
     }
   },
 
-  findContainer(creep: Creep): void {
+  /**
+   * Searches for a container with a miner near it, if the container has a free space, adds the path and id to the creep's memory.
+   * @param creep
+   */
+  findContainerAndSource: function (creep: Creep): void {
     const containers = creep.room.find(FIND_STRUCTURES, {
       filter: (structure) => structure.structureType === STRUCTURE_CONTAINER,
     }) as StructureContainer[];
 
-    console.log(`${creep.name} found ${containers.length} containers in room`);
-
-    for (let container of containers) {
-      const creeps = container.pos
+    for (const container of containers) {
+      const miners = container.pos
         .findInRange(FIND_MY_CREEPS, 1)
         .filter((c) => c.memory.role === "miner");
 
-      console.log(
-        `${creep.name} checking container ${container.id}, miners nearby: ${creeps.length}`
-      );
+      if (miners.length === 0) {
+        const sources = container.pos.findInRange(FIND_SOURCES, 2);
+        const pathToSource = container.pos.findPathTo(
+          sources[sources.length - 1]
+        );
+        const pos = this.findPositionBetween(container.pos, sources[0].pos);
+        const creepsHeadingTo = _.filter(
+          Object.values(Game.creeps),
+          (c: Creep) => c.memory.targetPos === pos && c.memory.role === "miner"
+        );
 
-      if (creeps.length === 0) {
-        const source = container.pos.findInRange(FIND_SOURCES, 1)[0];
-        if (source) {
-          creep.memory.targetContainer = container.id;
-          creep.memory.targetSourceId = source.id;
-          console.log(
-            `${creep.name} selected target container: ${container.id}`
-          );
-          break;
+        if (creepsHeadingTo.length === 0) {
+          creep.memory.targetPos = pos;
+          creep.memory.targetContainerId = container.id;
+          creep.memory.targetSourceId = sources[sources.length - 1].id;
+          creep.memory.path = creep.pos.findPathTo(pos);
+          return;
         }
       }
     }
   },
 
-  getPositionBetween(
-    pos1: RoomPosition,
-    pos2: RoomPosition
+  findPositionBetween: function (
+    containerPos: RoomPosition,
+    sourcePos: RoomPosition
   ): RoomPosition | null {
-    const x = (pos1.x + pos2.x) / 2;
-    const y = (pos1.y + pos2.y) / 2;
-    const roomName = pos1.roomName;
+    const terrain = Game.map.getRoomTerrain(containerPos.roomName);
 
-    const terrain = Game.map.getRoomTerrain(roomName);
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        if (dx === 0 && dy === 0) continue;
+        const x = containerPos.x + dx;
+        const y = containerPos.y + dy;
 
-    const positions = [
-      new RoomPosition(Math.floor(x), Math.floor(y), roomName),
-      new RoomPosition(Math.ceil(x), Math.ceil(y), roomName),
-      new RoomPosition(Math.floor(x), Math.ceil(y), roomName),
-      new RoomPosition(Math.ceil(x), Math.floor(y), roomName),
-    ];
-
-    for (const pos of positions) {
-      if (terrain.get(pos.x, pos.y) !== TERRAIN_MASK_WALL) {
-        return pos;
+        if (terrain.get(x, y) !== TERRAIN_MASK_WALL) {
+          const pos = new RoomPosition(x, y, containerPos.roomName);
+          if (pos.getRangeTo(sourcePos) <= 1) {
+            return pos;
+          }
+        }
       }
     }
 

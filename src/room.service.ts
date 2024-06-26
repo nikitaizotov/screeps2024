@@ -177,7 +177,11 @@ const roomService = {
     try {
       for (const name in Game.creeps) {
         const creep = Game.creeps[name];
-        if (Game.time % 1 === 0) {
+        console.log("ROLE", creep.memory.role);
+
+        const timeToCheck = creep.memory.role === roleMiner.memoryKey ? 15 : 1;
+
+        if (Game.time % timeToCheck === 0) {
           creepService.findIdleCreep(creep);
         }
 

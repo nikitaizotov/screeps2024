@@ -38,7 +38,17 @@ const creepService = {
     });
   },
 
+  /**
+   * Gets path to a container, or source.
+   * @param creep
+   */
   getPathToSource: function (creep: Creep): void {
+    this.findContainer(creep);
+
+    if (creep.memory.targetId) {
+      return;
+    }
+
     const sources = creep.room.find(FIND_SOURCES);
     let bestPath: PathFinderPath | null = null;
     let bestSource: Source | null | any = null;
@@ -255,25 +265,33 @@ const creepService = {
   },
 
   moveAndHarvest: function (creep: Creep): void {
-    let source = Game.getObjectById(creep.memory.targetId as Id<Source>);
+    const objectToCheck = Game.getObjectById(
+      creep.memory.targetId as Id<StructureContainer>
+    );
 
-    if (!source) {
-      creep.memory.targetId = null;
-      creep.memory.path = undefined;
-      this.getPathToSource(creep);
-      return;
-    }
+    if (objectToCheck && objectToCheck.structureType === STRUCTURE_CONTAINER) {
+      this.moveAndCollectFromContainer(creep, objectToCheck);
+    } else {
+      let source = Game.getObjectById(creep.memory.targetId as Id<Source>);
 
-    if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
-      this.drawPath(creep);
-
-      if (this.isCreepIsStuck(creep)) {
+      if (!source) {
+        creep.memory.targetId = null;
+        creep.memory.path = undefined;
         this.getPathToSource(creep);
-      } else {
-        let moveResult = creep.moveByPath(creep.memory.path!);
+        return;
+      }
 
-        if (moveResult === ERR_NOT_FOUND || moveResult === ERR_INVALID_ARGS) {
+      if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
+        this.drawPath(creep);
+
+        if (this.isCreepIsStuck(creep)) {
           this.getPathToSource(creep);
+        } else {
+          let moveResult = creep.moveByPath(creep.memory.path!);
+
+          if (moveResult === ERR_NOT_FOUND || moveResult === ERR_INVALID_ARGS) {
+            this.getPathToSource(creep);
+          }
         }
       }
     }
@@ -317,6 +335,109 @@ const creepService = {
     if (this.isCreepIsStuck(creep)) {
       creep.memory.targetId = null;
       creep.memory.path = undefined;
+    }
+  },
+
+  moveAndCollectFromContainer: function (
+    creep: Creep,
+    container: StructureContainer
+  ): void {
+    const action = creep.withdraw(container, RESOURCE_ENERGY);
+
+    if (action === ERR_NOT_IN_RANGE) {
+      creepService.drawPath(creep);
+
+      let moveResult = creep.moveByPath(creep.memory.path!);
+
+      if (moveResult === ERR_NOT_FOUND || moveResult === ERR_INVALID_ARGS) {
+        this.findContainer(creep);
+      }
+    }
+  },
+
+  /**
+   * Searches for a container with miner near it, if container having a free space, adds path and id to creep memory.
+   * @param creep
+   */
+  findContainer: function (creep: Creep): void {
+    creep.memory.targetId = null;
+    creep.memory.path = undefined;
+
+    const containers = creep.room.find(FIND_STRUCTURES, {
+      filter: (structure) => structure.structureType === STRUCTURE_CONTAINER,
+    }) as StructureContainer[];
+
+    let closestContainer = null;
+    let minDistance = Infinity;
+
+    for (let container of containers) {
+      const miners = container.pos
+        .findInRange(FIND_MY_CREEPS, 1)
+        .filter((c) => c.memory.role === "miner");
+
+      if (miners.length > 0) {
+        const area = creep.room.lookAtArea(
+          container.pos.y - 1,
+          container.pos.x - 1,
+          container.pos.y + 1,
+          container.pos.x + 1,
+          true
+        );
+
+        let hasFreeSpot = false;
+
+        for (const pos of area) {
+          if (
+            (pos.type === "terrain" && pos.terrain !== "wall") ||
+            pos.type === "creep" ||
+            pos.type === "structure"
+          ) {
+            const posCreeps = creep.room.lookForAt(LOOK_CREEPS, pos.x, pos.y);
+            const posStructures = creep.room.lookForAt(
+              LOOK_STRUCTURES,
+              pos.x,
+              pos.y
+            );
+            const posConstructionSites = creep.room.lookForAt(
+              LOOK_CONSTRUCTION_SITES,
+              pos.x,
+              pos.y
+            );
+
+            if (
+              posCreeps.length === 0 &&
+              posStructures.length === 0 &&
+              posConstructionSites.length === 0
+            ) {
+              const creepsHeadingToPos = _.filter(
+                Object.values(Game.creeps),
+                (c: Creep) =>
+                  c.memory.targetPos &&
+                  c.memory.targetPos.x === pos.x &&
+                  c.memory.targetPos.y === pos.y
+              );
+
+              if (creepsHeadingToPos.length === 0) {
+                hasFreeSpot = true;
+                break;
+              }
+            }
+          }
+        }
+
+        if (hasFreeSpot) {
+          const distance = creep.pos.getRangeTo(container.pos);
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestContainer = container;
+          }
+        }
+      }
+    }
+
+    if (closestContainer) {
+      creep.memory.targetId = closestContainer.id;
+      creep.memory.path = creep.pos.findPathTo(closestContainer);
     }
   },
 };

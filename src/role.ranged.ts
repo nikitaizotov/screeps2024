@@ -3,7 +3,7 @@ import creepService from "./creep.service";
 import { CreepRole } from "./role.interface";
 
 const roleRanged: CreepRole = {
-  creepsPerRoom: 1,
+  creepsPerRoom: 0,
   namePrefix: "Ranged",
   memoryKey: "ranged",
   bodyParts: [

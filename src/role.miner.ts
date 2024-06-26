@@ -60,9 +60,6 @@ const roleMiner: CreepRole = {
 
       if (miners.length === 0) {
         const sources = container.pos.findInRange(FIND_SOURCES, 2);
-        const pathToSource = container.pos.findPathTo(
-          sources[sources.length - 1]
-        );
         const pos = this.findPositionBetween(container.pos, sources[0].pos);
         const creepsHeadingTo = _.filter(
           Object.values(Game.creeps),

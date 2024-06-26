@@ -1,8 +1,9 @@
+import _ from "lodash";
 import creepService from "./creep.service";
 import { CreepRole } from "./role.interface";
 
 const roleBuilder: CreepRole = {
-  creepsPerRoom: 1,
+  creepsPerRoom: 2,
   namePrefix: "Builder",
   memoryKey: "builder",
   bodyParts: [WORK, CARRY, MOVE],
@@ -54,15 +55,15 @@ const roleBuilder: CreepRole = {
         },
       });
 
+      targets = _.sortBy(targets, (target) => creep.pos.getRangeTo(target));
+
       if (targets.length === 0) {
         const constructionTargets = creep.room.find(FIND_CONSTRUCTION_SITES);
         if (constructionTargets.length > 0) {
           creep.memory.targetId = constructionTargets[0].id as Id<
             ConstructionSite<BuildableStructureConstant>
           >;
-          creep.memory.path = creep.pos.findPathTo(constructionTargets[0].pos, {
-            ignoreCreeps: true,
-          });
+          creep.memory.path = creep.pos.findPathTo(constructionTargets[0].pos);
         }
       } else {
         creepService.getPathTotargets(creep, targets);

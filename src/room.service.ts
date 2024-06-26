@@ -177,7 +177,6 @@ const roomService = {
     try {
       for (const name in Game.creeps) {
         const creep = Game.creeps[name];
-        console.log("ROLE", creep.memory.role);
 
         const timeToCheck = creep.memory.role === roleMiner.memoryKey ? 15 : 1;
 

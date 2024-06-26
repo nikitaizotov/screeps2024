@@ -363,9 +363,13 @@ const creepService = {
     creep.memory.targetId = null;
     creep.memory.path = undefined;
 
-    const containers = creep.room.find(FIND_STRUCTURES, {
+    let containers = creep.room.find(FIND_STRUCTURES, {
       filter: (structure) => structure.structureType === STRUCTURE_CONTAINER,
     }) as StructureContainer[];
+
+    containers = _.sortBy(containers, (container) =>
+      creep.pos.getRangeTo(container)
+    );
 
     let closestContainer = null;
     let minDistance = Infinity;
@@ -374,6 +378,10 @@ const creepService = {
       const miners = container.pos
         .findInRange(FIND_MY_CREEPS, 1)
         .filter((c) => c.memory.role === "miner");
+
+      if (container.store.energy === 0) {
+        continue;
+      }
 
       if (miners.length > 0) {
         const area = creep.room.lookAtArea(

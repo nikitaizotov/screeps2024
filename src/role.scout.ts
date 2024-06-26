@@ -17,10 +17,12 @@ interface Memory {
 declare const Memory: Memory;
 
 export const scoutRole: CreepRole = {
-  creepsPerRoom: 0,
+  creepsPerRoom: 1,
   namePrefix: "Scout",
   memoryKey: "scout",
-  bodyParts: [MOVE, MOVE, MOVE, WORK, CARRY, CLAIM],
+  bodyParts: [MOVE, MOVE],
+  baseBodyParts: [MOVE, WORK, CARRY, CLAIM],
+  maxBodyPartsMultiplier: 0,
 
   run(creep: Creep): void {
     try {

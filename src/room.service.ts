@@ -140,10 +140,18 @@ const roomService = {
             const newName = role.namePrefix + Game.time;
             const totalEnergyInRoom =
               energyInExtensions + spawn.store[RESOURCE_ENERGY];
-            const bodyPartsMultiplier =
+            let bodyPartsMultiplier =
               role.memoryKey !== roleScout.memoryKey
                 ? Math.floor((totalEnergyInRoom - baseCost) / bodyPartsCost)
                 : 1;
+
+            if (
+              role?.maxBodyPartsMultiplier &&
+              bodyPartsMultiplier > role?.maxBodyPartsMultiplier
+            ) {
+              bodyPartsMultiplier = role?.maxBodyPartsMultiplier;
+            }
+
             const finalBodyParts = [
               ...baseBodyParts,
               ...utilsService.repeatArray(bodyParts, bodyPartsMultiplier),

@@ -5,5 +5,6 @@ export interface CreepRole {
   bodyParts: BodyPartConstant[];
   run: (creep: Creep) => void;
   baseBodyParts?: BodyPartConstant[];
+  maxBodyPartsMultiplier?: number;
   [key: string]: any;
 }

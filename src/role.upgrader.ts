@@ -2,11 +2,10 @@ import creepService from "./creep.service";
 import { CreepRole } from "./role.interface";
 
 const roleUpgrader: CreepRole = {
-  creepsPerRoom: 3,
+  creepsPerRoom: 2,
   namePrefix: "Upgrader",
   memoryKey: "upgrader",
   bodyParts: [WORK, CARRY, MOVE],
-
   run(creep: Creep): void {
     if (creep.spawning) {
       return;

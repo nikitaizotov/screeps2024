@@ -449,62 +449,62 @@ const creepService = {
       }
 
       if (miners.length > 0) {
-        const area = creep.room.lookAtArea(
-          container.pos.y - 1,
-          container.pos.x - 1,
-          container.pos.y + 1,
-          container.pos.x + 1,
-          true
-        );
+        // const area = creep.room.lookAtArea(
+        //   container.pos.y - 1,
+        //   container.pos.x - 1,
+        //   container.pos.y + 1,
+        //   container.pos.x + 1,
+        //   true
+        // );
 
-        let hasFreeSpot = false;
+        // let hasFreeSpot = false;
 
-        for (const pos of area) {
-          if (
-            (pos.type === "terrain" && pos.terrain !== "wall") ||
-            pos.type === "creep" ||
-            pos.type === "structure"
-          ) {
-            const posCreeps = creep.room.lookForAt(LOOK_CREEPS, pos.x, pos.y);
-            const posStructures = creep.room.lookForAt(
-              LOOK_STRUCTURES,
-              pos.x,
-              pos.y
-            );
-            const posConstructionSites = creep.room.lookForAt(
-              LOOK_CONSTRUCTION_SITES,
-              pos.x,
-              pos.y
-            );
+        // for (const pos of area) {
+        //   if (
+        //     (pos.type === "terrain" && pos.terrain !== "wall") ||
+        //     pos.type === "creep" ||
+        //     pos.type === "structure"
+        //   ) {
+        //     const posCreeps = creep.room.lookForAt(LOOK_CREEPS, pos.x, pos.y);
+        //     const posStructures = creep.room.lookForAt(
+        //       LOOK_STRUCTURES,
+        //       pos.x,
+        //       pos.y
+        //     );
+        //     const posConstructionSites = creep.room.lookForAt(
+        //       LOOK_CONSTRUCTION_SITES,
+        //       pos.x,
+        //       pos.y
+        //     );
 
-            if (
-              posCreeps.length === 0 &&
-              posStructures.length === 0 &&
-              posConstructionSites.length === 0
-            ) {
-              const creepsHeadingToPos = _.filter(
-                Object.values(Game.creeps),
-                (c: Creep) =>
-                  c.memory.targetPos &&
-                  c.memory.targetPos.x === pos.x &&
-                  c.memory.targetPos.y === pos.y
-              );
+        //     if (
+        //       posCreeps.length === 0 &&
+        //       posStructures.length === 0 &&
+        //       posConstructionSites.length === 0
+        //     ) {
+        //       const creepsHeadingToPos = _.filter(
+        //         Object.values(Game.creeps),
+        //         (c: Creep) =>
+        //           c.memory.targetPos &&
+        //           c.memory.targetPos.x === pos.x &&
+        //           c.memory.targetPos.y === pos.y
+        //       );
 
-              if (creepsHeadingToPos.length === 0) {
-                hasFreeSpot = true;
-                break;
-              }
-            }
-          }
+        //       if (creepsHeadingToPos.length === 0) {
+        //         hasFreeSpot = true;
+        //         break;
+        //       }
+        //     }
+        //   }
+        // }
+
+        // if (hasFreeSpot) {
+        const distance = creep.pos.getRangeTo(container.pos);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestContainer = container;
         }
-
-        if (hasFreeSpot) {
-          const distance = creep.pos.getRangeTo(container.pos);
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestContainer = container;
-          }
-        }
+        // }
       }
     }
 

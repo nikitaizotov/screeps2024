@@ -25,6 +25,8 @@ interface CreepMemory {
   targetSourceId?: Id<Source>;
   harvestingFromContainer?: boolean;
   working?: boolean;
+  targetRoom?: string;
+  exit?: RoomPosition;
 }
 
 interface Memory {

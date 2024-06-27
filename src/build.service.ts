@@ -80,7 +80,7 @@ const buildService = {
         }
       }
     } catch (error: any) {
-      console.log(`Error in run: ${error.message}`);
+      console.log(`Error in buildService run: ${error.message}`);
     }
   },
 
@@ -533,7 +533,6 @@ const buildService = {
 
   buildRoadsFromFirstStructure(room: Room, startPos: RoomPosition): void {
     try {
-      console.log("buildRoadsFromFirstStructure");
       let sources = room.find(FIND_SOURCES);
       let controller = room.controller;
 

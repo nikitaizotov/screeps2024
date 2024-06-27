@@ -7,6 +7,7 @@ const roleBuilder: CreepRole = {
   namePrefix: "Builder",
   memoryKey: "builder",
   bodyParts: [WORK, CARRY, MOVE],
+  maxBodyPartsMultiplier: 5,
 
   run(creep: Creep): void {
     if (creep.spawning) {

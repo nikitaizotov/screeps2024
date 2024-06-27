@@ -186,7 +186,9 @@ const roomService = {
       for (const name in Game.creeps) {
         const creep = Game.creeps[name];
 
-        const timeToCheck = creep.memory.role === roleMiner.memoryKey ? 500 : 1;
+        let timeToCheck = creep.memory.role === roleMiner.memoryKey ? 500 : 1;
+        timeToCheck =
+          creep.memory.role === roleScout.memoryKey ? 20 : timeToCheck;
 
         if (Game.time % timeToCheck === 0) {
           creepService.findIdleCreep(creep);

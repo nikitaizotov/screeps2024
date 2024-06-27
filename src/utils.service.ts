@@ -43,7 +43,8 @@ const utilsService = {
           filter: (structure: any) =>
             structure.structureType !== STRUCTURE_WALL &&
             structure.structureType !== STRUCTURE_RAMPART &&
-            structure.structureType !== STRUCTURE_ROAD,
+            structure.structureType !== STRUCTURE_ROAD &&
+            structure.structureType !== STRUCTURE_CONTAINER,
         });
 
         // Check, if structure were attacked.

@@ -7,6 +7,7 @@ const roleHarvester: CreepRole = {
   namePrefix: "Harvester",
   memoryKey: "harvester",
   bodyParts: [WORK, CARRY, MOVE],
+  maxBodyPartsMultiplier: 5,
 
   // Main function to run the harvester role.
   run(creep: Creep): void {

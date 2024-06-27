@@ -6,6 +6,7 @@ const roleWallAndRampBuilder: CreepRole = {
   namePrefix: "WallRampBuilder",
   memoryKey: "wallRampBuilder",
   bodyParts: [WORK, CARRY, MOVE],
+  maxBodyPartsMultiplier: 5,
 
   run(creep: Creep): void {
     if (creep.spawning) {

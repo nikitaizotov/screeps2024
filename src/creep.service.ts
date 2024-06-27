@@ -448,7 +448,7 @@ const creepService = {
         continue;
       }
 
-      if (miners.length > 0) {
+      if (miners.length > 0 || container.store.energy > 0) {
         // const area = creep.room.lookAtArea(
         //   container.pos.y - 1,
         //   container.pos.x - 1,

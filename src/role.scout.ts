@@ -168,8 +168,6 @@ export const scoutRole: CreepRole = {
   },
 
   buildOrFinishSpawn(creep: Creep) {
-    creep.say(creep.memory.building as any);
-
     if (
       creep.memory.building === undefined ||
       (creep.memory.building && creep.store[RESOURCE_ENERGY] == 0)
@@ -203,14 +201,14 @@ export const scoutRole: CreepRole = {
 
   transferEnergy(creep: Creep): void {
     if (!creep.memory.path) {
-      creepService.findConstructionSite(creep);
+      //creepService.findConstructionSite(creep);
 
       // const target = creep.room.find(FIND_CONSTRUCTION_SITES, {
       //   filter: (site) => site.structureType === STRUCTURE_SPAWN,
       // })[0];
 
       const target =
-        creep.room.controller?.level !== 2
+        creep.room.controller?.level === 1
           ? creep.room.controller
           : creep.room.find(FIND_CONSTRUCTION_SITES, {
               filter: (site) => site.structureType === STRUCTURE_SPAWN,
@@ -218,9 +216,10 @@ export const scoutRole: CreepRole = {
 
       if (target) {
         creep.memory.path = creep.pos.findPathTo(target);
+        creep.memory.targetId = target.id;
       } else {
         const spawns = creep.room.find(FIND_MY_SPAWNS);
-        if (!spawns) {
+        if (spawns) {
           this.getPathToNextRoom(creep);
         }
       }
@@ -230,9 +229,11 @@ export const scoutRole: CreepRole = {
   },
 
   moveAndTransfer: function (creep: Creep): void {
-    const target = creep.room.find(FIND_CONSTRUCTION_SITES, {
-      filter: (site) => site.structureType === STRUCTURE_SPAWN,
-    })[0];
+    // const target = creep.room.find(FIND_CONSTRUCTION_SITES, {
+    //   filter: (site) => site.structureType === STRUCTURE_SPAWN,
+    // })[0];
+
+    const target = Game.getObjectById(creep.memory.targetId as any);
 
     if (!target) {
       // The target may have been completed, so we check this and clear the memory.
@@ -267,7 +268,14 @@ export const scoutRole: CreepRole = {
       return;
     }
 
-    const action = creep.build(target);
+    let action;
+    const controller = creep.room.controller as StructureController;
+
+    if (creep.memory.targetId === controller.id) {
+      action = creep.upgradeController(controller);
+    } else {
+      action = creep.build(target as any);
+    }
 
     if (action === ERR_NOT_IN_RANGE) {
       const moveResult = creep.moveByPath(creep.memory.path as PathStep[]);
@@ -281,12 +289,17 @@ export const scoutRole: CreepRole = {
       creep.memory.path = undefined;
       creep.memory.targetId = null;
     } else if (action === OK) {
-      // Check if the construction is completed.
-      if (!target.progressTotal || target.progress >= target.progressTotal) {
-        creep.memory.building = false;
-        creep.memory.path = undefined;
-        creep.memory.targetId = null;
-        creep.memory.job = scoutJobs.MOVING_TO_NEXT_ROOM;
+      if (creep.memory.targetId !== controller.id) {
+        // Check if the construction is completed.
+
+        const spawn = target as any;
+
+        if (!spawn.progressTotal || spawn.progress >= spawn.progressTotal) {
+          creep.memory.building = false;
+          creep.memory.path = undefined;
+          creep.memory.targetId = null;
+          creep.memory.job = scoutJobs.MOVING_TO_NEXT_ROOM;
+        }
       }
     }
   },

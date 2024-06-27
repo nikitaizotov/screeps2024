@@ -38,6 +38,10 @@ interface Memory {
   exitZones: { [roomName: string]: ExitZone[] };
   roomTerrain: { [roomName: string]: number[][] };
   connectedPoints: { [key: string]: string[] };
+  currentRoomIndex: number;
+  currentOperationIndex: number;
+  buildOrderPosition: { [roomName: string]: number };
+  cachedPaths: { [roomName: string]: number };
 }
 
 // `global` extension samples

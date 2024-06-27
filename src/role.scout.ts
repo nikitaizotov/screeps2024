@@ -29,7 +29,7 @@ interface Memory {
 declare const Memory: Memory;
 
 export const scoutRole: CreepRole = {
-  creepsPerRoom: 3,
+  creepsPerRoom: 0,
   namePrefix: "Scout",
   memoryKey: "scout",
   bodyParts: [MOVE, WORK, WORK, CARRY, CARRY, CARRY, CLAIM],

@@ -101,12 +101,7 @@ const utilsService = {
             );
 
             look.forEach((item: any) => {
-              if (
-                item?.terrain === "swamp" ||
-                item?.terrain === "plain" ||
-                item?.type === "creep" ||
-                item?.structure?.structureType === STRUCTURE_ROAD
-              ) {
+              if (item?.terrain === "swamp" || item?.terrain === "plain") {
                 totalCount++;
               }
             });

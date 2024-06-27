@@ -131,7 +131,10 @@ const roomService = {
                 creep.memory.spawnRoom == spawn.room.name
             );
 
-            if (spawn.room.controller!.level < 5 || scoutsInRoom.length > 0) {
+            if (
+              spawn.room.controller!.level < 5 ||
+              scoutsInRoom.length >= roleScout.creepsPerRoom
+            ) {
               continue;
             }
           }

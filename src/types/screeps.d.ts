@@ -27,6 +27,7 @@ interface CreepMemory {
   working?: boolean;
   targetRoom?: string;
   exit?: RoomPosition;
+  job?: scoutJobs;
 }
 
 interface Memory {

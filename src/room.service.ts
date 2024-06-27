@@ -28,6 +28,7 @@ const roomService = {
       this.creepsRoutines();
       buildService.build();
       this.structureRoutines();
+      this.roomRoutines();
     } catch (error: any) {
       console.log(`Error in routines: ${error.message}`);
     }
@@ -57,6 +58,10 @@ const roomService = {
 
   spawnCreeps(): void {
     try {
+      if (Game.time % 2) {
+        return;
+      }
+
       for (let spawnName in Game.spawns) {
         const spawn: StructureSpawn = Game.spawns[spawnName];
         const energyInExtensions = utilsService.getTotalEnergyInExtensions(
@@ -139,7 +144,17 @@ const roomService = {
             }
           }
 
-          if (selectedCreeps.length < role.creepsPerRoom && canAfford) {
+          const maxCreepsAllowed =
+            role.creepsPerSourcePositions &&
+            role.creepsPerSourcePositions[
+              Memory.roomData.sourcePositions[spawn.room.name]
+            ]
+              ? role.creepsPerSourcePositions[
+                  Memory.roomData.sourcePositions[spawn.room.name]
+                ]
+              : role.creepsPerRoom;
+
+          if (selectedCreeps.length < maxCreepsAllowed && canAfford) {
             const newName = role.namePrefix + Game.time;
             const totalEnergyInRoom =
               energyInExtensions + spawn.store[RESOURCE_ENERGY];
@@ -230,6 +245,10 @@ const roomService = {
     } catch (error: any) {
       console.log(`Error in structureRoutines: ${error.message}`);
     }
+  },
+
+  roomRoutines: function (): void {
+    utilsService.getRoomData();
   },
 };
 

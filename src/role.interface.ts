@@ -1,3 +1,7 @@
+export interface CreepPerSourcePositions {
+  [num: number]: number;
+}
+
 export interface CreepRole {
   creepsPerRoom: number;
   namePrefix: string;
@@ -7,4 +11,5 @@ export interface CreepRole {
   baseBodyParts?: BodyPartConstant[];
   maxBodyPartsMultiplier?: number;
   [key: string]: any;
+  creepsPerSourcePositions?: CreepPerSourcePositions;
 }

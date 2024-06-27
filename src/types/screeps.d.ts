@@ -30,6 +30,10 @@ interface CreepMemory {
   job?: scoutJobs;
 }
 
+interface RoomData {
+  sourcePositions: { [key: string]: number };
+}
+
 interface Memory {
   uuid: number;
   log: any;
@@ -42,6 +46,7 @@ interface Memory {
   currentOperationIndex: number;
   buildOrderPosition: { [roomName: string]: number };
   cachedPaths: { [roomName: string]: number };
+  roomData: RoomData;
 }
 
 // `global` extension samples

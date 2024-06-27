@@ -73,6 +73,51 @@ const utilsService = {
       console.log(`Error in isSafeModeNeeded method, ${error}`);
     }
   },
+
+  getRoomData: function (): void {
+    try {
+      if (!Memory.roomData) {
+        Memory.roomData = {
+          sourcePositions: {},
+        };
+      }
+
+      for (let roomName in Game.rooms) {
+        const room = Game.rooms[roomName];
+        const controller = room.controller;
+
+        if (controller?.my && !Memory.roomData.sourcePositions[roomName]) {
+          const sources = room.find(FIND_SOURCES);
+
+          let totalCount = 0;
+
+          for (let source of sources) {
+            const look: LookAtResultWithPos[] = room.lookAtArea(
+              source.pos.y - 1,
+              source.pos.x - 1,
+              source.pos.y + 1,
+              source.pos.x + 1,
+              true
+            );
+
+            look.forEach((item: any) => {
+              if (
+                item?.terrain === "swamp" ||
+                item?.terrain === "plain" ||
+                item?.type === "creep" ||
+                item?.structure?.structureType === STRUCTURE_ROAD
+              ) {
+                totalCount++;
+              }
+            });
+          }
+          Memory.roomData.sourcePositions[roomName] = totalCount;
+        }
+      }
+    } catch (error: any) {
+      console.log(`Error in getRoomMiningPositions: ${error.message}`);
+    }
+  },
 };
 
 export default utilsService;

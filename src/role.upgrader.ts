@@ -7,6 +7,13 @@ const roleUpgrader: CreepRole = {
   memoryKey: "upgrader",
   bodyParts: [WORK, CARRY, MOVE],
   maxBodyPartsMultiplier: 5,
+  creepsPerSourcePositions: {
+    "1": 1,
+    "2": 1,
+    "3": 1,
+    "4": 1,
+    "5": 1,
+  },
   run(creep: Creep): void {
     if (creep.spawning) {
       return;

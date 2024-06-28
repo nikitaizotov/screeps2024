@@ -52,10 +52,10 @@ const roleBuilder: CreepRole = {
 
   transferEnergy(creep: Creep): void {
     if (!creep.memory.path) {
-      creepService.findConstructionSite(creep);
+      creepService.getDamagedStructures(creep);
 
       if (!creep.memory.path) {
-        creepService.getDamagedStructures(creep);
+        creepService.findConstructionSite(creep);
       }
     } else {
       this.moveAndTransfer(creep);
@@ -79,6 +79,11 @@ const roleBuilder: CreepRole = {
 
     if (action === ERR_NOT_IN_RANGE) {
       const moveResult = creep.moveByPath(creep.memory.path as PathStep[]);
+
+      if (!("progress" in target) && target.hits === target.hitsMax) {
+        creep.memory.path = undefined;
+        creep.memory.targetId = null;
+      }
 
       if (moveResult !== OK && moveResult !== ERR_TIRED) {
         console.log("Move by path failed, error:", moveResult);

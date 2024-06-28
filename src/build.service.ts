@@ -1,4 +1,10 @@
+import { reverse } from "lodash";
 import containerService from "./container.service";
+
+interface PositionSegment {
+  x: number;
+  y: number;
+}
 
 interface CachedPath {
   x: number;
@@ -68,22 +74,22 @@ const buildService = {
             Memory.roomTerrain[room.name] = this.cacheRoomTerrain(room.name);
           }
 
-          // Планирование дорог каждые 15000 тиков
+          // Plan roads every 15000 ticks.
           if (Game.time % 15000 === 0) this.planRoads(room);
 
-          // Обработка очереди строительства каждые 90 тиков
+          // Process build queue every 90 ticks.
           if (Game.time % 90 === 0) this.processBuildOrder(room);
 
-          // Подключение первой структуры каждые 111 тиков
+          // Connect the first structure every 111 ticks.
           if (Game.time % 111 === 0) this.connectFirstStructure(room);
 
-          // // Блокировка выходов каждые 222 тика
-          // if (Game.time % 222 === 0) this.blockExits(room);
+          // Block exits every 222 ticks.
+          if (Game.time % 222 === 0) this.blockExits(room);
 
-          // Строительство дорог вокруг строений каждые 244 тика
+          // Build roads around structures every 244 ticks.
           if (Game.time % 244 === 0) this.buildRoadsAroundStructures(room);
 
-          // Строительство контейнеров каждые 233 тика
+          // Build containers every 233 ticks.
           if (Game.time % 233 === 0) this.buildContainers(room);
         }
       }
@@ -673,6 +679,14 @@ const buildService = {
   },
   blockExits(room: Room): void {
     try {
+      const spawns = room.find(FIND_MY_SPAWNS);
+
+      if (!spawns) {
+        return;
+      }
+
+      const spawn: StructureSpawn = spawns[0];
+
       const exitTypes = [
         FIND_EXIT_TOP,
         FIND_EXIT_RIGHT,
@@ -680,9 +694,30 @@ const buildService = {
         FIND_EXIT_LEFT,
       ];
 
+      if (!Memory.roomData.exits) {
+        Memory.roomData.exits = {};
+      }
+
+      if (!Memory.roomData.exits[room.name]) {
+        Memory.roomData.exits[room.name] = {
+          [FIND_EXIT_TOP]: this.getExitRampPoint(room, FIND_EXIT_TOP, spawn),
+          [FIND_EXIT_RIGHT]: this.getExitRampPoint(
+            room,
+            FIND_EXIT_RIGHT,
+            spawn
+          ),
+          [FIND_EXIT_BOTTOM]: this.getExitRampPoint(
+            room,
+            FIND_EXIT_BOTTOM,
+            spawn
+          ),
+          [FIND_EXIT_LEFT]: this.getExitRampPoint(room, FIND_EXIT_LEFT, spawn),
+        };
+      }
+
       // for (let roomName in Game.rooms) {
       //   const room = Game.rooms[roomName];
-      //if (room.controller && room.controller.my) {
+      // if (room.controller && room.controller.my) {
       if (!Memory.exitZones[room.name] || Game.time % 5000 === 0) {
         Memory.exitZones[room.name] = this.getExitZones(room);
       }
@@ -716,33 +751,6 @@ const buildService = {
           }
 
           for (let cluster of clusters) {
-            const midIndex = Math.floor(cluster.length / 2);
-            const midExit = cluster[midIndex];
-            let midX = midExit.x;
-            let midY = midExit.y;
-
-            switch (exitType) {
-              case FIND_EXIT_TOP:
-                midY += 2;
-                break;
-              case FIND_EXIT_RIGHT:
-                midX -= 2;
-                break;
-              case FIND_EXIT_BOTTOM:
-                midY -= 2;
-                break;
-              case FIND_EXIT_LEFT:
-                midX += 2;
-                break;
-            }
-
-            if (
-              room.lookForAt(LOOK_STRUCTURES, midX, midY).length === 0 &&
-              room.lookForAt(LOOK_CONSTRUCTION_SITES, midX, midY).length === 0
-            ) {
-              room.createConstructionSite(midX, midY, STRUCTURE_RAMPART);
-            }
-
             for (let exitPosition of cluster) {
               const x = exitPosition.x;
               const y = exitPosition.y;
@@ -788,12 +796,24 @@ const buildService = {
               }
 
               for (const pos of wallPositions) {
-                if (
-                  room.lookForAt(LOOK_STRUCTURES, pos.x, pos.y).length === 0 &&
+                const rampartPositions =
+                  Memory.roomData.exits[room.name][exitType];
+
+                const structuresAtPos =
+                  room.lookForAt(LOOK_STRUCTURES, pos.x, pos.y).length === 0;
+                const constructionSitesAtPos =
                   room.lookForAt(LOOK_CONSTRUCTION_SITES, pos.x, pos.y)
-                    .length === 0
-                ) {
-                  room.createConstructionSite(pos.x, pos.y, STRUCTURE_WALL);
+                    .length === 0;
+
+                if (structuresAtPos && constructionSitesAtPos) {
+                  const isRampartPosition = rampartPositions.some(
+                    (p) => p.x === pos.x && p.y === pos.y
+                  );
+
+                  const structureType = isRampartPosition
+                    ? STRUCTURE_RAMPART
+                    : STRUCTURE_WALL;
+                  room.createConstructionSite(pos.x, pos.y, structureType);
                 }
               }
             }
@@ -801,9 +821,159 @@ const buildService = {
         }
       }
       // }
-      // }
+      //}
     } catch (error: any) {
       console.log(`Error in blockExits: ${error.message}`);
+    }
+  },
+
+  getExitRampPoint(
+    room: Room,
+    exitType:
+      | FIND_EXIT_TOP
+      | FIND_EXIT_RIGHT
+      | FIND_EXIT_BOTTOM
+      | FIND_EXIT_LEFT,
+    spawn: StructureSpawn
+  ): PathStep[] {
+    const returnData: PathStep[] = [];
+    const exitPositions = room.find(exitType);
+    // Array to store segments of exit positions.
+    const segments: PositionSegment[][] = [];
+    // Array to store the current segment.
+    let currentSegment: PositionSegment[] = [];
+
+    // Sort exit positions to simplify processing. Sort based on exit type.
+    exitPositions.sort((a, b) =>
+      exitType === FIND_EXIT_TOP || exitType === FIND_EXIT_BOTTOM
+        ? a.x - b.x
+        : a.y - b.y
+    );
+
+    exitPositions.forEach((pos) => {
+      if (
+        currentSegment.length === 0 ||
+        this.areAdjacent(currentSegment[currentSegment.length - 1], pos)
+      ) {
+        // Check if the current position is adjacent to the last position in the segment.
+        // Add position to the current segment.
+        currentSegment.push({ x: pos.x, y: pos.y });
+      } else {
+        // Add the current segment to segments array.
+        segments.push(currentSegment);
+        // Start a new segment.
+        currentSegment = [{ x: pos.x, y: pos.y }];
+      }
+    });
+
+    if (currentSegment.length > 0) {
+      // Add the last segment if it exists.
+      segments.push(currentSegment);
+    }
+
+    // Find the central points for each segment.
+    const centralPoints = segments.map((segment) => {
+      // Calculate the middle index.
+      const midIndex = Math.floor(segment.length / 2);
+      // Return the central point of the segment.
+      return segment[midIndex];
+    });
+
+    for (let centralPoint of centralPoints) {
+      const position = new RoomPosition(
+        centralPoint.x,
+        centralPoint.y,
+        room.name
+      );
+      const path = spawn.pos.findPathTo(position);
+      path.reverse();
+
+      const MIN = 2;
+      const MAX = 47;
+
+      switch (exitType) {
+        case FIND_EXIT_TOP:
+          this.addRampartPosition(
+            [null, MIN],
+            [null, MIN - 1],
+            returnData,
+            path
+          );
+          break;
+        case FIND_EXIT_RIGHT:
+          this.addRampartPosition(
+            [MAX, null],
+            [MAX + 1, null],
+            returnData,
+            path
+          );
+          break;
+        case FIND_EXIT_BOTTOM:
+          this.addRampartPosition(
+            [null, MAX],
+            [null, MAX + 1],
+            returnData,
+            path
+          );
+          break;
+        case FIND_EXIT_LEFT:
+          this.addRampartPosition(
+            [MIN, null],
+            [MIN - 1, null],
+            returnData,
+            path
+          );
+          break;
+      }
+    }
+
+    return returnData;
+  },
+
+  areAdjacent(pos1: PositionSegment, pos2: PositionSegment): boolean {
+    const distance = Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y);
+    return distance === 1;
+  },
+
+  getPointOnPath(
+    x: number | null,
+    y: number | null,
+    path: PathStep[]
+  ): PathStep | null {
+    for (let step of path) {
+      if (x !== null && step.x === x) {
+        return step;
+      }
+
+      if (y !== null && step.y === y) {
+        return step;
+      }
+    }
+    return null;
+  },
+
+  addRampartPosition(
+    primaryPosition: any,
+    secondaryPosition: any,
+    returnData: PathStep[],
+    path: PathStep[]
+  ) {
+    const primaryRampartPosition = this.getPointOnPath(
+      primaryPosition[0],
+      primaryPosition[1],
+      path
+    );
+    if (primaryRampartPosition) {
+      returnData.push(primaryRampartPosition);
+    } else {
+      const secondaryRampartPosition = this.getPointOnPath(
+        secondaryPosition[0],
+        secondaryPosition[1],
+        path
+      );
+      if (secondaryRampartPosition) {
+        returnData.push(secondaryRampartPosition);
+      }
     }
   },
 };

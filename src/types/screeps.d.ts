@@ -31,7 +31,16 @@ interface CreepMemory {
 }
 
 interface RoomData {
-  sourcePositions: { [key: string]: number };
+  sourcePositions: { [roomName: string]: number };
+  exits?: {
+    [roomName: string]: {
+      [FIND_EXIT_TOP]: PathStep[];
+      [FIND_EXIT_RIGHT]: PathStep[];
+      [FIND_EXIT_BOTTOM]: PathStep[];
+      [FIND_EXIT_LEFT]: PathStep[];
+    };
+  };
+  junk?: any;
 }
 
 interface Memory {

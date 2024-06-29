@@ -1,3 +1,5 @@
+import { WorkerTask } from "./role.worker.const";
+
 export interface CreepPerSourcePositions {
   [num: number]: number;
 }
@@ -12,4 +14,7 @@ export interface CreepRole {
   maxBodyPartsMultiplier?: number;
   [key: string]: any;
   creepsPerSourcePositions?: CreepPerSourcePositions;
+  tasksPerRoom?: {
+    Transferring: CreepPerSourcePositions;
+  };
 }

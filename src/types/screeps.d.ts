@@ -28,6 +28,7 @@ interface CreepMemory {
   targetRoom?: string;
   exit?: RoomPosition;
   job?: scoutJobs;
+  task?: WorkerTask;
 }
 
 interface RoomData {

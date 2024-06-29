@@ -10,16 +10,19 @@ import buildService from "./build.service";
 import creepService from "./creep.service";
 import utilsService from "./utils.service";
 import roleMiner from "./role.miner";
+import roleWorker from "./role.worker";
+import { WorkerTask } from "./role.worker.const";
 
 const roomService = {
   enabledRoles: [
-    roleMiner,
-    roleHarvester,
-    roleUpgrader,
-    roleBuilder,
-    roleRanged,
-    roleWallAndRampBuilder,
-    roleScout,
+    roleWorker,
+    // roleMiner,
+    // roleHarvester,
+    // roleUpgrader,
+    // roleBuilder,
+    // roleRanged,
+    // roleWallAndRampBuilder,
+    // roleScout,
   ],
 
   routines: function () {
@@ -29,6 +32,7 @@ const roomService = {
       buildService.build();
       this.structureRoutines();
       this.roomRoutines();
+      this.manageWorkers();
     } catch (error: any) {
       console.log(`Error in routines: ${error.message}`);
     }
@@ -223,6 +227,34 @@ const roomService = {
       }
     } catch (error: any) {
       console.log(`Error in moveCreeps: ${error.message}`);
+    }
+  },
+
+  manageWorkers: function () {
+    for (let spawnName in Game.spawns) {
+      const spawn = Game.spawns[spawnName];
+      const room = spawn.room;
+
+      const workers = _.filter(
+        Game.creeps,
+        (creep) =>
+          creep.memory.role === "worker" &&
+          creep.room.name === spawn.room.name &&
+          creep.memory.task === WorkerTask.Idling
+      );
+
+      if (!roleWorker.tasksPerRoom) {
+        return;
+      }
+      const enabledTasks = Object.keys(roleWorker.tasksPerRoom);
+
+      for (let enabledTask of enabledTasks) {
+        const onTask = workers.filter((w) => w.memory.task === enabledTask);
+        const workersRequired =
+          roleWorker.tasksPerRoom[
+            enabledTask as keyof typeof roleWorker.tasksPerRoom
+          ];
+      }
     }
   },
 

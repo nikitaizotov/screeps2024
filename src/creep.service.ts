@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { WorkerTask } from "./role.worker.const";
 
 const creepService = {
   drawPath: function (creep: Creep): void {
@@ -523,6 +524,106 @@ const creepService = {
     if (closestContainer) {
       creep.memory.targetId = closestContainer.id;
       creep.memory.path = creep.pos.findPathTo(closestContainer);
+    }
+  },
+
+  isTargetedByOtherCreeps(target: AnyStructure): boolean {
+    return _.some(Object.values(Game.creeps), (c: Creep) => {
+      return c.memory.targetId === target.id && c.memory.transferring;
+    });
+  },
+
+  taskHarvest: function (creep: Creep) {
+    if (creep.store.getFreeCapacity() == 0) {
+      creep.memory.task = WorkerTask.Idling;
+    }
+
+    if (!creep.memory.path || !creep.memory.targetId) {
+      this.getPathToSource(creep);
+    } else {
+      this.moveAndHarvest(creep);
+    }
+  },
+
+  taskTransfer: function (creep: Creep) {
+    if (!creep.memory.path || !creep.memory.targetId) {
+      const room = creep.room;
+      const targets = room.find(FIND_STRUCTURES, {
+        filter: (structure: AnyStructure) => {
+          return (
+            (structure.structureType === STRUCTURE_SPAWN ||
+              structure.structureType === STRUCTURE_TOWER ||
+              structure.structureType === STRUCTURE_EXTENSION) &&
+            structure.store &&
+            structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+          );
+        },
+      });
+
+      const spawns = targets.filter((t) => t.structureType === STRUCTURE_SPAWN);
+      const extensions = targets.filter(
+        (t) => t.structureType === STRUCTURE_EXTENSION
+      );
+      const towers = targets.filter((t) => t.structureType === STRUCTURE_TOWER);
+
+      const sortedExtensions = extensions
+        .filter((ext) => !this.isTargetedByOtherCreeps(ext))
+        .sort((a, b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b));
+      const sortedSpawns = spawns
+        .filter((spawn) => !this.isTargetedByOtherCreeps(spawn))
+        .sort((a, b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b));
+      const sortedTowers = towers.sort(
+        (a, b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b)
+      );
+
+      const priorityTargets = [
+        ...sortedSpawns,
+        ...sortedExtensions,
+        ...sortedTowers,
+      ];
+
+      if (priorityTargets.length) {
+        const newTarget = targets[0];
+        creep.memory.targetId = newTarget.id as Id<
+          Structure<StructureConstant>
+        >;
+        creep.memory.path = creep.pos.findPathTo(newTarget);
+      } else {
+        creep.memory.task = WorkerTask.Idling;
+      }
+    } else {
+      const target = Game.getObjectById(
+        creep.memory.targetId as Id<Structure<StructureConstant>>
+      );
+
+      // Reset target if it's invalid or full.
+      if (
+        !target ||
+        ("store" in target &&
+          (target as AnyStoreStructure).store.getFreeCapacity(
+            RESOURCE_ENERGY
+          ) === 0)
+      ) {
+        creep.memory.path = undefined;
+        creep.memory.targetId = null;
+        creep.memory.task = WorkerTask.Idling;
+      } else {
+        const action = creep.transfer(
+          target as AnyStoreStructure,
+          RESOURCE_ENERGY
+        );
+
+        if (action === ERR_NOT_IN_RANGE) {
+          const moveResult = creep.moveByPath(creep.memory.path as PathStep[]);
+
+          if (moveResult !== OK && moveResult !== ERR_TIRED) {
+            console.log(`Move by path failed, error: ${moveResult}`);
+            creep.memory.path = undefined;
+            creep.memory.targetId = null;
+            creep.memory.task = WorkerTask.Idling;
+          }
+        }
+      }
     }
   },
 };

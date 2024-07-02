@@ -7,9 +7,9 @@ import buildService from "./build.service";
 import creepService from "./creep.service";
 import utilsService from "./utils.service";
 import roleMiner from "../roles/role.miner";
-import roleWorker from "../roles/role.worker";
+import roleWorker from "../roles/worker/role.worker";
 import { WorkerTask } from "../roles/constants/role.worker.const";
-import { WorkerService } from "./worker.service";
+import { WorkerService } from "../roles/worker/worker.service";
 
 const workerService = new WorkerService();
 

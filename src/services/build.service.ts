@@ -1,5 +1,6 @@
 import { reverse } from "lodash";
 import containerService from "./container.service";
+import LinkService from "./link.service";
 
 interface PositionSegment {
   x: number;
@@ -24,6 +25,8 @@ interface StructureCache {
   constructionSites: ConstructionSite[];
   existingStructures: AnyOwnedStructure[];
 }
+
+const linkService = new LinkService();
 
 const buildService = {
   structureCache: {} as { [roomName: string]: StructureCache },
@@ -89,6 +92,11 @@ const buildService = {
 
           // Build containers every 233 ticks.
           if (Game.time % 233 === 0) this.buildContainers(room);
+
+          // Build links every 244 ticks.
+          if (Game.time % 244 === 0 && linkService.isLinksAvailable(room)) {
+            linkService.buildLinks(room);
+          }
         }
       }
     } catch (error: any) {

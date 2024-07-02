@@ -1,7 +1,6 @@
 import _ from "lodash";
-import { WorkerTask } from "../roles/constants/role.worker.const";
-import roleWorker from "../roles/role.worker";
-import creepService from "./creep.service";
+import { WorkerTask } from "../constants/role.worker.const";
+import roleWorker from "./role.worker";
 
 export class WorkerService {
   manageWorkers(): void {

@@ -1,6 +1,6 @@
-import creepService from "../services/creep.service";
-import { CreepRole } from "./role.interface";
-import { WorkerTask } from "./constants/role.worker.const";
+import creepService from "../../services/creep.service";
+import { CreepRole } from "../role.interface";
+import { WorkerTask } from "../constants/role.worker.const";
 
 const roleWorker: CreepRole = {
   creepsPerRoom: 5,

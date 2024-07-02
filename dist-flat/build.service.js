@@ -4,6 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var container_service_1 = __importDefault(require("./container.service"));
+var link_service_1 = __importDefault(require("./link.service"));
+var linkService = new link_service_1.default();
 var buildService = {
     structureCache: {},
     cachedPaths: [],
@@ -67,6 +69,10 @@ var buildService = {
                     // Build containers every 233 ticks.
                     if (Game.time % 233 === 0)
                         this.buildContainers(room);
+                    // Build links every 244 ticks.
+                    if (Game.time % 244 === 0 && linkService.isLinksAvailable(room)) {
+                        linkService.buildLinks(room);
+                    }
                 }
             }
         }

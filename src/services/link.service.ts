@@ -1,0 +1,254 @@
+class LinkService {
+  isLinksAvailable(room: Room): boolean {
+    if (room.controller && room.controller.level >= 5) {
+      const links = room.find(FIND_STRUCTURES, {
+        filter: (structure) => structure.structureType === STRUCTURE_LINK,
+      });
+
+      const constructionSites = room.find(FIND_CONSTRUCTION_SITES, {
+        filter: (site) => site.structureType === STRUCTURE_LINK,
+      });
+
+      const maxLinks =
+        CONTROLLER_STRUCTURES[STRUCTURE_LINK][room.controller.level];
+
+      if (links.length + constructionSites.length < maxLinks) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
+  isStoragesLinked(room: Room): boolean {
+    const storages = room.find(FIND_STRUCTURES, {
+      filter: (structure) => structure.structureType === STRUCTURE_STORAGE,
+    }) as StructureStorage[];
+
+    if (storages.length === 0) {
+      return false;
+    }
+
+    const terrain = room.getTerrain();
+    const offsets = [
+      { x: -1, y: -1 },
+      { x: 0, y: -1 },
+      { x: 1, y: -1 },
+      { x: -1, y: 0 },
+      { x: 1, y: 0 },
+      { x: -1, y: 1 },
+      { x: 0, y: 1 },
+      { x: 1, y: 1 },
+    ];
+
+    // Проверяем каждое хранилище
+    for (const storage of storages) {
+      const storagePos = storage.pos;
+
+      for (const offset of offsets) {
+        const x = storagePos.x + offset.x;
+        const y = storagePos.y + offset.y;
+
+        // Ensure the position is within room boundaries and not a wall.
+        if (terrain.get(x, y) !== TERRAIN_MASK_WALL) {
+          const structuresAtPos = room.lookForAt(LOOK_STRUCTURES, x, y);
+          const hasLink = structuresAtPos.some(
+            (structure) => structure.structureType === STRUCTURE_LINK
+          );
+
+          if (hasLink) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  findBestLinkPosition(
+    room: Room,
+    sourcePos: RoomPosition
+  ): RoomPosition | null {
+    const terrain = room.getTerrain();
+    const offsets = [
+      { x: -2, y: -2 },
+      { x: -1, y: -2 },
+      { x: 0, y: -2 },
+      { x: 1, y: -2 },
+      { x: 2, y: -2 },
+      { x: -2, y: -1 },
+      { x: 2, y: -1 },
+      { x: -2, y: 0 },
+      { x: 2, y: 0 },
+      { x: -2, y: 1 },
+      { x: 2, y: 1 },
+      { x: -2, y: 2 },
+      { x: -1, y: 2 },
+      { x: 0, y: 2 },
+      { x: 1, y: 2 },
+      { x: 2, y: 2 },
+    ];
+    let bestPosition: RoomPosition | null = null;
+    let maxFreeSpaces = -1;
+
+    for (let offset of offsets) {
+      const x = sourcePos.x + offset.x;
+      const y = sourcePos.y + offset.y;
+
+      // Ensure the position is within room boundaries and not a wall.
+      if (terrain.get(x, y) !== TERRAIN_MASK_WALL) {
+        // Ensure there is no container at the position
+        const structuresAtPos = room.lookForAt(LOOK_STRUCTURES, x, y);
+        const hasContainer = structuresAtPos.some(
+          (structure) => structure.structureType === STRUCTURE_CONTAINER
+        );
+
+        if (!hasContainer) {
+          const area = room.lookForAtArea(
+            LOOK_TERRAIN,
+            y - 1,
+            x - 1,
+            y + 1,
+            x + 1,
+            true
+          );
+          const freeSpaces = area.filter(
+            (spot) => spot.terrain !== "wall"
+          ).length;
+
+          // Check if this position has more free spaces than the current best.
+          if (freeSpaces > maxFreeSpaces) {
+            bestPosition = new RoomPosition(x, y, room.name);
+            maxFreeSpaces = freeSpaces;
+          }
+        }
+      }
+    }
+
+    return bestPosition;
+  }
+
+  findBestLinkPositionNearStorage(
+    room: Room,
+    storagePos: RoomPosition
+  ): RoomPosition | null {
+    const terrain = room.getTerrain();
+    const offsets = [
+      { x: -2, y: -2 },
+      { x: -1, y: -2 },
+      { x: 0, y: -2 },
+      { x: 1, y: -2 },
+      { x: 2, y: -2 },
+      { x: -2, y: -1 },
+      { x: 2, y: -1 },
+      { x: -2, y: 0 },
+      { x: 2, y: 0 },
+      { x: -2, y: 1 },
+      { x: 2, y: 1 },
+      { x: -2, y: 2 },
+      { x: -1, y: 2 },
+      { x: 0, y: 2 },
+      { x: 1, y: 2 },
+      { x: 2, y: 2 },
+    ];
+    let bestPosition: RoomPosition | null = null;
+    let maxFreeSpaces = -1;
+
+    for (const offset of offsets) {
+      const x = storagePos.x + offset.x;
+      const y = storagePos.y + offset.y;
+
+      // Ensure the position is within room boundaries and is not a wall.
+      const terrainType = terrain.get(x, y);
+      if (terrainType !== TERRAIN_MASK_WALL) {
+        // Ensure there are no structures or construction sites at the position
+        const structuresAtPos = room.lookForAt(LOOK_STRUCTURES, x, y);
+        const constructionSitesAtPos = room.lookForAt(
+          LOOK_CONSTRUCTION_SITES,
+          x,
+          y
+        );
+        if (
+          structuresAtPos.length === 0 &&
+          constructionSitesAtPos.length === 0
+        ) {
+          const area = room.lookForAtArea(
+            LOOK_TERRAIN,
+            y - 1,
+            x - 1,
+            y + 1,
+            x + 1,
+            true
+          );
+          const freeSpaces = area.filter(
+            (spot) =>
+              spot.terrain !== "wall" &&
+              (spot.terrain === "plain" ||
+                spot.terrain === "swamp" ||
+                spot.terrain === "road")
+          ).length;
+
+          // Check if this position has more free spaces than the current best.
+          if (freeSpaces > maxFreeSpaces) {
+            bestPosition = new RoomPosition(x, y, room.name);
+            maxFreeSpaces = freeSpaces;
+          }
+        }
+      }
+    }
+
+    return bestPosition;
+  }
+
+  buildLinks(room: Room): void {
+    const storages = room.find(FIND_STRUCTURES, {
+      filter: (structure) => structure.structureType === STRUCTURE_STORAGE,
+    }) as StructureStorage[];
+
+    if (storages.length === 0) {
+      return;
+    }
+
+    // Link storage.
+    if (!this.isStoragesLinked(room)) {
+      for (let storage of storages) {
+        const bestPosition = this.findBestLinkPositionNearStorage(
+          room,
+          storage.pos
+        );
+        if (bestPosition) {
+          // room.createFlag(bestPosition, `Storage-${storage.id}`, COLOR_YELLOW);
+          room.createConstructionSite(
+            bestPosition.x,
+            bestPosition.y,
+            STRUCTURE_LINK
+          );
+        }
+      }
+    }
+
+    // Link sources.
+    const sources = room.find(FIND_SOURCES);
+
+    for (let source of sources) {
+      const bestSourcePosition = this.findBestLinkPosition(room, source.pos);
+      if (bestSourcePosition) {
+        room.createConstructionSite(
+          bestSourcePosition.x,
+          bestSourcePosition.y,
+          STRUCTURE_LINK
+        );
+        // room.createFlag(
+        //   bestSourcePosition,
+        //   `SourceFlag-${source.id}`,
+        //   COLOR_YELLOW
+        // );
+      }
+    }
+  }
+}
+
+export default LinkService;

@@ -3,7 +3,7 @@ import creepService from "../services/creep.service";
 import { CreepRole } from "./role.interface";
 
 const roleBuilder: CreepRole = {
-  creepsPerRoom: 2,
+  creepsPerRoom: 0,
   namePrefix: "Builder",
   memoryKey: "builder",
   bodyParts: [WORK, CARRY, MOVE],

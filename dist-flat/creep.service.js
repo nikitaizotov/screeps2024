@@ -1,13 +1,4 @@
 "use strict";
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -226,12 +217,12 @@ var creepService = {
         }
         return false;
     },
-    // findIdleCreep: function (creep: Creep): void {
-    //   if (this.isCreepIsStuck(creep)) {
-    //     creep.memory.targetId = null;
-    //     creep.memory.path = undefined;
-    //   }
-    // },
+    findIdleCreep: function (creep) {
+        if (this.isCreepIsStuck(creep)) {
+            creep.memory.targetId = null;
+            creep.memory.path = undefined;
+        }
+    },
     moveAndCollectFromContainer: function (creep, container) {
         var action = creep.withdraw(container, RESOURCE_ENERGY);
         if (action === ERR_NOT_IN_RANGE) {
@@ -297,7 +288,6 @@ var creepService = {
         }
     },
     taskTransfer: function (creep) {
-        var _this = this;
         if (creep.store[RESOURCE_ENERGY] == 0) {
             this.setTask(creep, role_worker_const_1.WorkerTask.Harvesting);
             return;
@@ -306,31 +296,37 @@ var creepService = {
             var room = creep.room;
             var targets = room.find(FIND_STRUCTURES, {
                 filter: function (structure) {
+                    var creepsHeadingToDist = lodash_1.default.filter(Object.values(Game.creeps), function (c) { return c.memory.targetId === structure.id; });
                     return ((structure.structureType === STRUCTURE_SPAWN ||
-                        structure.structureType === STRUCTURE_TOWER ||
                         structure.structureType === STRUCTURE_EXTENSION) &&
                         structure.store &&
+                        creepsHeadingToDist.length === 0 &&
                         structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
                 },
             });
-            var spawns = targets.filter(function (t) { return t.structureType === STRUCTURE_SPAWN; });
-            var extensions = targets.filter(function (t) { return t.structureType === STRUCTURE_EXTENSION; });
-            var towers = targets.filter(function (t) { return t.structureType === STRUCTURE_TOWER; });
-            var sortedExtensions = extensions
-                .filter(function (ext) { return !_this.isTargetedByOtherCreeps(ext); })
-                .sort(function (a, b) { return creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b); });
-            var sortedSpawns = spawns
-                .filter(function (spawn) { return !_this.isTargetedByOtherCreeps(spawn); })
-                .sort(function (a, b) { return creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b); });
-            var sortedTowers = towers.sort(function (a, b) { return creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b); });
-            var priorityTargets = __spreadArray(__spreadArray(__spreadArray([], sortedSpawns, true), sortedExtensions, true), sortedTowers, true);
-            if (priorityTargets.length) {
-                var newTarget = targets[0];
-                creep.memory.targetId = newTarget.id;
-                creep.memory.path = creep.pos.findPathTo(newTarget);
+            var target = creep.pos.findClosestByPath(targets);
+            if (target) {
+                creep.memory.targetId = target.id;
+                creep.memory.path = creep.pos.findPathTo(target);
             }
             else {
-                this.setTask(creep, role_worker_const_1.WorkerTask.Idling);
+                var towers = room.find(FIND_STRUCTURES, {
+                    filter: function (structure) {
+                        return (structure.structureType === STRUCTURE_TOWER &&
+                            structure.store &&
+                            structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
+                    },
+                });
+                var tower = creep.pos.findClosestByPath(towers);
+                if (tower) {
+                    if (tower) {
+                        creep.memory.targetId = tower.id;
+                        creep.memory.path = creep.pos.findPathTo(tower);
+                    }
+                }
+                else {
+                    this.setTask(creep, role_worker_const_1.WorkerTask.Idling);
+                }
             }
         }
         else {
@@ -392,12 +388,14 @@ var creepService = {
         else {
             var target = Game.getObjectById(creep.memory.targetId);
             if (!target) {
+                this.setTask(creep, role_worker_const_1.WorkerTask.Idling);
                 return;
             }
             var action = creep.repair(target);
             if ("progress" in target) {
                 action = creep.build(target);
             }
+            creep.say(action);
             if (action === ERR_NOT_IN_RANGE) {
                 var moveResult = creep.moveByPath(creep.memory.path);
                 if (!("progress" in target) && target.hits === target.hitsMax) {
@@ -409,6 +407,11 @@ var creepService = {
             }
             else if (action === ERR_INVALID_TARGET || action === ERR_NO_BODYPART) {
                 this.setTask(creep, role_worker_const_1.WorkerTask.Harvesting);
+            }
+            else if (action === OK &&
+                !("progress" in target) &&
+                target.hits === target.hitsMax) {
+                this.setTask(creep, role_worker_const_1.WorkerTask.Idling);
             }
         }
     },

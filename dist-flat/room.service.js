@@ -14,11 +14,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var lodash_1 = __importDefault(require("lodash"));
 var role_WallAndRampartBuilder_1 = __importDefault(require("./role.WallAndRampartBuilder"));
-var role_ranged_1 = __importDefault(require("./role.ranged"));
 var role_scout_1 = __importDefault(require("./role.scout"));
 var structure_tower_1 = __importDefault(require("./structure.tower"));
 var role_builder_1 = __importDefault(require("./role.builder"));
 var build_service_1 = __importDefault(require("./build.service"));
+var creep_service_1 = __importDefault(require("./creep.service"));
 var utils_service_1 = __importDefault(require("./utils.service"));
 var role_miner_1 = __importDefault(require("./role.miner"));
 var role_worker_1 = __importDefault(require("./role.worker"));
@@ -28,10 +28,10 @@ var roomService = {
     enabledRoles: [
         role_worker_1.default,
         role_miner_1.default,
-        // roleHarvester,
-        // roleUpgrader,
-        // roleBuilder,
-        role_ranged_1.default,
+        //roleHarvester,
+        //roleUpgrader,
+        //roleBuilder,
+        // roleRanged,
         role_WallAndRampartBuilder_1.default,
         // roleScout,
     ],
@@ -186,9 +186,9 @@ var roomService = {
                 var timeToCheck = creep.memory.role === role_miner_1.default.memoryKey ? 500 : 1;
                 timeToCheck =
                     creep.memory.role === role_scout_1.default.memoryKey ? 20 : timeToCheck;
-                // if (Game.time % timeToCheck === 0) {
-                //   creepService.findIdleCreep(creep);
-                // }
+                if (Game.time % timeToCheck === 0) {
+                    creep_service_1.default.findIdleCreep(creep);
+                }
                 var role = this_2.enabledRoles.find(function (role) { return role.memoryKey === creep.memory.role; });
                 if (role) {
                     role.run(creep);

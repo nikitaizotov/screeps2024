@@ -2,7 +2,7 @@ import creepService from "../services/creep.service";
 import { CreepRole } from "./role.interface";
 
 const roleUpgrader: CreepRole = {
-  creepsPerRoom: 2,
+  creepsPerRoom: 0,
   namePrefix: "Upgrader",
   memoryKey: "upgrader",
   bodyParts: [WORK, CARRY, MOVE],

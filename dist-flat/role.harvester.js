@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var lodash_1 = __importDefault(require("lodash"));
 var creep_service_1 = __importDefault(require("./creep.service"));
 var roleHarvester = {
-    creepsPerRoom: 6,
+    creepsPerRoom: 0,
     namePrefix: "Harvester",
     memoryKey: "harvester",
     bodyParts: [WORK, CARRY, MOVE],

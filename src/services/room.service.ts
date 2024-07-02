@@ -20,10 +20,10 @@ const roomService = {
   enabledRoles: [
     roleWorker,
     roleMiner,
-    // roleHarvester,
-    // roleUpgrader,
-    // roleBuilder,
-    roleRanged,
+    //roleHarvester,
+    //roleUpgrader,
+    //roleBuilder,
+    // roleRanged,
     roleWallAndRampBuilder,
     // roleScout,
   ],
@@ -215,9 +215,9 @@ const roomService = {
         timeToCheck =
           creep.memory.role === roleScout.memoryKey ? 20 : timeToCheck;
 
-        // if (Game.time % timeToCheck === 0) {
-        //   creepService.findIdleCreep(creep);
-        // }
+        if (Game.time % timeToCheck === 0) {
+          creepService.findIdleCreep(creep);
+        }
 
         const role = this.enabledRoles.find(
           (role) => role.memoryKey === creep.memory.role

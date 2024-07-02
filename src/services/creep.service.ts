@@ -268,12 +268,12 @@ const creepService = {
     return false;
   },
 
-  // findIdleCreep: function (creep: Creep): void {
-  //   if (this.isCreepIsStuck(creep)) {
-  //     creep.memory.targetId = null;
-  //     creep.memory.path = undefined;
-  //   }
-  // },
+  findIdleCreep: function (creep: Creep): void {
+    if (this.isCreepIsStuck(creep)) {
+      creep.memory.targetId = null;
+      creep.memory.path = undefined;
+    }
+  },
 
   moveAndCollectFromContainer: function (
     creep: Creep,
@@ -365,46 +365,46 @@ const creepService = {
       const room = creep.room;
       const targets = room.find(FIND_STRUCTURES, {
         filter: (structure: AnyStructure) => {
+          const creepsHeadingToDist = _.filter(
+            Object.values(Game.creeps),
+            (c: Creep) => c.memory.targetId === structure.id
+          );
           return (
             (structure.structureType === STRUCTURE_SPAWN ||
-              structure.structureType === STRUCTURE_TOWER ||
               structure.structureType === STRUCTURE_EXTENSION) &&
             structure.store &&
+            creepsHeadingToDist.length === 0 &&
             structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
           );
         },
       });
 
-      const spawns = targets.filter((t) => t.structureType === STRUCTURE_SPAWN);
-      const extensions = targets.filter(
-        (t) => t.structureType === STRUCTURE_EXTENSION
-      );
-      const towers = targets.filter((t) => t.structureType === STRUCTURE_TOWER);
+      let target = creep.pos.findClosestByPath(targets);
 
-      const sortedExtensions = extensions
-        .filter((ext) => !this.isTargetedByOtherCreeps(ext))
-        .sort((a, b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b));
-      const sortedSpawns = spawns
-        .filter((spawn) => !this.isTargetedByOtherCreeps(spawn))
-        .sort((a, b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b));
-      const sortedTowers = towers.sort(
-        (a, b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b)
-      );
-
-      const priorityTargets = [
-        ...sortedSpawns,
-        ...sortedExtensions,
-        ...sortedTowers,
-      ];
-
-      if (priorityTargets.length) {
-        const newTarget = targets[0];
-        creep.memory.targetId = newTarget.id as Id<
-          Structure<StructureConstant>
-        >;
-        creep.memory.path = creep.pos.findPathTo(newTarget);
+      if (target) {
+        creep.memory.targetId = target.id;
+        creep.memory.path = creep.pos.findPathTo(target);
       } else {
-        this.setTask(creep, WorkerTask.Idling);
+        const towers = room.find(FIND_STRUCTURES, {
+          filter: (structure: AnyStructure) => {
+            return (
+              structure.structureType === STRUCTURE_TOWER &&
+              structure.store &&
+              structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+            );
+          },
+        });
+
+        let tower = creep.pos.findClosestByPath(towers);
+
+        if (tower) {
+          if (tower) {
+            creep.memory.targetId = tower.id;
+            creep.memory.path = creep.pos.findPathTo(tower);
+          }
+        } else {
+          this.setTask(creep, WorkerTask.Idling);
+        }
       }
     } else {
       const target = Game.getObjectById(
@@ -484,12 +484,16 @@ const creepService = {
     } else {
       const target: any = Game.getObjectById(creep.memory.targetId as any);
       if (!target) {
+        this.setTask(creep, WorkerTask.Idling);
         return;
       }
       let action: any = creep.repair(target);
       if ("progress" in target) {
         action = creep.build(target);
       }
+
+      creep.say(action as any);
+
       if (action === ERR_NOT_IN_RANGE) {
         const moveResult = creep.moveByPath(creep.memory.path as PathStep[]);
         if (!("progress" in target) && target.hits === target.hitsMax) {
@@ -500,6 +504,12 @@ const creepService = {
         }
       } else if (action === ERR_INVALID_TARGET || action === ERR_NO_BODYPART) {
         this.setTask(creep, WorkerTask.Harvesting);
+      } else if (
+        action === OK &&
+        !("progress" in target) &&
+        target.hits === target.hitsMax
+      ) {
+        this.setTask(creep, WorkerTask.Idling);
       }
     }
   },

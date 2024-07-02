@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var creep_service_1 = __importDefault(require("./creep.service"));
 var roleBuilder = {
-    creepsPerRoom: 2,
+    creepsPerRoom: 0,
     namePrefix: "Builder",
     memoryKey: "builder",
     bodyParts: [WORK, CARRY, MOVE],

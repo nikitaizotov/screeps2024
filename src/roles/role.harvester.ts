@@ -3,7 +3,7 @@ import creepService from "../services/creep.service";
 import { CreepRole } from "./role.interface";
 
 const roleHarvester: CreepRole = {
-  creepsPerRoom: 6,
+  creepsPerRoom: 0,
   namePrefix: "Harvester",
   memoryKey: "harvester",
   bodyParts: [WORK, CARRY, MOVE],

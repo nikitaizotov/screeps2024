@@ -44,7 +44,6 @@ const buildService = {
 
   build(): void {
     try {
-      // Инициализация Memory, если не инициализировано
       if (!Memory.structureCache) Memory.structureCache = {};
       if (!Memory.cachedPaths) Memory.cachedPaths = [];
       if (!Memory.exitZones) Memory.exitZones = [] as any;
@@ -59,7 +58,6 @@ const buildService = {
           room.controller.my &&
           !this.checkConstructionSites(room)
         ) {
-          // Проверка и инициализация кэша для комнаты
           if (!Memory.structureCache[room.name]) {
             Memory.structureCache[room.name] = {
               spawns: room.find(FIND_MY_SPAWNS),
@@ -312,9 +310,12 @@ const buildService = {
       let exitZones = this.exitZones;
       let cachedPaths = Memory.cachedPaths;
 
-      for (let radius = 1; structuresPlanned < maxCount; radius += 2) {
-        for (let xOffset = -radius; xOffset <= radius; xOffset += 2) {
-          for (let yOffset = -radius; yOffset <= radius; yOffset += 2) {
+      for (let radius = 1; structuresPlanned < maxCount; radius++) {
+        for (let xOffset = -radius; xOffset <= radius; xOffset++) {
+          for (let yOffset = -radius; yOffset <= radius; yOffset++) {
+            // Шахматный порядок по диагоналям
+            if ((xOffset + yOffset) % 2 !== 0) continue;
+
             let x = roomCenter.x + xOffset;
             let y = roomCenter.y + yOffset;
             const areaToCheck: LookAtResultWithPos[] = room.lookAtArea(
@@ -324,7 +325,6 @@ const buildService = {
               x + 1,
               true
             );
-            // const isWallNear = areaToCheck.find((a) => a.terrain === "wall");
             const hasContainerNearby = areaToCheck.some(
               (a) =>
                 a.structure && a.structure.structureType === STRUCTURE_CONTAINER
@@ -463,12 +463,12 @@ const buildService = {
 
             let positions = [
               [x - 1, y - 1],
-              [x, y - 1],
+              // [x, y - 1],
               [x + 1, y - 1],
-              [x - 1, y],
-              [x + 1, y],
+              // [x - 1, y],
+              // [x + 1, y],
               [x - 1, y + 1],
-              [x, y + 1],
+              // [x, y + 1],
               [x + 1, y + 1],
             ];
 

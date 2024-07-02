@@ -6,7 +6,6 @@ const creepService = {
     if (!creep.memory.path) {
       return;
     }
-
     const visual = new RoomVisual(creep.room.name);
     let currentPos = new RoomPosition(
       creep.pos.x,
@@ -14,17 +13,14 @@ const creepService = {
       creep.room.name
     );
     let pathToDraw = creep.memory.path;
-
     let inPathPosIndex = creep.memory.path.findIndex(
       (elm) => elm.x === creep.pos.x && elm.y === creep.pos.y
     );
-
     if (inPathPosIndex > -1) {
       pathToDraw = creep.memory.path.slice(inPathPosIndex);
     } else {
       pathToDraw = creep.memory.path;
     }
-
     pathToDraw.forEach((step, index) => {
       const nextPos = new RoomPosition(step.x, step.y, creep.room.name);
       if (index === 0) {

@@ -22,7 +22,6 @@ var buildService = {
     firstStructurePos: null,
     build: function () {
         try {
-            // Инициализация Memory, если не инициализировано
             if (!Memory.structureCache)
                 Memory.structureCache = {};
             if (!Memory.cachedPaths)
@@ -37,7 +36,6 @@ var buildService = {
                 if (room.controller &&
                     room.controller.my &&
                     !this.checkConstructionSites(room)) {
-                    // Проверка и инициализация кэша для комнаты
                     if (!Memory.structureCache[room.name]) {
                         Memory.structureCache[room.name] = {
                             spawns: room.find(FIND_MY_SPAWNS),
@@ -226,13 +224,15 @@ var buildService = {
             var roomCenter = new RoomPosition(25, 25, room.name);
             var exitZones = this.exitZones;
             var cachedPaths = Memory.cachedPaths;
-            for (var radius = 1; structuresPlanned < maxCount; radius += 2) {
-                for (var xOffset = -radius; xOffset <= radius; xOffset += 2) {
-                    for (var yOffset = -radius; yOffset <= radius; yOffset += 2) {
+            for (var radius = 1; structuresPlanned < maxCount; radius++) {
+                for (var xOffset = -radius; xOffset <= radius; xOffset++) {
+                    for (var yOffset = -radius; yOffset <= radius; yOffset++) {
+                        // Шахматный порядок по диагоналям
+                        if ((xOffset + yOffset) % 2 !== 0)
+                            continue;
                         var x = roomCenter.x + xOffset;
                         var y = roomCenter.y + yOffset;
                         var areaToCheck = room.lookAtArea(y - 1, x - 1, y + 1, x + 1, true);
-                        // const isWallNear = areaToCheck.find((a) => a.terrain === "wall");
                         var hasContainerNearby = areaToCheck.some(function (a) {
                             return a.structure && a.structure.structureType === STRUCTURE_CONTAINER;
                         });
@@ -329,12 +329,12 @@ var buildService = {
                         var y = structure.pos.y;
                         var positions = [
                             [x - 1, y - 1],
-                            [x, y - 1],
+                            // [x, y - 1],
                             [x + 1, y - 1],
-                            [x - 1, y],
-                            [x + 1, y],
+                            // [x - 1, y],
+                            // [x + 1, y],
                             [x - 1, y + 1],
-                            [x, y + 1],
+                            // [x, y + 1],
                             [x + 1, y + 1],
                         ];
                         positions.forEach(function (pos) {

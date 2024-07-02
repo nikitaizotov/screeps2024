@@ -43,7 +43,6 @@ class LinkService {
       { x: 1, y: 1 },
     ];
 
-    // Проверяем каждое хранилище
     for (const storage of storages) {
       const storagePos = storage.pos;
 

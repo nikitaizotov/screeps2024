@@ -28,6 +28,13 @@ export class WorkerService {
             enabledTask as keyof typeof roleWorker.tasksPerRoom
           ];
 
+        if (
+          enabledTask === WorkerTask.Transferring &&
+          !this.isTransferNeeded(spawn)
+        ) {
+          continue;
+        }
+
         const workersPrrPosition = Object.keys(workersPlanned);
 
         const workersRequiredPerTask = workersPlanned[
@@ -61,5 +68,19 @@ export class WorkerService {
         }
       }
     }
+  }
+  isTransferNeeded(spawn: StructureSpawn): boolean {
+    const targets = spawn.room.find(FIND_STRUCTURES, {
+      filter: (structure: AnyStructure) => {
+        return (
+          (structure.structureType === STRUCTURE_SPAWN ||
+            structure.structureType === STRUCTURE_TOWER ||
+            structure.structureType === STRUCTURE_EXTENSION) &&
+          structure.store &&
+          structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+        );
+      },
+    });
+    return targets.length !== 0;
   }
 }

@@ -535,7 +535,7 @@ const creepService = {
 
   taskHarvest: function (creep: Creep) {
     if (creep.store.getFreeCapacity() == 0) {
-      creep.memory.task = WorkerTask.Idling;
+      this.setIdlingTask(creep, WorkerTask.Idling);
     }
 
     if (!creep.memory.path || !creep.memory.targetId) {
@@ -547,7 +547,6 @@ const creepService = {
 
   taskTransfer: function (creep: Creep) {
     if (creep.store[RESOURCE_ENERGY] == 0) {
-      console.log("UNSET!!!!!!!!!");
       creep.memory.path = undefined;
       creep.memory.targetId = null;
       creep.memory.task = WorkerTask.Harvesting;
@@ -597,14 +596,12 @@ const creepService = {
         >;
         creep.memory.path = creep.pos.findPathTo(newTarget);
       } else {
-        creep.memory.task = WorkerTask.Idling;
+        this.setIdlingTask(creep, WorkerTask.Idling);
       }
     } else {
       const target = Game.getObjectById(
         creep.memory.targetId as Id<Structure<StructureConstant>>
       );
-
-      console.log("HERE");
 
       // Reset target if it's invalid or full.
       if (
@@ -614,18 +611,17 @@ const creepService = {
             RESOURCE_ENERGY
           ) === 0)
       ) {
-        creep.memory.path = undefined;
-        creep.memory.targetId = null;
-        creep.memory.task = WorkerTask.Idling;
+        creep.say("1");
+
+        this.setIdlingTask(creep, WorkerTask.Idling);
       } else {
-        console.log("TADDAAA");
         const action = creep.transfer(
           target as AnyStoreStructure,
           RESOURCE_ENERGY
         );
 
         if (action === ERR_FULL) {
-          creep.memory.task = WorkerTask.Idling;
+          this.setIdlingTask(creep, WorkerTask.Idling);
         }
 
         if (action === ERR_NOT_IN_RANGE) {
@@ -633,13 +629,16 @@ const creepService = {
 
           if (moveResult !== OK && moveResult !== ERR_TIRED) {
             console.log(`Move by path failed, error: ${moveResult}`);
-            creep.memory.path = undefined;
-            creep.memory.targetId = null;
-            creep.memory.task = WorkerTask.Idling;
+            this.setIdlingTask(creep, WorkerTask.Idling);
           }
         }
       }
     }
+  },
+  setIdlingTask(creep: Creep, task: typeof WorkerTask): void {
+    creep.memory.path = undefined;
+    creep.memory.targetId = null;
+    creep.memory.task = task;
   },
 };
 

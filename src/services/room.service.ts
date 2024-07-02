@@ -19,12 +19,12 @@ const workerService = new WorkerService();
 const roomService = {
   enabledRoles: [
     roleWorker,
-    //    roleMiner,
+    roleMiner,
     // roleHarvester,
     // roleUpgrader,
     // roleBuilder,
-    // roleRanged,
-    // roleWallAndRampBuilder,
+    roleRanged,
+    roleWallAndRampBuilder,
     // roleScout,
   ],
 

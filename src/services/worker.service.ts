@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { WorkerTask } from "../roles/constants/role.worker.const";
 import roleWorker from "../roles/role.worker";
+import creepService from "./creep.service";
 
 export class WorkerService {
   manageWorkers(): void {
@@ -35,6 +36,10 @@ export class WorkerService {
           continue;
         }
 
+        if (enabledTask === WorkerTask.Building && !this.isBuildNeeded(spawn)) {
+          continue;
+        }
+
         const workersPrrPosition = Object.keys(workersPlanned);
 
         const workersRequiredPerTask = workersPlanned[
@@ -53,22 +58,30 @@ export class WorkerService {
 
         if (
           workersIdling.length !== 0 &&
-          workersRequiredPerTask !== 0 &&
           workersOnTask.length < workersRequiredPerTask
         ) {
           const worker = workersIdling.shift();
           if (worker) {
             const creep = Game.getObjectById(worker.id);
             if (creep) {
-              creep.memory.task = enabledTask;
               creep.memory.path = undefined;
               creep.memory.targetId = null;
+              creep.memory.task = enabledTask;
             }
           }
         }
       }
+
+      if (workersIdling.length > 0) {
+        for (let creep of workersIdling) {
+          creep.memory.path = undefined;
+          creep.memory.targetId = null;
+          creep.memory.task = WorkerTask.Upgrading;
+        }
+      }
     }
   }
+
   isTransferNeeded(spawn: StructureSpawn): boolean {
     const targets = spawn.room.find(FIND_STRUCTURES, {
       filter: (structure: AnyStructure) => {
@@ -82,5 +95,28 @@ export class WorkerService {
       },
     });
     return targets.length !== 0;
+  }
+
+  isBuildNeeded(spawn: StructureSpawn): boolean {
+    const targets: AnyStructure[] = spawn.room.find(FIND_STRUCTURES, {
+      filter: (structure) => {
+        return (
+          structure.hits < structure.hitsMax &&
+          structure.structureType !== STRUCTURE_WALL &&
+          structure.structureType !== STRUCTURE_RAMPART
+        );
+      },
+    });
+
+    if (targets.length > 0) {
+      return true;
+    } else {
+      const constructionSites = spawn.room.find(FIND_CONSTRUCTION_SITES);
+      if (constructionSites.length > 0) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

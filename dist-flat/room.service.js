@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var lodash_1 = __importDefault(require("lodash"));
 var role_WallAndRampartBuilder_1 = __importDefault(require("./role.WallAndRampartBuilder"));
+var role_ranged_1 = __importDefault(require("./role.ranged"));
 var role_scout_1 = __importDefault(require("./role.scout"));
 var structure_tower_1 = __importDefault(require("./structure.tower"));
 var role_builder_1 = __importDefault(require("./role.builder"));
@@ -26,13 +27,13 @@ var workerService = new worker_service_1.WorkerService();
 var roomService = {
     enabledRoles: [
         role_worker_1.default,
-        // roleMiner,
+        role_miner_1.default,
         // roleHarvester,
         // roleUpgrader,
         // roleBuilder,
-        //roleRanged,
-        // roleWallAndRampBuilder,
-        //roleScout,
+        role_ranged_1.default,
+        role_WallAndRampartBuilder_1.default,
+        // roleScout,
     ],
     routines: function () {
         try {

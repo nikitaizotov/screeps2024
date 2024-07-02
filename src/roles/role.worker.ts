@@ -18,6 +18,8 @@ const roleWorker: CreepRole = {
   },
   tasksPerRoom: {
     Transferring: { "1": 1, "2": 1, "3": 1, "4": 2, "5": 2 },
+    Upgrading: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1 },
+    Building: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1 },
   },
 
   run: function (creep: Creep) {
@@ -26,34 +28,29 @@ const roleWorker: CreepRole = {
       return;
     }
 
-    creep.say(creep.memory.task);
+    //creep.say(creep.memory.task);
 
     // If creep has its path, let's show it!
     creepService.drawPath(creep);
-    console.log(
-      "creep.memory.taskcreep.memory.taskcreep.memory.task",
-      creep.memory.task
-    );
     switch (creep.memory.task) {
       case WorkerTask.Harvesting:
         creepService.taskHarvest(creep);
         break;
       case WorkerTask.Transferring:
-        console.log("TransferringTransferringTransferringTransferring");
         creepService.taskTransfer(creep);
         break;
       case WorkerTask.Idling:
         console.log(`Creep ${creep.name} is idling.`);
         break;
+      case WorkerTask.Upgrading:
+        creepService.taskUpgrade(creep);
+        break;
+      case WorkerTask.Building:
+        creepService.taskBuild(creep);
+        break;
       default:
         creep.memory.task = WorkerTask.Harvesting;
     }
-
-    // if (!creep.memory.task) {
-    //   creep.memory.task = WorkerTask.Harvesting;
-    // } else {
-    //   switch
-    // }
   },
 };
 

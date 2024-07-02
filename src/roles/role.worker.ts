@@ -1,23 +1,23 @@
-import creepService from "./creep.service";
+import creepService from "../services/creep.service";
 import { CreepRole } from "./role.interface";
-import { WorkerTask } from "./role.worker.const";
+import { WorkerTask } from "./constants/role.worker.const";
 
 const roleWorker: CreepRole = {
-  creepsPerRoom: 16,
+  creepsPerRoom: 4,
   namePrefix: "Worker",
   memoryKey: "worker",
   bodyParts: [WORK, CARRY, MOVE],
-  maxBodyPartsMultiplier: 5,
+  maxBodyPartsMultiplier: 10,
   creepsPerSourcePositions: {
     "1": 3,
     "2": 3,
-    "3": 6,
-    "4": 9,
-    "5": 12,
-    "6": 15,
+    "3": 3,
+    "4": 4,
+    "5": 4,
+    "6": 4,
   },
   tasksPerRoom: {
-    Transferring: { "1": 1, "2": 2, "3": 3, "4": 4, "5": 4 },
+    Transferring: { "1": 1, "2": 1, "3": 1, "4": 2, "5": 2 },
   },
 
   run: function (creep: Creep) {
@@ -26,14 +26,20 @@ const roleWorker: CreepRole = {
       return;
     }
 
+    creep.say(creep.memory.task);
+
     // If creep has its path, let's show it!
     creepService.drawPath(creep);
-
+    console.log(
+      "creep.memory.taskcreep.memory.taskcreep.memory.task",
+      creep.memory.task
+    );
     switch (creep.memory.task) {
       case WorkerTask.Harvesting:
         creepService.taskHarvest(creep);
         break;
       case WorkerTask.Transferring:
+        console.log("TransferringTransferringTransferringTransferring");
         creepService.taskTransfer(creep);
         break;
       case WorkerTask.Idling:

@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { WorkerTask } from "./role.worker.const";
+import { WorkerTask } from "../roles/constants/role.worker.const";
 
 const creepService = {
   drawPath: function (creep: Creep): void {
@@ -409,12 +409,12 @@ const creepService = {
     return false;
   },
 
-  findIdleCreep: function (creep: Creep): void {
-    if (this.isCreepIsStuck(creep)) {
-      creep.memory.targetId = null;
-      creep.memory.path = undefined;
-    }
-  },
+  // findIdleCreep: function (creep: Creep): void {
+  //   if (this.isCreepIsStuck(creep)) {
+  //     creep.memory.targetId = null;
+  //     creep.memory.path = undefined;
+  //   }
+  // },
 
   moveAndCollectFromContainer: function (
     creep: Creep,
@@ -546,6 +546,14 @@ const creepService = {
   },
 
   taskTransfer: function (creep: Creep) {
+    if (creep.store[RESOURCE_ENERGY] == 0) {
+      console.log("UNSET!!!!!!!!!");
+      creep.memory.path = undefined;
+      creep.memory.targetId = null;
+      creep.memory.task = WorkerTask.Harvesting;
+      return;
+    }
+
     if (!creep.memory.path || !creep.memory.targetId) {
       const room = creep.room;
       const targets = room.find(FIND_STRUCTURES, {
@@ -596,6 +604,8 @@ const creepService = {
         creep.memory.targetId as Id<Structure<StructureConstant>>
       );
 
+      console.log("HERE");
+
       // Reset target if it's invalid or full.
       if (
         !target ||
@@ -608,10 +618,15 @@ const creepService = {
         creep.memory.targetId = null;
         creep.memory.task = WorkerTask.Idling;
       } else {
+        console.log("TADDAAA");
         const action = creep.transfer(
           target as AnyStoreStructure,
           RESOURCE_ENERGY
         );
+
+        if (action === ERR_FULL) {
+          creep.memory.task = WorkerTask.Idling;
+        }
 
         if (action === ERR_NOT_IN_RANGE) {
           const moveResult = creep.moveByPath(creep.memory.path as PathStep[]);

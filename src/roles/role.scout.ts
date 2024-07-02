@@ -1,5 +1,5 @@
-import buildService from "./build.service";
-import creepService from "./creep.service";
+import buildService from "../services/build.service";
+import creepService from "../services/creep.service";
 import { CreepRole } from "./role.interface";
 
 interface ScoutRoomMemory {

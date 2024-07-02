@@ -1,4 +1,4 @@
-import creepService from "./creep.service";
+import creepService from "../services/creep.service";
 import { CreepRole } from "./role.interface";
 
 const roleUpgrader: CreepRole = {

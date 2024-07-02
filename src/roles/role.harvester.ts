@@ -1,5 +1,5 @@
 import _ from "lodash";
-import creepService from "./creep.service";
+import creepService from "../services/creep.service";
 import { CreepRole } from "./role.interface";
 
 const roleHarvester: CreepRole = {

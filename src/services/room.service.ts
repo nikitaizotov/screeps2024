@@ -1,17 +1,20 @@
 import _ from "lodash";
-import roleWallAndRampBuilder from "./role.WallAndRampartBuilder";
-import roleHarvester from "./role.harvester";
-import roleRanged from "./role.ranged";
-import roleScout from "./role.scout";
-import roleUpgrader from "./role.upgrader";
-import structureTower from "./structure.tower";
-import roleBuilder from "./role.builder";
+import roleWallAndRampBuilder from "../roles/role.WallAndRampartBuilder";
+import roleHarvester from "../roles/role.harvester";
+import roleRanged from "../roles/role.ranged";
+import roleScout from "../roles/role.scout";
+import roleUpgrader from "../roles/role.upgrader";
+import structureTower from "../structures/structure.tower";
+import roleBuilder from "../roles/role.builder";
 import buildService from "./build.service";
 import creepService from "./creep.service";
 import utilsService from "./utils.service";
-import roleMiner from "./role.miner";
-import roleWorker from "./role.worker";
-import { WorkerTask } from "./role.worker.const";
+import roleMiner from "../roles/role.miner";
+import roleWorker from "../roles/role.worker";
+import { WorkerTask } from "../roles/constants/role.worker.const";
+import { WorkerService } from "./worker.service";
+
+const workerService = new WorkerService();
 
 const roomService = {
   enabledRoles: [
@@ -20,9 +23,9 @@ const roomService = {
     // roleHarvester,
     // roleUpgrader,
     // roleBuilder,
-    // roleRanged,
+    //roleRanged,
     // roleWallAndRampBuilder,
-    // roleScout,
+    //roleScout,
   ],
 
   routines: function () {
@@ -32,7 +35,7 @@ const roomService = {
       buildService.build();
       this.structureRoutines();
       this.roomRoutines();
-      this.manageWorkers();
+      workerService.manageWorkers();
     } catch (error: any) {
       console.log(`Error in routines: ${error.message}`);
     }
@@ -212,9 +215,9 @@ const roomService = {
         timeToCheck =
           creep.memory.role === roleScout.memoryKey ? 20 : timeToCheck;
 
-        if (Game.time % timeToCheck === 0) {
-          creepService.findIdleCreep(creep);
-        }
+        // if (Game.time % timeToCheck === 0) {
+        //   creepService.findIdleCreep(creep);
+        // }
 
         const role = this.enabledRoles.find(
           (role) => role.memoryKey === creep.memory.role
@@ -230,33 +233,39 @@ const roomService = {
     }
   },
 
-  manageWorkers: function () {
-    for (let spawnName in Game.spawns) {
-      const spawn = Game.spawns[spawnName];
-      const room = spawn.room;
+  // manageWorkers: function () {
+  //   for (let spawnName in Game.spawns) {
+  //     const spawn = Game.spawns[spawnName];
+  //     const room = spawn.room;
 
-      const workers = _.filter(
-        Game.creeps,
-        (creep) =>
-          creep.memory.role === "worker" &&
-          creep.room.name === spawn.room.name &&
-          creep.memory.task === WorkerTask.Idling
-      );
+  //     const workers = _.filter(
+  //       Game.creeps,
+  //       (creep) =>
+  //         creep.memory.role === "worker" &&
+  //         creep.room.name === spawn.room.name &&
+  //         creep.memory.task === WorkerTask.Idling
+  //     );
 
-      if (!roleWorker.tasksPerRoom) {
-        return;
-      }
-      const enabledTasks = Object.keys(roleWorker.tasksPerRoom);
+  //     if (!roleWorker.tasksPerRoom) {
+  //       return;
+  //     }
+  //     const enabledTasks = Object.keys(roleWorker.tasksPerRoom);
 
-      for (let enabledTask of enabledTasks) {
-        const onTask = workers.filter((w) => w.memory.task === enabledTask);
-        const workersRequired =
-          roleWorker.tasksPerRoom[
-            enabledTask as keyof typeof roleWorker.tasksPerRoom
-          ];
-      }
-    }
-  },
+  //     for (let enabledTask of enabledTasks) {
+  //       const onTask = workers.filter((w) => w.memory.task === enabledTask);
+  //       const workersRequired =
+  //         roleWorker.tasksPerRoom[
+  //           enabledTask as keyof typeof roleWorker.tasksPerRoom
+  //         ];
+
+  //       // if (workersRequired > onTask.length) {
+
+  //       // }
+
+  //       console.warn(">>>>", workersRequired);
+  //     }
+  //   }
+  // },
 
   structureRoutines: function () {
     try {

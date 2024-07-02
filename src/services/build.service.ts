@@ -317,8 +317,28 @@ const buildService = {
           for (let yOffset = -radius; yOffset <= radius; yOffset += 2) {
             let x = roomCenter.x + xOffset;
             let y = roomCenter.y + yOffset;
+            const areaToCheck: LookAtResultWithPos[] = room.lookAtArea(
+              y - 1,
+              x - 1,
+              y + 1,
+              x + 1,
+              true
+            );
+            // const isWallNear = areaToCheck.find((a) => a.terrain === "wall");
+            const hasContainerNearby = areaToCheck.some(
+              (a) =>
+                a.structure && a.structure.structureType === STRUCTURE_CONTAINER
+            );
+            const hasSourceNearby = areaToCheck.some(
+              (a) => a.type === LOOK_SOURCES
+            );
 
-            if (this.isRestrictedZone(exitZones, cachedPaths, x, y)) continue;
+            if (
+              this.isRestrictedZone(exitZones, cachedPaths, x, y) ||
+              hasContainerNearby ||
+              hasSourceNearby
+            )
+              continue;
 
             if (
               this.isValidConstructionPosition(

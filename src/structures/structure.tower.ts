@@ -1,4 +1,4 @@
-import attackService from "./attack.service";
+import attackService from "../services/attack.service";
 
 const towerManager = {
   run(tower: StructureTower): void {

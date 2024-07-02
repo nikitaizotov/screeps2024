@@ -55,13 +55,11 @@ var creepService = {
     },
     findConstructionSite: function (creep) {
         var constructionSites = creep.room.find(FIND_CONSTRUCTION_SITES);
-        console.log(constructionSites.length);
         if (constructionSites.length > 0) {
             var closestSite = creep.pos.findClosestByPath(constructionSites);
             if (closestSite) {
                 creep.memory.path = creep.pos.findPathTo(closestSite);
                 creep.memory.targetId = closestSite.id;
-                console.log("creep.memory.targetId", creep.memory.targetId);
             }
         }
     },
@@ -156,9 +154,6 @@ var creepService = {
         if (bestTarget) {
             creep.memory.path = creep.pos.findPathTo(bestTarget.pos);
             creep.memory.targetId = bestTarget.id;
-        }
-        else {
-            creep.say("No path found!");
         }
     },
     moveAndHarvest: function (creep) {
@@ -345,7 +340,6 @@ var creepService = {
                 if (action === ERR_NOT_IN_RANGE) {
                     var moveResult = creep.moveByPath(creep.memory.path);
                     if (moveResult !== OK && moveResult !== ERR_TIRED) {
-                        console.log("Move by path failed, error: ".concat(moveResult));
                         this.setTask(creep, role_worker_const_1.WorkerTask.Idling);
                     }
                 }
@@ -395,7 +389,6 @@ var creepService = {
             if ("progress" in target) {
                 action = creep.build(target);
             }
-            creep.say(action);
             if (action === ERR_NOT_IN_RANGE) {
                 var moveResult = creep.moveByPath(creep.memory.path);
                 if (!("progress" in target) && target.hits === target.hitsMax) {
@@ -417,7 +410,6 @@ var creepService = {
     },
     setTask: function (creep, task, setFunction) {
         if (setFunction === void 0) { setFunction = "NA"; }
-        console.log("".concat(setFunction, ": Setting task ").concat(task, " for creep ").concat(creep.id));
         creep.memory.path = undefined;
         creep.memory.targetId = null;
         creep.memory.task = task;

@@ -3,7 +3,7 @@ import { CreepRole } from "./role.interface";
 import { WorkerTask } from "./constants/role.worker.const";
 
 const roleWorker: CreepRole = {
-  creepsPerRoom: 4,
+  creepsPerRoom: 5,
   namePrefix: "Worker",
   memoryKey: "worker",
   bodyParts: [WORK, CARRY, MOVE],
@@ -11,13 +11,13 @@ const roleWorker: CreepRole = {
   creepsPerSourcePositions: {
     "1": 3,
     "2": 3,
-    "3": 3,
-    "4": 4,
-    "5": 4,
-    "6": 4,
+    "3": 4,
+    "4": 5,
+    "5": 5,
+    "6": 5,
   },
   tasksPerRoom: {
-    Transferring: { "1": 2, "2": 2, "3": 2, "4": 2, "5": 2 },
+    Transferring: { "1": 2, "2": 2, "3": 2, "4": 3, "5": 4 },
     Upgrading: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1 },
     Building: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1 },
   },

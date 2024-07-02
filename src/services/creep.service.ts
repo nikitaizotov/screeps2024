@@ -65,16 +65,12 @@ const creepService = {
 
   findConstructionSite: function (creep: Creep) {
     const constructionSites = creep.room.find(FIND_CONSTRUCTION_SITES);
-
-    console.log(constructionSites.length);
-
     if (constructionSites.length > 0) {
       let closestSite = creep.pos.findClosestByPath(constructionSites);
 
       if (closestSite) {
         creep.memory.path = creep.pos.findPathTo(closestSite);
         creep.memory.targetId = closestSite.id;
-        console.log("creep.memory.targetId", creep.memory.targetId);
       }
     }
   },
@@ -196,8 +192,6 @@ const creepService = {
     if (bestTarget) {
       creep.memory.path = creep.pos.findPathTo(bestTarget.pos);
       creep.memory.targetId = bestTarget.id;
-    } else {
-      creep.say("No path found!");
     }
   },
 
@@ -434,7 +428,6 @@ const creepService = {
           const moveResult = creep.moveByPath(creep.memory.path as PathStep[]);
 
           if (moveResult !== OK && moveResult !== ERR_TIRED) {
-            console.log(`Move by path failed, error: ${moveResult}`);
             this.setTask(creep, WorkerTask.Idling);
           }
         }
@@ -492,8 +485,6 @@ const creepService = {
         action = creep.build(target);
       }
 
-      creep.say(action as any);
-
       if (action === ERR_NOT_IN_RANGE) {
         const moveResult = creep.moveByPath(creep.memory.path as PathStep[]);
         if (!("progress" in target) && target.hits === target.hitsMax) {
@@ -519,7 +510,6 @@ const creepService = {
     task: typeof WorkerTask,
     setFunction: string = "NA"
   ): void {
-    console.log(`${setFunction}: Setting task ${task} for creep ${creep.id}`);
     creep.memory.path = undefined;
     creep.memory.targetId = null;
     creep.memory.task = task;

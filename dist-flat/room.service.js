@@ -16,7 +16,6 @@ var lodash_1 = __importDefault(require("lodash"));
 var role_WallAndRampartBuilder_1 = __importDefault(require("./role.WallAndRampartBuilder"));
 var role_scout_1 = __importDefault(require("./role.scout"));
 var structure_tower_1 = __importDefault(require("./structure.tower"));
-var role_builder_1 = __importDefault(require("./role.builder"));
 var build_service_1 = __importDefault(require("./build.service"));
 var creep_service_1 = __importDefault(require("./creep.service"));
 var utils_service_1 = __importDefault(require("./utils.service"));
@@ -28,9 +27,6 @@ var roomService = {
     enabledRoles: [
         role_worker_1.default,
         role_miner_1.default,
-        //roleHarvester,
-        //roleUpgrader,
-        //roleBuilder,
         // roleRanged,
         role_WallAndRampartBuilder_1.default,
         // roleScout,
@@ -53,7 +49,6 @@ var roomService = {
             for (var name in Memory.creeps) {
                 if (!Game.creeps[name]) {
                     delete Memory.creeps[name];
-                    console.log("Clearing non-existing creep memory:", name);
                 }
             }
         }
@@ -72,7 +67,7 @@ var roomService = {
     },
     spawnCreeps: function () {
         try {
-            if (Game.time % 2) {
+            if (Game.time % 3) {
                 return;
             }
             var _loop_1 = function (spawnName) {
@@ -93,12 +88,6 @@ var roomService = {
                     var bodyPartsCost = bodyParts.reduce(function (sum, part) { return sum + BODYPART_COST[part]; }, 0);
                     var totalCost = baseCost + bodyPartsCost;
                     var canAfford = energyInExtensions + spawn.store[RESOURCE_ENERGY] >= totalCost;
-                    if (role.memoryKey === role_builder_1.default.memoryKey) {
-                        var constructionSites = spawn.room.find(FIND_CONSTRUCTION_SITES);
-                        if (!constructionSites.length) {
-                            return "continue";
-                        }
-                    }
                     if (role.memoryKey === role_miner_1.default.memoryKey) {
                         var containers = spawn.room.find(FIND_STRUCTURES, {
                             filter: function (structure) {
@@ -156,7 +145,6 @@ var roomService = {
                                         .padStart(6, "0"),
                             },
                         }) === OK) {
-                            console.log("Spawning a new creep: " + newName);
                             return { value: void 0 };
                         }
                     }

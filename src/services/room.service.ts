@@ -1,11 +1,8 @@
 import _ from "lodash";
 import roleWallAndRampBuilder from "../roles/role.WallAndRampartBuilder";
-import roleHarvester from "../roles/role.harvester";
 import roleRanged from "../roles/role.ranged";
 import roleScout from "../roles/role.scout";
-import roleUpgrader from "../roles/role.upgrader";
 import structureTower from "../structures/structure.tower";
-import roleBuilder from "../roles/role.builder";
 import buildService from "./build.service";
 import creepService from "./creep.service";
 import utilsService from "./utils.service";
@@ -20,9 +17,6 @@ const roomService = {
   enabledRoles: [
     roleWorker,
     roleMiner,
-    //roleHarvester,
-    //roleUpgrader,
-    //roleBuilder,
     // roleRanged,
     roleWallAndRampBuilder,
     // roleScout,
@@ -46,7 +40,6 @@ const roomService = {
       for (var name in Memory.creeps) {
         if (!Game.creeps[name]) {
           delete Memory.creeps[name];
-          console.log("Clearing non-existing creep memory:", name);
         }
       }
     } catch (error: any) {
@@ -65,7 +58,7 @@ const roomService = {
 
   spawnCreeps(): void {
     try {
-      if (Game.time % 2) {
+      if (Game.time % 3) {
         return;
       }
 
@@ -100,13 +93,6 @@ const roomService = {
           const totalCost = baseCost + bodyPartsCost;
           const canAfford =
             energyInExtensions + spawn.store[RESOURCE_ENERGY] >= totalCost;
-
-          if (role.memoryKey === roleBuilder.memoryKey) {
-            const constructionSites = spawn.room.find(FIND_CONSTRUCTION_SITES);
-            if (!constructionSites.length) {
-              continue;
-            }
-          }
 
           if (role.memoryKey === roleMiner.memoryKey) {
             const containers = spawn.room.find(FIND_STRUCTURES, {
@@ -195,7 +181,6 @@ const roomService = {
                 },
               }) === OK
             ) {
-              console.log("Spawning a new creep: " + newName);
               return;
             }
           }

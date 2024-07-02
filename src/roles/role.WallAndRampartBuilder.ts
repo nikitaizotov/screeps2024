@@ -19,13 +19,11 @@ const roleWallAndRampBuilder: CreepRole = {
       creep.memory.repairing = false;
       creep.memory.path = undefined;
       creep.memory.targetId = null;
-      creep.say("🔄 harvest");
     }
     if (!creep.memory.repairing && creep.store.getFreeCapacity() === 0) {
       creep.memory.repairing = true;
       creep.memory.path = undefined;
       creep.memory.targetId = null;
-      creep.say("🚧 repair");
     }
 
     if (creep.memory.repairing) {

@@ -6,22 +6,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var creep_service_1 = __importDefault(require("./creep.service"));
 var role_worker_const_1 = require("./role.worker.const");
 var roleWorker = {
-    creepsPerRoom: 5,
+    creepsPerRoom: 6,
     namePrefix: "Worker",
     memoryKey: "worker",
     bodyParts: [WORK, CARRY, MOVE],
     maxBodyPartsMultiplier: 10,
     creepsPerSourcePositions: {
         "1": 3,
-        "2": 3,
-        "3": 4,
-        "4": 5,
-        "5": 5,
-        "6": 5,
+        "2": 5,
+        "3": 5,
+        "4": 6,
+        "5": 6,
+        "6": 7,
     },
     tasksPerRoom: {
-        Transferring: { "1": 2, "2": 2, "3": 2, "4": 3, "5": 4 },
-        Upgrading: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1 },
+        Transferring: { "1": 2, "2": 3, "3": 3, "4": 4, "5": 4 },
+        Upgrading: { "1": 1, "2": 2, "3": 2, "4": 2, "5": 2 },
         Building: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1 },
     },
     run: function (creep) {

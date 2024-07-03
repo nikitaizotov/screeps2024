@@ -41,7 +41,6 @@ var LinkService = /** @class */ (function () {
             { x: 0, y: 1 },
             { x: 1, y: 1 },
         ];
-        // Проверяем каждое хранилище
         for (var _i = 0, storages_1 = storages; _i < storages_1.length; _i++) {
             var storage = storages_1[_i];
             var storagePos = storage.pos;

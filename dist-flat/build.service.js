@@ -334,14 +334,14 @@ var buildService = {
                         var x = structure.pos.x;
                         var y = structure.pos.y;
                         var positions = [
-                            [x - 1, y - 1],
-                            // [x, y - 1],
-                            [x + 1, y - 1],
-                            // [x - 1, y],
-                            // [x + 1, y],
-                            [x - 1, y + 1],
-                            // [x, y + 1],
-                            [x + 1, y + 1],
+                            ///[x - 1, y - 1],
+                            [x, y - 1],
+                            ///[x + 1, y - 1],
+                            [x - 1, y],
+                            [x + 1, y],
+                            ///[x - 1, y + 1],
+                            [x, y + 1],
+                            ///[x + 1, y + 1],
                         ];
                         positions.forEach(function (pos) {
                             var x = pos[0], y = pos[1];

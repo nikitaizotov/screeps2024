@@ -3,48 +3,72 @@ import attackService from "../services/attack.service";
 const towerManager = {
   run(tower: StructureTower): void {
     if (tower) {
-      const closestHostile = tower.pos.findClosestByPath(FIND_HOSTILE_CREEPS, {
-        filter: (enemyCreep: Creep) => {
-          return !attackService.avoidPlayers.includes(
-            enemyCreep.owner.username
-          );
-        },
-      });
+      // First, look for the closest hostile creep with HEAL body part
+      const closestHostileWithHeal = tower.pos.findClosestByPath(
+        FIND_HOSTILE_CREEPS,
+        {
+          filter: (enemyCreep: Creep) => {
+            return (
+              !attackService.avoidPlayers.includes(enemyCreep.owner.username) &&
+              enemyCreep.body.some((part) => part.type === HEAL)
+            );
+          },
+        }
+      );
 
-      if (closestHostile) {
-        tower.attack(closestHostile);
+      if (closestHostileWithHeal) {
+        tower.attack(closestHostileWithHeal);
       } else {
-        const closestDamagedAlly = tower.pos.findClosestByRange(
-          FIND_MY_CREEPS,
+        // If no hostile creeps with HEAL are found, look for the closest hostile creep
+        const closestHostile = tower.pos.findClosestByPath(
+          FIND_HOSTILE_CREEPS,
           {
-            filter: (creep: Creep) => creep.hits < creep.hitsMax,
+            filter: (enemyCreep: Creep) => {
+              return !attackService.avoidPlayers.includes(
+                enemyCreep.owner.username
+              );
+            },
           }
         );
 
-        if (closestDamagedAlly) {
-          tower.heal(closestDamagedAlly);
+        if (closestHostile) {
+          tower.attack(closestHostile);
         } else {
-          const closestDamagedStructure = tower.pos.findClosestByRange(
-            FIND_STRUCTURES,
+          // If no hostile creeps are found, look for the closest damaged ally creep
+          const closestDamagedAlly = tower.pos.findClosestByRange(
+            FIND_MY_CREEPS,
             {
-              filter: (structure: AnyStructure) =>
-                structure.hits < structure.hitsMax &&
-                structure.structureType !== STRUCTURE_WALL &&
-                structure.structureType !== STRUCTURE_RAMPART,
+              filter: (creep: Creep) => creep.hits < creep.hitsMax,
             }
           );
 
-          if (closestDamagedStructure) {
-            tower.repair(closestDamagedStructure);
+          if (closestDamagedAlly) {
+            tower.heal(closestDamagedAlly);
+          } else {
+            // If no damaged ally creeps are found, look for the closest damaged structure
+            const closestDamagedStructure = tower.pos.findClosestByRange(
+              FIND_STRUCTURES,
+              {
+                filter: (structure: AnyStructure) =>
+                  structure.hits < structure.hitsMax &&
+                  structure.structureType !== STRUCTURE_WALL &&
+                  structure.structureType !== STRUCTURE_RAMPART,
+              }
+            );
 
-            if (
-              closestDamagedStructure.hits === closestDamagedStructure.hitsMax
-            ) {
-              for (const creepName in Game.creeps) {
-                const creep = Game.creeps[creepName];
-                if (creep.memory.targetId === closestDamagedStructure.id) {
-                  creep.memory.targetId = null;
-                  creep.memory.path = undefined;
+            if (closestDamagedStructure) {
+              tower.repair(closestDamagedStructure);
+
+              // If the structure is fully repaired, clear the memory of any creeps targeting it
+              if (
+                closestDamagedStructure.hits === closestDamagedStructure.hitsMax
+              ) {
+                for (const creepName in Game.creeps) {
+                  const creep = Game.creeps[creepName];
+                  if (creep.memory.targetId === closestDamagedStructure.id) {
+                    creep.memory.targetId = null;
+                    creep.memory.path = undefined;
+                  }
                 }
               }
             }

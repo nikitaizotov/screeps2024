@@ -81,6 +81,7 @@ const utilsService = {
       if (!Memory.roomData) {
         Memory.roomData = {
           sourcePositions: {},
+          links: {},
         };
       }
 

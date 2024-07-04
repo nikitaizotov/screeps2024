@@ -146,6 +146,7 @@ class RoomService {
                                         .toString(16)
                                         .padStart(6, "0"),
                                 idleTicks: 0,
+                                pathName: "",
                             },
                         }) === OK) {
                             return;
@@ -165,7 +166,7 @@ class RoomService {
                 let timeToCheck = creep.memory.role === this.roleMiner.memoryKey ? 500 : 1;
                 timeToCheck =
                     creep.memory.role === role_scout_1.default.memoryKey ? 20 : timeToCheck;
-                if (Game.time % timeToCheck === 2) {
+                if (Game.time % timeToCheck === 0) {
                     this.creepService.findIdleCreep(creep);
                 }
                 const role = this.enabledRoles.find((role) => role.memoryKey === creep.memory.role);

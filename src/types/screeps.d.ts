@@ -29,6 +29,7 @@ interface CreepMemory {
   exit?: RoomPosition;
   job?: scoutJobs;
   task?: WorkerTask;
+  pathName: string;
 }
 
 interface RoomData {
@@ -39,6 +40,13 @@ interface RoomData {
       [FIND_EXIT_RIGHT]: PathStep[];
       [FIND_EXIT_BOTTOM]: PathStep[];
       [FIND_EXIT_LEFT]: PathStep[];
+    };
+  };
+  links: {
+    [roomName: string]: {
+      [linkId: string]: {
+        storageLink: boolean;
+      };
     };
   };
   junk?: any;

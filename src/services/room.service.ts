@@ -191,6 +191,7 @@ export class RoomService {
                       .toString(16)
                       .padStart(6, "0"),
                   idleTicks: 0,
+                  pathName: "",
                 },
               }) === OK
             ) {
@@ -214,7 +215,7 @@ export class RoomService {
         timeToCheck =
           creep.memory.role === roleScout.memoryKey ? 20 : timeToCheck;
 
-        if (Game.time % timeToCheck === 2) {
+        if (Game.time % timeToCheck === 0) {
           this.creepService.findIdleCreep(creep);
         }
 

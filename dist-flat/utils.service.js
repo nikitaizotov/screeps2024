@@ -68,6 +68,7 @@ const utilsService = {
             if (!Memory.roomData) {
                 Memory.roomData = {
                     sourcePositions: {},
+                    links: {},
                 };
             }
             for (let roomName in Game.rooms) {

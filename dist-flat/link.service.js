@@ -178,5 +178,57 @@ class LinkService {
             }
         }
     }
+    cacheLinks(room) {
+        if (!Memory.roomData.links) {
+            Memory.roomData.links = {};
+        }
+        if (!Memory.roomData.links[room.name]) {
+            Memory.roomData.links[room.name] = {};
+        }
+        const links = room.find(FIND_STRUCTURES, {
+            filter: (structure) => structure.structureType === STRUCTURE_LINK,
+        });
+        for (let link of links) {
+            if (!Memory.roomData.links[room.name][link.id]) {
+                Memory.roomData.links[room.name][link.id] = {
+                    storageLink: this.isLinkNearStorage(room, link.pos),
+                };
+            }
+        }
+    }
+    isLinkNearStorage(room, pos) {
+        console.log("isLinkNearStorage");
+        const terrain = room.getTerrain();
+        const offsets = [
+            { x: -2, y: -2 },
+            { x: -1, y: -2 },
+            { x: 0, y: -2 },
+            { x: 1, y: -2 },
+            { x: 2, y: -2 },
+            { x: -2, y: -1 },
+            { x: 2, y: -1 },
+            { x: -2, y: 0 },
+            { x: 2, y: 0 },
+            { x: -2, y: 1 },
+            { x: 2, y: 1 },
+            { x: -2, y: 2 },
+            { x: -1, y: 2 },
+            { x: 0, y: 2 },
+            { x: 1, y: 2 },
+            { x: 2, y: 2 },
+        ];
+        for (const offset of offsets) {
+            const x = pos.x + offset.x;
+            const y = pos.y + offset.y;
+            if (terrain.get(x, y) !== TERRAIN_MASK_WALL) {
+                const structuresAtPos = room.lookForAt(LOOK_STRUCTURES, x, y);
+                const hasStorage = structuresAtPos.some((structure) => structure.structureType === STRUCTURE_STORAGE);
+                if (hasStorage) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }
 exports.default = LinkService;

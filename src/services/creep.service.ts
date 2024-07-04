@@ -54,7 +54,7 @@ export class CreepService {
     const closest = creep.pos.findClosestByPath(sources);
 
     if (closest) {
-      const path = this.getPath(creep.pos, closest.pos);
+      const path = this.getPath(creep, closest.pos);
       creep.memory.path = path;
       creep.memory.targetId = closest.id;
     }
@@ -66,7 +66,7 @@ export class CreepService {
       let closestSite = creep.pos.findClosestByPath(constructionSites);
 
       if (closestSite) {
-        creep.memory.path = this.getPath(creep.pos, closestSite.pos);
+        creep.memory.path = this.getPath(creep, closestSite.pos);
         creep.memory.targetId = closestSite.id;
       }
     }
@@ -87,7 +87,7 @@ export class CreepService {
       let closestSite = creep.pos.findClosestByPath(targets);
 
       if (closestSite) {
-        creep.memory.path = this.getPath(creep.pos, closestSite.pos);
+        creep.memory.path = this.getPath(creep, closestSite.pos);
         creep.memory.targetId = closestSite.id;
       }
     }
@@ -187,7 +187,7 @@ export class CreepService {
     }
 
     if (bestTarget) {
-      creep.memory.path = this.getPath(creep.pos, bestTarget.pos);
+      creep.memory.path = this.getPath(creep, bestTarget.pos);
       creep.memory.targetId = bestTarget.id;
     }
   }
@@ -241,7 +241,7 @@ export class CreepService {
       creep.store.getUsedCapacity(RESOURCE_ENERGY) ===
         creep.memory.lastPos.energy
     ) {
-      creep.memory.idleTicks!++;
+      creep.memory.idleTicks += 1;
     } else {
       creep.memory.lastPos = {
         x: creep.pos.x,
@@ -251,7 +251,7 @@ export class CreepService {
       creep.memory.idleTicks = 0;
     }
 
-    if (creep.memory.idleTicks! >= 3) {
+    if (creep.memory.idleTicks! >= 5) {
       creep.memory.idleTicks = 0;
       return true;
     }
@@ -306,7 +306,7 @@ export class CreepService {
 
     if (closestContainer) {
       creep.memory.targetId = closestContainer.id;
-      creep.memory.path = this.getPath(creep.pos, closestContainer.pos);
+      creep.memory.path = this.getPath(creep, closestContainer.pos);
     }
   }
 
@@ -376,7 +376,7 @@ export class CreepService {
 
       if (target) {
         creep.memory.targetId = target.id;
-        creep.memory.path = this.getPath(creep.pos, target.pos);
+        creep.memory.path = this.getPath(creep, target.pos);
       } else {
         this.setTask(creep, WorkerTask.Idling);
       }
@@ -487,7 +487,7 @@ export class CreepService {
   getPathToController(creep: Creep): void {
     const controller = creep.room.controller as StructureController;
 
-    creep.memory.path = this.getPath(creep.pos, controller.pos);
+    creep.memory.path = this.getPath(creep, controller.pos);
   }
 
   /**
@@ -495,7 +495,8 @@ export class CreepService {
    * @param startPos
    * @param endPos
    */
-  getPath(startPos: RoomPosition, endPos: RoomPosition): PathStep[] {
+  getPath(creep: Creep, endPos: RoomPosition): PathStep[] {
+    const startPos: RoomPosition = creep.pos;
     const roomName = startPos.roomName;
     const cacheKey = `${startPos.x},${startPos.y}:${endPos.x},${endPos.y}`;
     const currentTick = Game.time;
@@ -514,25 +515,7 @@ export class CreepService {
       return cachedPath.path;
     }
 
-    const path = startPos.findPathTo(endPos, {
-      ignoreCreeps: true,
-      costCallback: (roomName, costMatrix) => {
-        const room = Game.rooms[roomName];
-        if (room) {
-          room.find(FIND_STRUCTURES).forEach((struct) => {
-            if (struct.structureType === STRUCTURE_ROAD) {
-              costMatrix.set(struct.pos.x, struct.pos.y, 1);
-            } else if (
-              struct.structureType !== STRUCTURE_CONTAINER &&
-              (struct.structureType !== STRUCTURE_RAMPART || !struct.my)
-            ) {
-              costMatrix.set(struct.pos.x, struct.pos.y, 0xff);
-            }
-          });
-        }
-        return costMatrix;
-      },
-    });
+    const path = startPos.findPathTo(endPos);
 
     Memory.cacheCreepPaths[roomName][cacheKey] = {
       usedTimes: 1,
@@ -540,6 +523,7 @@ export class CreepService {
       lastAccessed: currentTick,
     };
 
+    creep.memory.pathName = cacheKey;
     return path;
   }
 
@@ -552,26 +536,22 @@ export class CreepService {
     }
 
     const moveResult = creep.moveByPath(path);
-
     const roomName = creep.room.name;
-    const startPos = creep.pos;
-    const endPos = path[path.length - 1];
-    const pathKey = `${startPos.x},${startPos.y}:${endPos.x},${endPos.y}`;
 
     if (moveResult === ERR_INVALID_ARGS || moveResult === ERR_NOT_FOUND) {
       if (Memory.cacheCreepPaths && Memory.cacheCreepPaths[roomName]) {
-        delete Memory.cacheCreepPaths[roomName][pathKey];
+        delete Memory.cacheCreepPaths[roomName][creep.memory.pathName];
       }
 
       delete creep.memory.path;
-    } else if (moveResult === ERR_BUSY) {
+    } else if (moveResult === ERR_BUSY || moveResult === OK) {
       if (creep.memory.idleTicks > 3) {
         if (Memory.cacheCreepPaths && Memory.cacheCreepPaths[roomName]) {
-          delete Memory.cacheCreepPaths[roomName][pathKey];
+          delete Memory.cacheCreepPaths[roomName][creep.memory.pathName];
         }
 
         creep.memory.idleTicks = 0;
-        delete creep.memory.path;
+        creep.memory.path = undefined;
       }
     }
 

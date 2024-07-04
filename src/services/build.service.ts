@@ -94,8 +94,12 @@ const buildService = {
           if (Game.time % 233 === 0) this.buildContainers(room);
 
           // Build links every 244 ticks.
-          if (Game.time % 244 === 0 && linkService.isLinksAvailable(room)) {
-            linkService.buildLinks(room);
+          if (Game.time % 244 === 0) {
+            if (linkService.isLinksAvailable(room)) {
+              linkService.buildLinks(room);
+            }
+
+            linkService.cacheLinks(room);
           }
         }
       }

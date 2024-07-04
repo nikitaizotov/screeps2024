@@ -6,14 +6,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RoomService = void 0;
 const lodash_1 = __importDefault(require("lodash"));
 const role_WallAndRampartBuilder_1 = __importDefault(require("./role.WallAndRampartBuilder"));
-// import roleRanged from "../roles/role.ranged";
 const role_scout_1 = __importDefault(require("./role.scout"));
 const structure_tower_1 = __importDefault(require("./structure.tower"));
 const build_service_1 = __importDefault(require("./build.service"));
 const creep_service_1 = __importDefault(require("./creep.service"));
 const utils_service_1 = __importDefault(require("./utils.service"));
 const role_worker_1 = __importDefault(require("./role.worker"));
-// import { WorkerTask } from "../roles/constants/role.worker.const";
 const worker_service_1 = require("./worker.service");
 const role_miner_1 = require("./role.miner");
 const profiler = require("./screeps-profiler");
@@ -51,11 +49,8 @@ class RoomService {
     }
     structureRoutines() {
         try {
-            // creepService.clearCreepPathCache(5000);
-            // this.cacheGameRooms();
             build_service_1.default.build();
             this.manageStructures();
-            // creepService.createStructureCache();
         }
         catch (error) {
             console.log(`Error in structureRoutines: ${error.message}`);
@@ -209,4 +204,4 @@ class RoomService {
     }
 }
 exports.RoomService = RoomService;
-profiler.registerClass(RoomService, "RoomService");
+// profiler.registerClass(RoomService, "RoomService");

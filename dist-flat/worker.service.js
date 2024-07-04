@@ -4,48 +4,43 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorkerService = void 0;
-var lodash_1 = __importDefault(require("lodash"));
-var role_worker_const_1 = require("./role.worker.const");
-var role_worker_1 = __importDefault(require("./role.worker"));
-var WorkerService = /** @class */ (function () {
-    function WorkerService() {
-    }
-    WorkerService.prototype.manageWorkers = function () {
-        var _loop_1 = function (spawnName) {
-            var spawn = Game.spawns[spawnName];
-            var room = spawn.room;
-            var workersIdling = lodash_1.default.filter(Game.creeps, function (creep) {
-                return creep.memory.role === "worker" &&
-                    creep.room.name === spawn.room.name &&
-                    creep.memory.task === role_worker_const_1.WorkerTask.Idling;
-            });
+const lodash_1 = __importDefault(require("lodash"));
+const role_worker_const_1 = require("./role.worker.const");
+const role_worker_1 = __importDefault(require("./role.worker"));
+const profiler = require("./screeps-profiler");
+class WorkerService {
+    manageWorkers() {
+        for (let spawnName in Game.spawns) {
+            const spawn = Game.spawns[spawnName];
+            const room = spawn.room;
+            const workersIdling = lodash_1.default.filter(Game.creeps, (creep) => creep.memory.role === "worker" &&
+                creep.room.name === spawn.room.name &&
+                creep.memory.task === role_worker_const_1.WorkerTask.Idling);
             if (!role_worker_1.default.tasksPerRoom) {
-                return { value: void 0 };
+                return;
             }
-            var enabledTasks = Object.keys(role_worker_1.default.tasksPerRoom);
-            var _loop_2 = function (enabledTask) {
-                var workersPlanned = role_worker_1.default.tasksPerRoom[enabledTask];
+            const enabledTasks = Object.keys(role_worker_1.default.tasksPerRoom);
+            for (let enabledTask of enabledTasks) {
+                const workersPlanned = role_worker_1.default.tasksPerRoom[enabledTask];
                 if (enabledTask === role_worker_const_1.WorkerTask.Transferring &&
-                    !this_1.isTransferNeeded(spawn)) {
-                    return "continue";
+                    !this.isTransferNeeded(spawn)) {
+                    continue;
                 }
-                if (enabledTask === role_worker_const_1.WorkerTask.Building && !this_1.isBuildNeeded(spawn)) {
-                    return "continue";
+                if (enabledTask === role_worker_const_1.WorkerTask.Building && !this.isBuildNeeded(spawn)) {
+                    continue;
                 }
-                var workersPrrPosition = Object.keys(workersPlanned);
-                var workersRequiredPerTask = workersPlanned[Memory.roomData.sourcePositions[room.name]]
+                const workersPrrPosition = Object.keys(workersPlanned);
+                const workersRequiredPerTask = workersPlanned[Memory.roomData.sourcePositions[room.name]]
                     ? workersPlanned[Memory.roomData.sourcePositions[room.name]]
                     : workersPlanned[workersPrrPosition.length - 1];
-                var workersOnTask = lodash_1.default.filter(Game.creeps, function (creep) {
-                    return creep.memory.role === "worker" &&
-                        creep.room.name === spawn.room.name &&
-                        creep.memory.task === enabledTask;
-                });
+                const workersOnTask = lodash_1.default.filter(Game.creeps, (creep) => creep.memory.role === "worker" &&
+                    creep.room.name === spawn.room.name &&
+                    creep.memory.task === enabledTask);
                 if (workersIdling.length !== 0 &&
                     workersOnTask.length < workersRequiredPerTask) {
-                    var worker = workersIdling.shift();
+                    const worker = workersIdling.shift();
                     if (worker) {
-                        var creep = Game.getObjectById(worker.id);
+                        const creep = Game.getObjectById(worker.id);
                         if (creep) {
                             creep.memory.path = undefined;
                             creep.memory.targetId = null;
@@ -53,30 +48,19 @@ var WorkerService = /** @class */ (function () {
                         }
                     }
                 }
-            };
-            for (var _i = 0, enabledTasks_1 = enabledTasks; _i < enabledTasks_1.length; _i++) {
-                var enabledTask = enabledTasks_1[_i];
-                _loop_2(enabledTask);
             }
             if (workersIdling.length > 0) {
-                for (var _a = 0, workersIdling_1 = workersIdling; _a < workersIdling_1.length; _a++) {
-                    var creep = workersIdling_1[_a];
+                for (let creep of workersIdling) {
                     creep.memory.path = undefined;
                     creep.memory.targetId = null;
                     creep.memory.task = role_worker_const_1.WorkerTask.Upgrading;
                 }
             }
-        };
-        var this_1 = this;
-        for (var spawnName in Game.spawns) {
-            var state_1 = _loop_1(spawnName);
-            if (typeof state_1 === "object")
-                return state_1.value;
         }
-    };
-    WorkerService.prototype.isTransferNeeded = function (spawn) {
-        var targets = spawn.room.find(FIND_STRUCTURES, {
-            filter: function (structure) {
+    }
+    isTransferNeeded(spawn) {
+        const targets = spawn.room.find(FIND_STRUCTURES, {
+            filter: (structure) => {
                 return ((structure.structureType === STRUCTURE_SPAWN ||
                     structure.structureType === STRUCTURE_TOWER ||
                     structure.structureType === STRUCTURE_EXTENSION) &&
@@ -85,10 +69,10 @@ var WorkerService = /** @class */ (function () {
             },
         });
         return targets.length !== 0;
-    };
-    WorkerService.prototype.isBuildNeeded = function (spawn) {
-        var targets = spawn.room.find(FIND_STRUCTURES, {
-            filter: function (structure) {
+    }
+    isBuildNeeded(spawn) {
+        const targets = spawn.room.find(FIND_STRUCTURES, {
+            filter: (structure) => {
                 return (structure.hits < structure.hitsMax &&
                     structure.structureType !== STRUCTURE_WALL &&
                     structure.structureType !== STRUCTURE_RAMPART);
@@ -98,13 +82,13 @@ var WorkerService = /** @class */ (function () {
             return true;
         }
         else {
-            var constructionSites = spawn.room.find(FIND_CONSTRUCTION_SITES);
+            const constructionSites = spawn.room.find(FIND_CONSTRUCTION_SITES);
             if (constructionSites.length > 0) {
                 return true;
             }
         }
         return false;
-    };
-    return WorkerService;
-}());
+    }
+}
 exports.WorkerService = WorkerService;
+// profiler.registerClass(WorkerService, "WorkerService");

@@ -257,4 +257,4 @@ export class RoomService {
   }
 }
 
-profiler.registerClass(RoomService, "RoomService");
+// profiler.registerClass(RoomService, "RoomService");

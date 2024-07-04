@@ -9,7 +9,7 @@ interface CreepMemory {
   path?: PathStep[];
   targetId?: Id<Source | Structure | ConstructionSite> | null;
   building?: boolean;
-  targetPos?: RoomPosition;
+  targetPos?: RoomPosition | null;
   lastPos?: { x: number; y: number; energy: number };
   idleTicks?: number;
   pathColor?: string;

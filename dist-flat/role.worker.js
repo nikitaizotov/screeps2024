@@ -22,7 +22,7 @@ const roleWorker = {
     },
     tasksPerRoom: {
         Transferring: { "1": 2, "2": 2, "3": 2, "4": 2, "5": 2 },
-        Upgrading: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1 },
+        Upgrading: { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 },
         Building: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1 },
     },
     run: function (creep) {

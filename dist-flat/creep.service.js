@@ -466,5 +466,5 @@ const creepService = {
         }
     },
 };
-//profiler.registerObject(creepService, "creepService");
+profiler.registerObject(creepService, "creepService");
 exports.default = creepService;

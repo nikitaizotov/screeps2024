@@ -6,45 +6,59 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RoomService = void 0;
 const lodash_1 = __importDefault(require("lodash"));
 const role_WallAndRampartBuilder_1 = __importDefault(require("./role.WallAndRampartBuilder"));
+// import roleRanged from "../roles/role.ranged";
 const role_scout_1 = __importDefault(require("./role.scout"));
 const structure_tower_1 = __importDefault(require("./structure.tower"));
 const build_service_1 = __importDefault(require("./build.service"));
 const creep_service_1 = __importDefault(require("./creep.service"));
 const utils_service_1 = __importDefault(require("./utils.service"));
-const role_miner_1 = __importDefault(require("./role.miner"));
 const role_worker_1 = __importDefault(require("./role.worker"));
+// import { WorkerTask } from "../roles/constants/role.worker.const";
 const worker_service_1 = require("./worker.service");
+const role_miner_1 = require("./role.miner");
 const profiler = require("./screeps-profiler");
-const workerService = new worker_service_1.WorkerService();
 class RoomService {
     constructor() {
+        this.roleMiner = new role_miner_1.RoleMiner();
+        this.workerService = new worker_service_1.WorkerService();
+        this.enabledRoles = [];
         this.enabledRoles = [
             role_worker_1.default,
-            role_miner_1.default,
+            this.roleMiner,
             // roleRanged,
             role_WallAndRampartBuilder_1.default,
             // roleScout,
         ];
-        // cacheGameRooms(): void {
-        //   // unset old cache.
-        //   Memory.cacheGameRooms = {};
-        //   Memory.cacheGameRooms = { ...Game.rooms };
-        // }
     }
-    routines() {
+    creepRoutines() {
+        try {
+            this.spawnCreeps();
+            this.moveCreeps();
+            this.workerService.manageWorkers();
+        }
+        catch (error) {
+            console.log(`Error in creepRoutines: ${error.message}`);
+        }
+    }
+    cacheRoutines() {
         try {
             this.cleanMemory();
+            this.roomRoutines();
+        }
+        catch (error) {
+            console.log(`Error in cacheRoutines: ${error.message}`);
+        }
+    }
+    structureRoutines() {
+        try {
             // creepService.clearCreepPathCache(5000);
             // this.cacheGameRooms();
-            this.creepsRoutines();
             build_service_1.default.build();
-            this.structureRoutines();
-            this.roomRoutines();
-            workerService.manageWorkers();
+            this.manageStructures();
             // creepService.createStructureCache();
         }
         catch (error) {
-            console.log(`Error in routines: ${error.message}`);
+            console.log(`Error in structureRoutines: ${error.message}`);
         }
     }
     cleanMemory() {
@@ -57,15 +71,6 @@ class RoomService {
         }
         catch (error) {
             console.log(`Error in cleanMemory: ${error.message}`);
-        }
-    }
-    creepsRoutines() {
-        try {
-            this.spawnCreeps();
-            this.moveCreeps();
-        }
-        catch (error) {
-            console.log(`Error in creepsRoutines: ${error.message}`);
         }
     }
     spawnCreeps() {
@@ -89,7 +94,7 @@ class RoomService {
                     const bodyPartsCost = bodyParts.reduce((sum, part) => sum + BODYPART_COST[part], 0);
                     const totalCost = baseCost + bodyPartsCost;
                     const canAfford = energyInExtensions + spawn.store[RESOURCE_ENERGY] >= totalCost;
-                    if (role.memoryKey === role_miner_1.default.memoryKey) {
+                    if (role.memoryKey === this.roleMiner.memoryKey) {
                         const containers = spawn.room.find(FIND_STRUCTURES, {
                             filter: (structure) => structure.structureType === STRUCTURE_CONTAINER,
                         });
@@ -159,7 +164,7 @@ class RoomService {
         try {
             for (const name in Game.creeps) {
                 const creep = Game.creeps[name];
-                let timeToCheck = creep.memory.role === role_miner_1.default.memoryKey ? 500 : 1;
+                let timeToCheck = creep.memory.role === this.roleMiner.memoryKey ? 500 : 1;
                 timeToCheck =
                     creep.memory.role === role_scout_1.default.memoryKey ? 20 : timeToCheck;
                 if (Game.time % timeToCheck === 2) {
@@ -178,7 +183,7 @@ class RoomService {
             console.log(`Error in moveCreeps: ${error.message}`);
         }
     }
-    structureRoutines() {
+    manageStructures() {
         try {
             for (let roomName in Game.rooms) {
                 const room = Game.rooms[roomName];
@@ -194,7 +199,7 @@ class RoomService {
             }
         }
         catch (error) {
-            console.log(`Error in structureRoutines: ${error.message}`);
+            console.log(`Error in manageStructures: ${error.message}`);
         }
     }
     roomRoutines() {

@@ -2,13 +2,14 @@ import _ from "lodash";
 import creepService from "../services/creep.service";
 import { CreepRole } from "./role.interface";
 
-const roleMiner: CreepRole = {
-  creepsPerRoom: 99,
-  namePrefix: "Miner",
-  memoryKey: "miner",
-  bodyParts: [WORK, WORK, WORK, WORK],
-  baseBodyParts: [WORK, MOVE, CARRY],
-  maxBodyPartsMultiplier: 3,
+export class RoleMiner implements CreepRole {
+  creepsPerRoom = 99;
+  namePrefix = "Miner";
+  memoryKey = "miner";
+  bodyParts = [WORK, WORK, WORK, WORK];
+  baseBodyParts = [WORK, MOVE, CARRY];
+  maxBodyPartsMultiplier = 3;
+  creepService = creepService;
 
   run(creep: Creep): void {
     if (creep.spawning) {
@@ -43,13 +44,13 @@ const roleMiner: CreepRole = {
         creep.transfer(targetContainer as StructureContainer, RESOURCE_ENERGY);
       }
     }
-  },
+  }
 
   /**
    * Searches for a container with a miner near it, if the container has a free space, adds the path and id to the creep's memory.
    * @param creep
    */
-  findContainerAndSource: function (creep: Creep): void {
+  findContainerAndSource(creep: Creep): void {
     const containers = creep.room.find(FIND_STRUCTURES, {
       filter: (structure) => structure.structureType === STRUCTURE_CONTAINER,
     }) as StructureContainer[];
@@ -71,14 +72,14 @@ const roleMiner: CreepRole = {
           creep.memory.targetPos = pos;
           creep.memory.targetContainerId = container.id;
           creep.memory.targetSourceId = sources[sources.length - 1].id;
-          creep.memory.path = creep.pos.findPathTo(pos);
+          creep.memory.path = creep.pos.findPathTo(pos as any);
           return;
         }
       }
     }
-  },
+  }
 
-  findPositionBetween: function (
+  findPositionBetween(
     containerPos: RoomPosition,
     sourcePos: RoomPosition
   ): RoomPosition | null {
@@ -100,7 +101,5 @@ const roleMiner: CreepRole = {
     }
 
     return null;
-  },
-};
-
-export default roleMiner;
+  }
+}

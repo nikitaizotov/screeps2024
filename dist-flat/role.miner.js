@@ -3,15 +3,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.RoleMiner = void 0;
 const lodash_1 = __importDefault(require("lodash"));
 const creep_service_1 = __importDefault(require("./creep.service"));
-const roleMiner = {
-    creepsPerRoom: 99,
-    namePrefix: "Miner",
-    memoryKey: "miner",
-    bodyParts: [WORK, WORK, WORK, WORK],
-    baseBodyParts: [WORK, MOVE, CARRY],
-    maxBodyPartsMultiplier: 3,
+class RoleMiner {
+    constructor() {
+        this.creepsPerRoom = 99;
+        this.namePrefix = "Miner";
+        this.memoryKey = "miner";
+        this.bodyParts = [WORK, WORK, WORK, WORK];
+        this.baseBodyParts = [WORK, MOVE, CARRY];
+        this.maxBodyPartsMultiplier = 3;
+        this.creepService = creep_service_1.default;
+    }
     run(creep) {
         if (creep.spawning) {
             return;
@@ -40,12 +44,12 @@ const roleMiner = {
                 creep.transfer(targetContainer, RESOURCE_ENERGY);
             }
         }
-    },
+    }
     /**
      * Searches for a container with a miner near it, if the container has a free space, adds the path and id to the creep's memory.
      * @param creep
      */
-    findContainerAndSource: function (creep) {
+    findContainerAndSource(creep) {
         const containers = creep.room.find(FIND_STRUCTURES, {
             filter: (structure) => structure.structureType === STRUCTURE_CONTAINER,
         });
@@ -66,8 +70,8 @@ const roleMiner = {
                 }
             }
         }
-    },
-    findPositionBetween: function (containerPos, sourcePos) {
+    }
+    findPositionBetween(containerPos, sourcePos) {
         const terrain = Game.map.getRoomTerrain(containerPos.roomName);
         for (let dx = -1; dx <= 1; dx++) {
             for (let dy = -1; dy <= 1; dy++) {
@@ -84,6 +88,6 @@ const roleMiner = {
             }
         }
         return null;
-    },
-};
-exports.default = roleMiner;
+    }
+}
+exports.RoleMiner = RoleMiner;

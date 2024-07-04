@@ -1,13 +1,11 @@
 import _ from "lodash";
 import roleWallAndRampBuilder from "../roles/role.WallAndRampartBuilder";
-// import roleRanged from "../roles/role.ranged";
 import roleScout from "../roles/role.scout";
 import structureTower from "../structures/structure.tower";
 import buildService from "./build.service";
 import creepService from "./creep.service";
 import utilsService from "./utils.service";
 import roleWorker from "../roles/worker/role.worker";
-// import { WorkerTask } from "../roles/constants/role.worker.const";
 import { WorkerService } from "../roles/worker/worker.service";
 import { RoleMiner } from "../roles/role.miner";
 import { CreepRole } from "../roles/role.interface";
@@ -49,11 +47,8 @@ export class RoomService {
 
   structureRoutines(): void {
     try {
-      // creepService.clearCreepPathCache(5000);
-      // this.cacheGameRooms();
       buildService.build();
       this.manageStructures();
-      // creepService.createStructureCache();
     } catch (error: any) {
       console.log(`Error in structureRoutines: ${error.message}`);
     }

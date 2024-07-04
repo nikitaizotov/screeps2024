@@ -1,10 +1,10 @@
 import _ from "lodash";
 import { WorkerTask } from "../roles/constants/role.worker.const";
-const profiler = require("./../screeps-profiler");
+// const profiler = require("./../screeps-profiler");
 
 export class CreepService {
-  drawPath(creep: Creep): void {
-    if (!creep.memory.path) {
+  drawPath(creep: Creep, forceDraw: boolean = true): void {
+    if (!creep.memory.path || !forceDraw) {
       return;
     }
     const visual = new RoomVisual(creep.room.name);
@@ -295,28 +295,14 @@ export class CreepService {
     creep.memory.path = undefined;
 
     const containers = creep.room.find(FIND_STRUCTURES, {
-      filter: (structure) => structure.structureType === STRUCTURE_CONTAINER,
+      filter: (structure) =>
+        structure.structureType === STRUCTURE_CONTAINER &&
+        structure.store[RESOURCE_ENERGY] > 0,
     }) as StructureContainer[];
 
-    let closestContainer: StructureContainer | null = null;
-    let minDistance = Infinity;
+    if (containers.length === 0) return;
 
-    for (const container of containers) {
-      if (container.store[RESOURCE_ENERGY] === 0) continue;
-
-      const miners = container.pos.findInRange(FIND_MY_CREEPS, 1, {
-        filter: (c) => c.memory.role === "miner",
-      });
-
-      if (miners.length > 0 || container.store[RESOURCE_ENERGY] > 0) {
-        const distance = creep.pos.getRangeTo(container.pos);
-
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestContainer = container;
-        }
-      }
-    }
+    const closestContainer = creep.pos.findClosestByPath(containers);
 
     if (closestContainer) {
       creep.memory.targetId = closestContainer.id;
@@ -528,7 +514,26 @@ export class CreepService {
       return cachedPath.path;
     }
 
-    const path = startPos.findPathTo(endPos);
+    const path = startPos.findPathTo(endPos, {
+      ignoreCreeps: true,
+      costCallback: (roomName, costMatrix) => {
+        const room = Game.rooms[roomName];
+        if (room) {
+          room.find(FIND_STRUCTURES).forEach((struct) => {
+            if (struct.structureType === STRUCTURE_ROAD) {
+              costMatrix.set(struct.pos.x, struct.pos.y, 1);
+            } else if (
+              struct.structureType !== STRUCTURE_CONTAINER &&
+              (struct.structureType !== STRUCTURE_RAMPART || !struct.my)
+            ) {
+              costMatrix.set(struct.pos.x, struct.pos.y, 0xff);
+            }
+          });
+        }
+        return costMatrix;
+      },
+    });
+
     Memory.cacheCreepPaths[roomName][cacheKey] = {
       usedTimes: 1,
       path: path,
@@ -576,7 +581,7 @@ export class CreepService {
   /**
    * Will clear the cache of paths.
    */
-  clearCreepPathCache(expirationTime: number = 5000): void {
+  clearCreepPathCache(expirationTime: number = 1000): void {
     const currentTick = Game.time;
 
     if (currentTick % 100 === 0) {
@@ -586,7 +591,10 @@ export class CreepService {
 
         for (const key in roomCache) {
           const cachedPath = roomCache[key];
-          if (currentTick - cachedPath.lastAccessed > expirationTime) {
+          if (
+            currentTick - cachedPath.lastAccessed > expirationTime ||
+            cachedPath.usedTimes <= 3
+          ) {
             keysToRemove.push(key);
           }
         }
@@ -620,4 +628,4 @@ export class CreepService {
   // },
 }
 
-profiler.registerClass(CreepService, "CreepService");
+// profiler.registerClass(CreepService, "CreepService");

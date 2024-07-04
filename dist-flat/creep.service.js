@@ -6,10 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreepService = void 0;
 const lodash_1 = __importDefault(require("lodash"));
 const role_worker_const_1 = require("./role.worker.const");
-const profiler = require("./screeps-profiler");
+// const profiler = require("./screeps-profiler");
 class CreepService {
-    drawPath(creep) {
-        if (!creep.memory.path) {
+    drawPath(creep, forceDraw = true) {
+        if (!creep.memory.path || !forceDraw) {
             return;
         }
         const visual = new RoomVisual(creep.room.name);
@@ -237,24 +237,12 @@ class CreepService {
         creep.memory.targetId = null;
         creep.memory.path = undefined;
         const containers = creep.room.find(FIND_STRUCTURES, {
-            filter: (structure) => structure.structureType === STRUCTURE_CONTAINER,
+            filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
+                structure.store[RESOURCE_ENERGY] > 0,
         });
-        let closestContainer = null;
-        let minDistance = Infinity;
-        for (const container of containers) {
-            if (container.store[RESOURCE_ENERGY] === 0)
-                continue;
-            const miners = container.pos.findInRange(FIND_MY_CREEPS, 1, {
-                filter: (c) => c.memory.role === "miner",
-            });
-            if (miners.length > 0 || container.store[RESOURCE_ENERGY] > 0) {
-                const distance = creep.pos.getRangeTo(container.pos);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestContainer = container;
-                }
-            }
-        }
+        if (containers.length === 0)
+            return;
+        const closestContainer = creep.pos.findClosestByPath(containers);
         if (closestContainer) {
             creep.memory.targetId = closestContainer.id;
             creep.memory.path = this.getPath(creep.pos, closestContainer.pos);
@@ -428,7 +416,24 @@ class CreepService {
             cachedPath.usedTimes = cachedPath.usedTimes + 1;
             return cachedPath.path;
         }
-        const path = startPos.findPathTo(endPos);
+        const path = startPos.findPathTo(endPos, {
+            ignoreCreeps: true,
+            costCallback: (roomName, costMatrix) => {
+                const room = Game.rooms[roomName];
+                if (room) {
+                    room.find(FIND_STRUCTURES).forEach((struct) => {
+                        if (struct.structureType === STRUCTURE_ROAD) {
+                            costMatrix.set(struct.pos.x, struct.pos.y, 1);
+                        }
+                        else if (struct.structureType !== STRUCTURE_CONTAINER &&
+                            (struct.structureType !== STRUCTURE_RAMPART || !struct.my)) {
+                            costMatrix.set(struct.pos.x, struct.pos.y, 0xff);
+                        }
+                    });
+                }
+                return costMatrix;
+            },
+        });
         Memory.cacheCreepPaths[roomName][cacheKey] = {
             usedTimes: 1,
             path: path,
@@ -466,7 +471,7 @@ class CreepService {
     /**
      * Will clear the cache of paths.
      */
-    clearCreepPathCache(expirationTime = 5000) {
+    clearCreepPathCache(expirationTime = 1000) {
         const currentTick = Game.time;
         if (currentTick % 100 === 0) {
             for (const roomName in Memory.cacheCreepPaths) {
@@ -474,7 +479,8 @@ class CreepService {
                 const keysToRemove = [];
                 for (const key in roomCache) {
                     const cachedPath = roomCache[key];
-                    if (currentTick - cachedPath.lastAccessed > expirationTime) {
+                    if (currentTick - cachedPath.lastAccessed > expirationTime ||
+                        cachedPath.usedTimes <= 3) {
                         keysToRemove.push(key);
                     }
                 }
@@ -493,4 +499,4 @@ class CreepService {
     }
 }
 exports.CreepService = CreepService;
-profiler.registerClass(CreepService, "CreepService");
+// profiler.registerClass(CreepService, "CreepService");

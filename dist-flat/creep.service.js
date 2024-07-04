@@ -3,11 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.CreepService = void 0;
 const lodash_1 = __importDefault(require("lodash"));
 const role_worker_const_1 = require("./role.worker.const");
-// const profiler = require("./screeps-profiler");
-const creepService = {
-    drawPath: function (creep) {
+const profiler = require("./screeps-profiler");
+class CreepService {
+    drawPath(creep) {
         if (!creep.memory.path) {
             return;
         }
@@ -34,12 +35,12 @@ const creepService = {
             }
             currentPos = nextPos;
         });
-    },
+    }
     /**
      * Gets path to a container, or source.
      * @param creep
      */
-    getPathToSource: function (creep) {
+    getPathToSource(creep) {
         this.findContainer(creep);
         if (creep.memory.targetId) {
             return;
@@ -53,8 +54,8 @@ const creepService = {
             creep.memory.path = path;
             creep.memory.targetId = closest.id;
         }
-    },
-    findConstructionSite: function (creep) {
+    }
+    findConstructionSite(creep) {
         const constructionSites = creep.room.find(FIND_CONSTRUCTION_SITES);
         if (constructionSites.length > 0) {
             let closestSite = creep.pos.findClosestByPath(constructionSites);
@@ -63,8 +64,8 @@ const creepService = {
                 creep.memory.targetId = closestSite.id;
             }
         }
-    },
-    getDamagedStructures: function (creep) {
+    }
+    getDamagedStructures(creep) {
         const targets = creep.room.find(FIND_STRUCTURES, {
             filter: (structure) => {
                 return (structure.hits < structure.hitsMax &&
@@ -79,8 +80,8 @@ const creepService = {
                 creep.memory.targetId = closestSite.id;
             }
         }
-    },
-    getOpenPositions: function (roomPosition) {
+    }
+    getOpenPositions(roomPosition) {
         const terrain = Game.map.getRoomTerrain(roomPosition.roomName);
         const openPositions = [];
         for (let dx = -1; dx <= 1; dx++) {
@@ -105,8 +106,8 @@ const creepService = {
             }
         }
         return openPositions;
-    },
-    getPathTotargets: function (creep, targets) {
+    }
+    getPathTotargets(creep, targets) {
         let bestPath = null;
         let bestTarget = null;
         let minCost = Infinity;
@@ -153,8 +154,8 @@ const creepService = {
             creep.memory.path = this.getPath(creep.pos, bestTarget.pos);
             creep.memory.targetId = bestTarget.id;
         }
-    },
-    moveAndHarvest: function (creep) {
+    }
+    moveAndHarvest(creep) {
         const objectToCheck = Game.getObjectById(creep.memory.targetId);
         if (objectToCheck && objectToCheck.structureType === STRUCTURE_CONTAINER) {
             this.moveAndCollectFromContainer(creep, objectToCheck);
@@ -173,15 +174,15 @@ const creepService = {
                     this.getPathToSource(creep);
                 }
                 else {
-                    let moveResult = creep.moveByPath(creep.memory.path);
+                    let moveResult = this.moveByPath(creep);
                     if (moveResult === ERR_NOT_FOUND || moveResult === ERR_INVALID_ARGS) {
                         this.getPathToSource(creep);
                     }
                 }
             }
         }
-    },
-    isCreepIsStuck: function (creep) {
+    }
+    isCreepIsStuck(creep) {
         if (!creep.memory.lastPos) {
             creep.memory.lastPos = {
                 x: creep.pos.x,
@@ -204,25 +205,25 @@ const creepService = {
             };
             creep.memory.idleTicks = 0;
         }
-        if (creep.memory.idleTicks >= 4) {
+        if (creep.memory.idleTicks >= 3) {
             creep.memory.idleTicks = 0;
             return true;
         }
         return false;
-    },
-    findIdleCreep: function (creep) {
+    }
+    findIdleCreep(creep) {
         if (this.isCreepIsStuck(creep)) {
             creep.memory.targetId = null;
             creep.memory.path = undefined;
         }
-    },
-    moveAndCollectFromContainer: function (creep, container) {
+    }
+    moveAndCollectFromContainer(creep, container) {
         if (!creep.memory.path || !creep.memory.path.length) {
             creep.memory.path = creep.pos.findPathTo(container.pos);
         }
         const action = creep.withdraw(container, RESOURCE_ENERGY);
         if (action === ERR_NOT_IN_RANGE) {
-            const moveResult = creep.moveByPath(creep.memory.path);
+            const moveResult = this.moveByPath(creep);
             if (moveResult === ERR_NOT_FOUND || moveResult === ERR_INVALID_ARGS) {
                 creep.memory.path = creep.pos.findPathTo(container.pos);
             }
@@ -231,8 +232,8 @@ const creepService = {
             action === ERR_NOT_ENOUGH_RESOURCES) {
             this.findContainer(creep);
         }
-    },
-    findContainer: function (creep) {
+    }
+    findContainer(creep) {
         creep.memory.targetId = null;
         creep.memory.path = undefined;
         const containers = creep.room.find(FIND_STRUCTURES, {
@@ -258,13 +259,13 @@ const creepService = {
             creep.memory.targetId = closestContainer.id;
             creep.memory.path = this.getPath(creep.pos, closestContainer.pos);
         }
-    },
+    }
     isTargetedByOtherCreeps(target) {
         return lodash_1.default.some(Object.values(Game.creeps), (c) => {
             return c.memory.targetId === target.id && c.memory.transferring;
         });
-    },
-    taskHarvest: function (creep) {
+    }
+    taskHarvest(creep) {
         if (creep.store.getFreeCapacity() == 0) {
             this.setTask(creep, role_worker_const_1.WorkerTask.Idling);
         }
@@ -274,8 +275,8 @@ const creepService = {
         else {
             this.moveAndHarvest(creep);
         }
-    },
-    taskTransfer: function (creep) {
+    }
+    taskTransfer(creep) {
         if (creep.store[RESOURCE_ENERGY] === 0) {
             this.setTask(creep, role_worker_const_1.WorkerTask.Harvesting);
             return;
@@ -324,7 +325,7 @@ const creepService = {
             else {
                 const action = creep.transfer(target, RESOURCE_ENERGY);
                 if (action === ERR_FULL || action === ERR_NOT_IN_RANGE) {
-                    const moveResult = creep.moveByPath(creep.memory.path);
+                    const moveResult = this.moveByPath(creep);
                     if (moveResult !== OK && moveResult !== ERR_TIRED) {
                         this.setTask(creep, role_worker_const_1.WorkerTask.Idling);
                     }
@@ -334,7 +335,7 @@ const creepService = {
                 }
             }
         }
-    },
+    }
     taskUpgrade(creep) {
         if (creep.store[RESOURCE_ENERGY] == 0) {
             this.setTask(creep, role_worker_const_1.WorkerTask.Harvesting);
@@ -346,14 +347,14 @@ const creepService = {
         else {
             const action = creep.upgradeController(creep.room.controller);
             if (action === ERR_NOT_IN_RANGE) {
-                const moveResult = creep.moveByPath(creep.memory.path);
-                creepService.drawPath(creep);
+                const moveResult = this.moveByPath(creep);
+                this.drawPath(creep);
                 if (moveResult !== OK && moveResult !== ERR_TIRED) {
                     this.getPathToController(creep);
                 }
             }
         }
-    },
+    }
     taskBuild(creep) {
         if (creep.store[RESOURCE_ENERGY] == 0) {
             this.setTask(creep, role_worker_const_1.WorkerTask.Harvesting);
@@ -379,7 +380,7 @@ const creepService = {
                 action = creep.build(target);
             }
             if (action === ERR_NOT_IN_RANGE) {
-                const moveResult = creep.moveByPath(creep.memory.path);
+                const moveResult = this.moveByPath(creep);
                 if (!("progress" in target) && target.hits === target.hitsMax) {
                     this.setTask(creep, role_worker_const_1.WorkerTask.Harvesting);
                 }
@@ -396,75 +397,100 @@ const creepService = {
                 this.setTask(creep, role_worker_const_1.WorkerTask.Idling);
             }
         }
-    },
+    }
     setTask(creep, task, setFunction = "NA") {
         creep.memory.path = undefined;
         creep.memory.targetId = null;
         creep.memory.task = task;
-    },
+    }
     getPathToController(creep) {
         const controller = creep.room.controller;
         creep.memory.path = this.getPath(creep.pos, controller.pos);
-    },
+    }
     /**
      * Will search for a cached path in Cache. If there is one, will return it and update lastTimeAccessed. If nothing will be found in cache, will create a new entry and return the path.
      * @param startPos
      * @param endPos
      */
     getPath(startPos, endPos) {
-        // if (!Memory.cacheCreepPaths) {
-        //   Memory.cacheCreepPaths = {};
-        // }
-        // if (!Memory.cacheCreepPaths[startPos.roomName]) {
-        //   Memory.cacheCreepPaths[startPos.roomName] = {};
-        // }
-        // const pathName: string = `${startPos.roomName}_${startPos.x}_${startPos.y}_${endPos.roomName}_${endPos.x}_${endPos.y}`;
-        // const cachedPath = Memory.cacheCreepPaths[startPos.roomName][pathName];
-        // if (cachedPath) {
-        //   cachedPath.lastTimeAccessed = Game.time;
-        //   cachedPath.usedTimes = cachedPath.usedTimes + 1;
-        //   return cachedPath.path;
-        // }
-        // const path = startPos.findPathTo(endPos);
-        // const newCacheEntry: CachedCreepPath = {
-        //   lastTimeAccessed: Game.time,
-        //   path: path,
-        //   usedTimes: 1,
-        // };
-        // Memory.cacheCreepPaths[startPos.roomName][pathName] = newCacheEntry;
+        const roomName = startPos.roomName;
+        const cacheKey = `${startPos.x},${startPos.y}:${endPos.x},${endPos.y}`;
+        const currentTick = Game.time;
+        if (!Memory.cacheCreepPaths) {
+            Memory.cacheCreepPaths = {};
+        }
+        if (!Memory.cacheCreepPaths[roomName]) {
+            Memory.cacheCreepPaths[roomName] = {};
+        }
+        const cachedPath = Memory.cacheCreepPaths[roomName][cacheKey];
+        if (cachedPath) {
+            cachedPath.lastAccessed = currentTick;
+            cachedPath.usedTimes = cachedPath.usedTimes + 1;
+            return cachedPath.path;
+        }
         const path = startPos.findPathTo(endPos);
+        Memory.cacheCreepPaths[roomName][cacheKey] = {
+            usedTimes: 1,
+            path: path,
+            lastAccessed: currentTick,
+        };
         return path;
-    },
+    }
+    moveByPath(creep) {
+        const path = creep.memory.path;
+        if (!path || path.length === 0) {
+            return ERR_NOT_FOUND;
+        }
+        const moveResult = creep.moveByPath(path);
+        const roomName = creep.room.name;
+        const startPos = creep.pos;
+        const endPos = path[path.length - 1];
+        const pathKey = `${startPos.x},${startPos.y}:${endPos.x},${endPos.y}`;
+        if (moveResult === ERR_INVALID_ARGS || moveResult === ERR_NOT_FOUND) {
+            if (Memory.cacheCreepPaths && Memory.cacheCreepPaths[roomName]) {
+                delete Memory.cacheCreepPaths[roomName][pathKey];
+            }
+            delete creep.memory.path;
+        }
+        else if (moveResult === ERR_BUSY) {
+            if (creep.memory.idleTicks > 3) {
+                if (Memory.cacheCreepPaths && Memory.cacheCreepPaths[roomName]) {
+                    delete Memory.cacheCreepPaths[roomName][pathKey];
+                }
+                creep.memory.idleTicks = 0;
+                delete creep.memory.path;
+            }
+        }
+        return moveResult;
+    }
     /**
      * Will clear the cache of paths.
      */
-    clearCreepPathCache(expirationTime = 1000) {
-        // if (Game.time % 1000 === 0) {
-        //   if (!Memory.cacheCreepPaths) return;
-        //   for (const roomName in Memory.cacheCreepPaths) {
-        //     for (const pathName in Memory.cacheCreepPaths[roomName]) {
-        //       const cachedPath = Memory.cacheCreepPaths[roomName][pathName];
-        //       if (Game.time - cachedPath.lastTimeAccessed > expirationTime) {
-        //         delete Memory.cacheCreepPaths[roomName][pathName];
-        //       }
-        //     }
-        //     if (Object.keys(Memory.cacheCreepPaths[roomName]).length === 0) {
-        //       delete Memory.cacheCreepPaths[roomName];
-        //     }
-        //   }
-        // }
-    },
-    createStructureCache() {
-        Memory.creepRoomCache = {};
-        const rooms = Game.rooms;
-        for (let roomName in rooms) {
-            const room = Game.rooms[roomName];
-            const structures = room.find(FIND_STRUCTURES);
-            if (structures) {
-                Memory.creepRoomCache[roomName] = structures;
+    clearCreepPathCache(expirationTime = 5000) {
+        const currentTick = Game.time;
+        if (currentTick % 100 === 0) {
+            for (const roomName in Memory.cacheCreepPaths) {
+                const roomCache = Memory.cacheCreepPaths[roomName];
+                const keysToRemove = [];
+                for (const key in roomCache) {
+                    const cachedPath = roomCache[key];
+                    if (currentTick - cachedPath.lastAccessed > expirationTime) {
+                        keysToRemove.push(key);
+                    }
+                }
+                for (const key of keysToRemove) {
+                    delete roomCache[key];
+                }
+                const sortedCache = Object.entries(roomCache)
+                    .sort(([, a], [, b]) => b.usedTimes - a.usedTimes)
+                    .reduce((acc, [key, value]) => {
+                    acc[key] = value;
+                    return acc;
+                }, {});
+                Memory.cacheCreepPaths[roomName] = sortedCache;
             }
         }
-    },
-};
-// profiler.registerObject(creepService, "creepService");
-exports.default = creepService;
+    }
+}
+exports.CreepService = CreepService;
+profiler.registerClass(CreepService, "CreepService");

@@ -5,7 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.scoutRole = void 0;
 const build_service_1 = __importDefault(require("./build.service"));
-const creep_service_1 = __importDefault(require("./creep.service"));
+const creep_service_1 = require("./creep.service");
+const creepService = new creep_service_1.CreepService();
 var scoutJobs;
 (function (scoutJobs) {
     scoutJobs[scoutJobs["MOVING_TO_NEXT_ROOM"] = 0] = "MOVING_TO_NEXT_ROOM";
@@ -30,7 +31,7 @@ exports.scoutRole = {
                 return;
             }
             if (creep.memory.path) {
-                creep_service_1.default.drawPath(creep);
+                creepService.drawPath(creep);
             }
             if (!creep.memory.initialized) {
                 this.initializeMemory(creep);
@@ -171,10 +172,10 @@ exports.scoutRole = {
     },
     harvestEnergy(creep) {
         if (!creep.memory.path) {
-            creep_service_1.default.getPathToSource(creep);
+            creepService.getPathToSource(creep);
         }
         else {
-            creep_service_1.default.moveAndHarvest(creep);
+            creepService.moveAndHarvest(creep);
         }
     },
     transferEnergy(creep) {

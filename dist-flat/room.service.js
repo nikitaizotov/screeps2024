@@ -9,17 +9,18 @@ const role_WallAndRampartBuilder_1 = __importDefault(require("./role.WallAndRamp
 const role_scout_1 = __importDefault(require("./role.scout"));
 const structure_tower_1 = __importDefault(require("./structure.tower"));
 const build_service_1 = __importDefault(require("./build.service"));
-const creep_service_1 = __importDefault(require("./creep.service"));
 const utils_service_1 = __importDefault(require("./utils.service"));
 const role_worker_1 = __importDefault(require("./role.worker"));
 const worker_service_1 = require("./worker.service");
 const role_miner_1 = require("./role.miner");
+const creep_service_1 = require("./creep.service");
 // const profiler = require("./screeps-profiler");
 class RoomService {
     constructor() {
         this.roleMiner = new role_miner_1.RoleMiner();
         this.workerService = new worker_service_1.WorkerService();
         this.enabledRoles = [];
+        this.creepService = new creep_service_1.CreepService();
         this.enabledRoles = [
             role_worker_1.default,
             this.roleMiner,
@@ -42,6 +43,7 @@ class RoomService {
         try {
             this.cleanMemory();
             this.roomRoutines();
+            this.creepService.clearCreepPathCache();
         }
         catch (error) {
             console.log(`Error in cacheRoutines: ${error.message}`);
@@ -143,6 +145,7 @@ class RoomService {
                                     ((Math.random() * 0xffffff) << 0)
                                         .toString(16)
                                         .padStart(6, "0"),
+                                idleTicks: 0,
                             },
                         }) === OK) {
                             return;
@@ -163,7 +166,7 @@ class RoomService {
                 timeToCheck =
                     creep.memory.role === role_scout_1.default.memoryKey ? 20 : timeToCheck;
                 if (Game.time % timeToCheck === 2) {
-                    creep_service_1.default.findIdleCreep(creep);
+                    this.creepService.findIdleCreep(creep);
                 }
                 const role = this.enabledRoles.find((role) => role.memoryKey === creep.memory.role);
                 if (role) {

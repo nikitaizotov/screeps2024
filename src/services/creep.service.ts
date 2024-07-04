@@ -1,9 +1,9 @@
 import _ from "lodash";
 import { WorkerTask } from "../roles/constants/role.worker.const";
-// const profiler = require("./../screeps-profiler");
+const profiler = require("./../screeps-profiler");
 
-const creepService = {
-  drawPath: function (creep: Creep): void {
+export class CreepService {
+  drawPath(creep: Creep): void {
     if (!creep.memory.path) {
       return;
     }
@@ -34,13 +34,13 @@ const creepService = {
       }
       currentPos = nextPos;
     });
-  },
+  }
 
   /**
    * Gets path to a container, or source.
    * @param creep
    */
-  getPathToSource: function (creep: Creep): void {
+  getPathToSource(creep: Creep): void {
     this.findContainer(creep);
 
     if (creep.memory.targetId) {
@@ -58,9 +58,9 @@ const creepService = {
       creep.memory.path = path;
       creep.memory.targetId = closest.id;
     }
-  },
+  }
 
-  findConstructionSite: function (creep: Creep) {
+  findConstructionSite(creep: Creep): void {
     const constructionSites = creep.room.find(FIND_CONSTRUCTION_SITES);
     if (constructionSites.length > 0) {
       let closestSite = creep.pos.findClosestByPath(constructionSites);
@@ -70,9 +70,9 @@ const creepService = {
         creep.memory.targetId = closestSite.id;
       }
     }
-  },
+  }
 
-  getDamagedStructures: function (creep: Creep): void {
+  getDamagedStructures(creep: Creep): void {
     const targets: AnyStructure[] = creep.room.find(FIND_STRUCTURES, {
       filter: (structure) => {
         return (
@@ -91,9 +91,9 @@ const creepService = {
         creep.memory.targetId = closestSite.id;
       }
     }
-  },
+  }
 
-  getOpenPositions: function (roomPosition: RoomPosition): RoomPosition[] {
+  getOpenPositions(roomPosition: RoomPosition): RoomPosition[] {
     const terrain = Game.map.getRoomTerrain(roomPosition.roomName);
     const openPositions: RoomPosition[] = [];
 
@@ -124,9 +124,9 @@ const creepService = {
     }
 
     return openPositions;
-  },
+  }
 
-  getPathTotargets: function (
+  getPathTotargets(
     creep: Creep,
     targets: AnyStructure[] | ConstructionSite<BuildableStructureConstant>[]
   ): void {
@@ -190,9 +190,9 @@ const creepService = {
       creep.memory.path = this.getPath(creep.pos, bestTarget.pos);
       creep.memory.targetId = bestTarget.id;
     }
-  },
+  }
 
-  moveAndHarvest: function (creep: Creep): void {
+  moveAndHarvest(creep: Creep): void {
     const objectToCheck = Game.getObjectById(
       creep.memory.targetId as Id<StructureContainer>
     );
@@ -215,7 +215,7 @@ const creepService = {
         if (this.isCreepIsStuck(creep)) {
           this.getPathToSource(creep);
         } else {
-          let moveResult = creep.moveByPath(creep.memory.path!);
+          let moveResult = this.moveByPath(creep);
 
           if (moveResult === ERR_NOT_FOUND || moveResult === ERR_INVALID_ARGS) {
             this.getPathToSource(creep);
@@ -223,9 +223,9 @@ const creepService = {
         }
       }
     }
-  },
+  }
 
-  isCreepIsStuck: function (creep: Creep): boolean {
+  isCreepIsStuck(creep: Creep): boolean {
     if (!creep.memory.lastPos) {
       creep.memory.lastPos = {
         x: creep.pos.x,
@@ -251,22 +251,22 @@ const creepService = {
       creep.memory.idleTicks = 0;
     }
 
-    if (creep.memory.idleTicks! >= 4) {
+    if (creep.memory.idleTicks! >= 3) {
       creep.memory.idleTicks = 0;
       return true;
     }
 
     return false;
-  },
+  }
 
-  findIdleCreep: function (creep: Creep): void {
+  findIdleCreep(creep: Creep): void {
     if (this.isCreepIsStuck(creep)) {
       creep.memory.targetId = null;
       creep.memory.path = undefined;
     }
-  },
+  }
 
-  moveAndCollectFromContainer: function (
+  moveAndCollectFromContainer(
     creep: Creep,
     container: StructureContainer
   ): void {
@@ -277,7 +277,7 @@ const creepService = {
     const action = creep.withdraw(container, RESOURCE_ENERGY);
 
     if (action === ERR_NOT_IN_RANGE) {
-      const moveResult = creep.moveByPath(creep.memory.path);
+      const moveResult = this.moveByPath(creep);
 
       if (moveResult === ERR_NOT_FOUND || moveResult === ERR_INVALID_ARGS) {
         creep.memory.path = creep.pos.findPathTo(container.pos);
@@ -288,9 +288,9 @@ const creepService = {
     ) {
       this.findContainer(creep);
     }
-  },
+  }
 
-  findContainer: function (creep: Creep): void {
+  findContainer(creep: Creep): void {
     creep.memory.targetId = null;
     creep.memory.path = undefined;
 
@@ -322,15 +322,15 @@ const creepService = {
       creep.memory.targetId = closestContainer.id;
       creep.memory.path = this.getPath(creep.pos, closestContainer.pos);
     }
-  },
+  }
 
   isTargetedByOtherCreeps(target: AnyStructure): boolean {
     return _.some(Object.values(Game.creeps), (c: Creep) => {
       return c.memory.targetId === target.id && c.memory.transferring;
     });
-  },
+  }
 
-  taskHarvest: function (creep: Creep) {
+  taskHarvest(creep: Creep) {
     if (creep.store.getFreeCapacity() == 0) {
       this.setTask(creep, WorkerTask.Idling);
     }
@@ -340,9 +340,9 @@ const creepService = {
     } else {
       this.moveAndHarvest(creep);
     }
-  },
+  }
 
-  taskTransfer: function (creep: Creep) {
+  taskTransfer(creep: Creep) {
     if (creep.store[RESOURCE_ENERGY] === 0) {
       this.setTask(creep, WorkerTask.Harvesting);
       return;
@@ -406,7 +406,7 @@ const creepService = {
         const action = creep.transfer(target, RESOURCE_ENERGY);
 
         if (action === ERR_FULL || action === ERR_NOT_IN_RANGE) {
-          const moveResult = creep.moveByPath(creep.memory.path as PathStep[]);
+          const moveResult = this.moveByPath(creep);
 
           if (moveResult !== OK && moveResult !== ERR_TIRED) {
             this.setTask(creep, WorkerTask.Idling);
@@ -416,7 +416,7 @@ const creepService = {
         }
       }
     }
-  },
+  }
 
   taskUpgrade(creep: Creep): void {
     if (creep.store[RESOURCE_ENERGY] == 0) {
@@ -432,15 +432,15 @@ const creepService = {
       );
 
       if (action === ERR_NOT_IN_RANGE) {
-        const moveResult = creep.moveByPath(creep.memory.path as PathStep[]);
-        creepService.drawPath(creep);
+        const moveResult = this.moveByPath(creep);
+        this.drawPath(creep);
 
         if (moveResult !== OK && moveResult !== ERR_TIRED) {
           this.getPathToController(creep);
         }
       }
     }
-  },
+  }
 
   taskBuild(creep: Creep) {
     if (creep.store[RESOURCE_ENERGY] == 0) {
@@ -469,7 +469,7 @@ const creepService = {
       }
 
       if (action === ERR_NOT_IN_RANGE) {
-        const moveResult = creep.moveByPath(creep.memory.path as PathStep[]);
+        const moveResult = this.moveByPath(creep);
         if (!("progress" in target) && target.hits === target.hitsMax) {
           this.setTask(creep, WorkerTask.Harvesting);
         }
@@ -486,7 +486,7 @@ const creepService = {
         this.setTask(creep, WorkerTask.Idling);
       }
     }
-  },
+  }
 
   setTask(
     creep: Creep,
@@ -496,84 +496,128 @@ const creepService = {
     creep.memory.path = undefined;
     creep.memory.targetId = null;
     creep.memory.task = task;
-  },
+  }
 
   getPathToController(creep: Creep): void {
     const controller = creep.room.controller as StructureController;
 
     creep.memory.path = this.getPath(creep.pos, controller.pos);
-  },
+  }
 
   /**
    * Will search for a cached path in Cache. If there is one, will return it and update lastTimeAccessed. If nothing will be found in cache, will create a new entry and return the path.
    * @param startPos
    * @param endPos
    */
-  getPath(startPos: RoomPosition, endPos: RoomPosition) {
-    // if (!Memory.cacheCreepPaths) {
-    //   Memory.cacheCreepPaths = {};
-    // }
+  getPath(startPos: RoomPosition, endPos: RoomPosition): PathStep[] {
+    const roomName = startPos.roomName;
+    const cacheKey = `${startPos.x},${startPos.y}:${endPos.x},${endPos.y}`;
+    const currentTick = Game.time;
 
-    // if (!Memory.cacheCreepPaths[startPos.roomName]) {
-    //   Memory.cacheCreepPaths[startPos.roomName] = {};
-    // }
+    if (!Memory.cacheCreepPaths) {
+      Memory.cacheCreepPaths = {};
+    }
+    if (!Memory.cacheCreepPaths[roomName]) {
+      Memory.cacheCreepPaths[roomName] = {};
+    }
 
-    // const pathName: string = `${startPos.roomName}_${startPos.x}_${startPos.y}_${endPos.roomName}_${endPos.x}_${endPos.y}`;
+    const cachedPath = Memory.cacheCreepPaths[roomName][cacheKey];
+    if (cachedPath) {
+      cachedPath.lastAccessed = currentTick;
+      cachedPath.usedTimes = cachedPath.usedTimes + 1;
+      return cachedPath.path;
+    }
 
-    // const cachedPath = Memory.cacheCreepPaths[startPos.roomName][pathName];
-
-    // if (cachedPath) {
-    //   cachedPath.lastTimeAccessed = Game.time;
-    //   cachedPath.usedTimes = cachedPath.usedTimes + 1;
-    //   return cachedPath.path;
-    // }
-
-    // const path = startPos.findPathTo(endPos);
-
-    // const newCacheEntry: CachedCreepPath = {
-    //   lastTimeAccessed: Game.time,
-    //   path: path,
-    //   usedTimes: 1,
-    // };
-
-    // Memory.cacheCreepPaths[startPos.roomName][pathName] = newCacheEntry;
     const path = startPos.findPathTo(endPos);
+    Memory.cacheCreepPaths[roomName][cacheKey] = {
+      usedTimes: 1,
+      path: path,
+      lastAccessed: currentTick,
+    };
+
     return path;
-  },
+  }
+
+  moveByPath(
+    creep: Creep
+  ): CreepMoveReturnCode | ERR_NOT_FOUND | ERR_INVALID_ARGS {
+    const path = creep.memory.path as PathStep[];
+    if (!path || path.length === 0) {
+      return ERR_NOT_FOUND;
+    }
+
+    const moveResult = creep.moveByPath(path);
+
+    const roomName = creep.room.name;
+    const startPos = creep.pos;
+    const endPos = path[path.length - 1];
+    const pathKey = `${startPos.x},${startPos.y}:${endPos.x},${endPos.y}`;
+
+    if (moveResult === ERR_INVALID_ARGS || moveResult === ERR_NOT_FOUND) {
+      if (Memory.cacheCreepPaths && Memory.cacheCreepPaths[roomName]) {
+        delete Memory.cacheCreepPaths[roomName][pathKey];
+      }
+
+      delete creep.memory.path;
+    } else if (moveResult === ERR_BUSY) {
+      if (creep.memory.idleTicks > 3) {
+        if (Memory.cacheCreepPaths && Memory.cacheCreepPaths[roomName]) {
+          delete Memory.cacheCreepPaths[roomName][pathKey];
+        }
+
+        creep.memory.idleTicks = 0;
+        delete creep.memory.path;
+      }
+    }
+
+    return moveResult;
+  }
 
   /**
    * Will clear the cache of paths.
    */
-  clearCreepPathCache(expirationTime: number = 1000): void {
-    // if (Game.time % 1000 === 0) {
-    //   if (!Memory.cacheCreepPaths) return;
-    //   for (const roomName in Memory.cacheCreepPaths) {
-    //     for (const pathName in Memory.cacheCreepPaths[roomName]) {
-    //       const cachedPath = Memory.cacheCreepPaths[roomName][pathName];
-    //       if (Game.time - cachedPath.lastTimeAccessed > expirationTime) {
-    //         delete Memory.cacheCreepPaths[roomName][pathName];
-    //       }
-    //     }
-    //     if (Object.keys(Memory.cacheCreepPaths[roomName]).length === 0) {
-    //       delete Memory.cacheCreepPaths[roomName];
-    //     }
-    //   }
-    // }
-  },
+  clearCreepPathCache(expirationTime: number = 5000): void {
+    const currentTick = Game.time;
 
-  createStructureCache(): void {
-    Memory.creepRoomCache = {};
-    const rooms = Game.rooms;
-    for (let roomName in rooms) {
-      const room = Game.rooms[roomName];
-      const structures = room.find(FIND_STRUCTURES);
-      if (structures) {
-        Memory.creepRoomCache[roomName] = structures;
+    if (currentTick % 100 === 0) {
+      for (const roomName in Memory.cacheCreepPaths) {
+        const roomCache = Memory.cacheCreepPaths[roomName];
+        const keysToRemove = [];
+
+        for (const key in roomCache) {
+          const cachedPath = roomCache[key];
+          if (currentTick - cachedPath.lastAccessed > expirationTime) {
+            keysToRemove.push(key);
+          }
+        }
+
+        for (const key of keysToRemove) {
+          delete roomCache[key];
+        }
+
+        const sortedCache = Object.entries(roomCache)
+          .sort(([, a], [, b]) => b.usedTimes - a.usedTimes)
+          .reduce((acc, [key, value]) => {
+            acc[key] = value;
+            return acc;
+          }, {} as { [key: string]: CachedCreepPath });
+
+        Memory.cacheCreepPaths[roomName] = sortedCache;
       }
     }
-  },
-};
+  }
 
-// profiler.registerObject(creepService, "creepService");
+  // createStructureCache(): void {
+  //   Memory.creepRoomCache = {};
+  //   const rooms = Game.rooms;
+  //   for (let roomName in rooms) {
+  //     const room = Game.rooms[roomName];
+  //     const structures = room.find(FIND_STRUCTURES);
+  //     if (structures) {
+  //       Memory.creepRoomCache[roomName] = structures;
+  //     }
+  //   }
+  // },
+}
 
-export default creepService;
+profiler.registerClass(CreepService, "CreepService");

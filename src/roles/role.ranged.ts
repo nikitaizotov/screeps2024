@@ -1,6 +1,8 @@
 import attackService from "../services/attack.service";
-import creepService from "../services/creep.service";
+import { CreepService } from "../services/creep.service";
 import { CreepRole } from "./role.interface";
+
+const creepService = new CreepService();
 
 const roleRanged: CreepRole = {
   creepsPerRoom: 0,

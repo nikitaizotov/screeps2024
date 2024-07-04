@@ -3,18 +3,19 @@ import roleWallAndRampBuilder from "../roles/role.WallAndRampartBuilder";
 import roleScout from "../roles/role.scout";
 import structureTower from "../structures/structure.tower";
 import buildService from "./build.service";
-import creepService from "./creep.service";
 import utilsService from "./utils.service";
 import roleWorker from "../roles/worker/role.worker";
 import { WorkerService } from "../roles/worker/worker.service";
 import { RoleMiner } from "../roles/role.miner";
 import { CreepRole } from "../roles/role.interface";
+import { CreepService } from "./creep.service";
 // const profiler = require("./../screeps-profiler");
 
 export class RoomService {
   private roleMiner = new RoleMiner();
   private workerService = new WorkerService();
   private enabledRoles: CreepRole[] = [];
+  private creepService = new CreepService();
 
   constructor() {
     this.enabledRoles = [
@@ -40,6 +41,7 @@ export class RoomService {
     try {
       this.cleanMemory();
       this.roomRoutines();
+      this.creepService.clearCreepPathCache();
     } catch (error: any) {
       console.log(`Error in cacheRoutines: ${error.message}`);
     }
@@ -188,6 +190,7 @@ export class RoomService {
                     ((Math.random() * 0xffffff) << 0)
                       .toString(16)
                       .padStart(6, "0"),
+                  idleTicks: 0,
                 },
               }) === OK
             ) {
@@ -212,7 +215,7 @@ export class RoomService {
           creep.memory.role === roleScout.memoryKey ? 20 : timeToCheck;
 
         if (Game.time % timeToCheck === 2) {
-          creepService.findIdleCreep(creep);
+          this.creepService.findIdleCreep(creep);
         }
 
         const role = this.enabledRoles.find(

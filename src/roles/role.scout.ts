@@ -1,6 +1,8 @@
 import buildService from "../services/build.service";
-import creepService from "../services/creep.service";
+import { CreepService } from "../services/creep.service";
 import { CreepRole } from "./role.interface";
+
+const creepService = new CreepService();
 
 interface ScoutRoomMemory {
   scouted: boolean;

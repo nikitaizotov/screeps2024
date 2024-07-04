@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RoleMiner = void 0;
 const lodash_1 = __importDefault(require("lodash"));
-const creep_service_1 = __importDefault(require("./creep.service"));
+const creep_service_1 = require("./creep.service");
 class RoleMiner {
     constructor() {
         this.creepsPerRoom = 99;
@@ -14,7 +14,7 @@ class RoleMiner {
         this.bodyParts = [WORK, WORK, WORK, WORK];
         this.baseBodyParts = [WORK, MOVE, CARRY];
         this.maxBodyPartsMultiplier = 3;
-        this.creepService = creep_service_1.default;
+        this.creepService = new creep_service_1.CreepService();
     }
     run(creep) {
         if (creep.spawning) {
@@ -25,7 +25,7 @@ class RoleMiner {
                 this.findContainerAndSource(creep);
             }
             else {
-                creep_service_1.default.drawPath(creep);
+                this.creepService.drawPath(creep);
                 creep.moveByPath(creep.memory.path);
                 if (creep.pos.x === creep.memory.targetPos.x &&
                     creep.pos.y === creep.memory.targetPos.y &&

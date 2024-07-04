@@ -4,7 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const attack_service_1 = __importDefault(require("./attack.service"));
-const creep_service_1 = __importDefault(require("./creep.service"));
+const creep_service_1 = require("./creep.service");
+const creepService = new creep_service_1.CreepService();
 const roleRanged = {
     creepsPerRoom: 0,
     namePrefix: "Ranged",
@@ -72,7 +73,7 @@ const roleRanged = {
                     // Ensure target.id is compatible with CreepMemory's targetId
                     creep.memory.targetId = target.id;
                 }
-                creep_service_1.default.drawPath(creep);
+                creepService.drawPath(creep);
                 creep.moveByPath(creep.memory.path);
             }
         }
@@ -95,7 +96,7 @@ const roleRanged = {
             path = creep.memory.path;
         }
         creep.moveByPath(path);
-        creep_service_1.default.drawPath(creep);
+        creepService.drawPath(creep);
     },
     randomlyPatrol(creep) {
         const directions = [

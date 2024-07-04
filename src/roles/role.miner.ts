@@ -1,6 +1,6 @@
 import _ from "lodash";
-import creepService from "../services/creep.service";
 import { CreepRole } from "./role.interface";
+import { CreepService } from "../services/creep.service";
 
 export class RoleMiner implements CreepRole {
   creepsPerRoom = 99;
@@ -9,7 +9,7 @@ export class RoleMiner implements CreepRole {
   bodyParts = [WORK, WORK, WORK, WORK];
   baseBodyParts = [WORK, MOVE, CARRY];
   maxBodyPartsMultiplier = 3;
-  creepService = creepService;
+  creepService = new CreepService();
 
   run(creep: Creep): void {
     if (creep.spawning) {
@@ -20,7 +20,7 @@ export class RoleMiner implements CreepRole {
       if (!creep.memory.targetPos || !creep.memory.path) {
         this.findContainerAndSource(creep);
       } else {
-        creepService.drawPath(creep);
+        this.creepService.drawPath(creep);
         creep.moveByPath(creep.memory.path);
 
         if (

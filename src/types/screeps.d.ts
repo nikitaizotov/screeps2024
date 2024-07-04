@@ -10,7 +10,7 @@ interface CreepMemory {
   building?: boolean;
   targetPos?: RoomPosition | null;
   lastPos?: { x: number; y: number; energy: number };
-  idleTicks?: number;
+  idleTicks: number;
   pathColor?: string;
   role?: string;
   spawnRoom?: string;
@@ -45,7 +45,7 @@ interface RoomData {
 }
 
 interface CachedCreepPath {
-  lastTimeAccessed: number;
+  lastAccessed: number;
   path: PathStep[];
   usedTimes: number;
 }

@@ -1,9 +1,7 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const creep_service_1 = __importDefault(require("./creep.service"));
+const creep_service_1 = require("./creep.service");
+const creepService = new creep_service_1.CreepService();
 const roleWallAndRampBuilder = {
     creepsPerRoom: 1,
     namePrefix: "WallRampBuilder",
@@ -34,10 +32,10 @@ const roleWallAndRampBuilder = {
     },
     harvestEnergy(creep) {
         if (!creep.memory.path) {
-            creep_service_1.default.getPathToSource(creep);
+            creepService.getPathToSource(creep);
         }
         else {
-            creep_service_1.default.moveAndHarvest(creep);
+            creepService.moveAndHarvest(creep);
         }
     },
     repairWallsAndRamparts(creep) {
@@ -51,7 +49,7 @@ const roleWallAndRampBuilder = {
             });
             if (targets.length > 0) {
                 targets.sort((a, b) => a.hits - b.hits || creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b));
-                creep_service_1.default.getPathTotargets(creep, [targets[0]]);
+                creepService.getPathTotargets(creep, [targets[0]]);
             }
             else {
                 console.log("No targets for repair found");
@@ -62,7 +60,7 @@ const roleWallAndRampBuilder = {
         }
     },
     moveAndRepair(creep) {
-        creep_service_1.default.drawPath(creep);
+        creepService.drawPath(creep);
         const target = Game.getObjectById(creep.memory.targetId);
         if (!target) {
             creep.memory.path = undefined;

@@ -14,7 +14,7 @@ const utils_service_1 = __importDefault(require("./utils.service"));
 const role_worker_1 = __importDefault(require("./role.worker"));
 const worker_service_1 = require("./worker.service");
 const role_miner_1 = require("./role.miner");
-const profiler = require("./screeps-profiler");
+// const profiler = require("./screeps-profiler");
 class RoomService {
     constructor() {
         this.roleMiner = new role_miner_1.RoleMiner();

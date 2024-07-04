@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const lodash_1 = __importDefault(require("lodash"));
 const role_worker_const_1 = require("./role.worker.const");
-const profiler = require("./screeps-profiler");
+// const profiler = require("./screeps-profiler");
 const creepService = {
     drawPath: function (creep) {
         if (!creep.memory.path) {
@@ -466,5 +466,5 @@ const creepService = {
         }
     },
 };
-profiler.registerObject(creepService, "creepService");
+// profiler.registerObject(creepService, "creepService");
 exports.default = creepService;

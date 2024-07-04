@@ -9,7 +9,7 @@ import roleWorker from "../roles/worker/role.worker";
 import { WorkerService } from "../roles/worker/worker.service";
 import { RoleMiner } from "../roles/role.miner";
 import { CreepRole } from "../roles/role.interface";
-const profiler = require("./../screeps-profiler");
+// const profiler = require("./../screeps-profiler");
 
 export class RoomService {
   private roleMiner = new RoleMiner();

@@ -7,7 +7,7 @@ exports.WorkerService = void 0;
 const lodash_1 = __importDefault(require("lodash"));
 const role_worker_const_1 = require("./role.worker.const");
 const role_worker_1 = __importDefault(require("./role.worker"));
-const profiler = require("./screeps-profiler");
+// const profiler = require("./screeps-profiler");
 class WorkerService {
     manageWorkers() {
         for (let spawnName in Game.spawns) {

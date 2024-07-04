@@ -1,4 +1,4 @@
-const profiler = require("./../screeps-profiler");
+// const profiler = require("./../screeps-profiler");
 
 const utilsService = {
   repeatArray: function (array: any[], times: number) {

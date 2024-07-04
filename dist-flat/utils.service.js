@@ -1,6 +1,6 @@
 "use strict";
+// const profiler = require("./screeps-profiler");
 Object.defineProperty(exports, "__esModule", { value: true });
-const profiler = require("./screeps-profiler");
 const utilsService = {
     repeatArray: function (array, times) {
         try {

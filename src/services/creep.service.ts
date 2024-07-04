@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { WorkerTask } from "../roles/constants/role.worker.const";
-const profiler = require("./../screeps-profiler");
+// const profiler = require("./../screeps-profiler");
 
 const creepService = {
   drawPath: function (creep: Creep): void {
@@ -574,6 +574,6 @@ const creepService = {
   },
 };
 
-profiler.registerObject(creepService, "creepService");
+// profiler.registerObject(creepService, "creepService");
 
 export default creepService;

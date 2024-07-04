@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const creep_service_1 = __importDefault(require("./creep.service"));
 const role_worker_const_1 = require("./role.worker.const");
-const profiler = require("./screeps-profiler");
+// const profiler = require("./screeps-profiler");
 const roleWorker = {
     creepsPerRoom: 4,
     namePrefix: "Worker",

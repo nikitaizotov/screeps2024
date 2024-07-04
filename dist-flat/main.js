@@ -1,9 +1,11 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-var room_service_1 = __importDefault(require("./room.service"));
+const room_service_1 = require("./room.service");
+const profiler = require("screeps-profiler");
+// profiler.enable();
+const roomService = new room_service_1.RoomService();
 module.exports.loop = function () {
-    room_service_1.default.routines();
+    profiler.wrap(function () {
+        roomService.routines();
+    });
 };

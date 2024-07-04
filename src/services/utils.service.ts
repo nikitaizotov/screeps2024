@@ -1,3 +1,5 @@
+const profiler = require("./../screeps-profiler");
+
 const utilsService = {
   repeatArray: function (array: any[], times: number) {
     try {
@@ -114,5 +116,7 @@ const utilsService = {
     }
   },
 };
+
+// profiler.registerObject(utilsService, "utilsService");
 
 export default utilsService;

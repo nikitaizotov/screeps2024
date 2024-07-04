@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { WorkerTask } from "../constants/role.worker.const";
 import roleWorker from "./role.worker";
+const profiler = require("./../../screeps-profiler");
 
 export class WorkerService {
   manageWorkers(): void {
@@ -119,3 +120,5 @@ export class WorkerService {
     return false;
   }
 }
+
+// profiler.registerClass(WorkerService, "WorkerService");

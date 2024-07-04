@@ -10,32 +10,36 @@ import roleMiner from "../roles/role.miner";
 import roleWorker from "../roles/worker/role.worker";
 import { WorkerTask } from "../roles/constants/role.worker.const";
 import { WorkerService } from "../roles/worker/worker.service";
+const profiler = require("./../screeps-profiler");
 
 const workerService = new WorkerService();
 
-const roomService = {
-  enabledRoles: [
+export class RoomService {
+  enabledRoles = [
     roleWorker,
     roleMiner,
     // roleRanged,
     roleWallAndRampBuilder,
     // roleScout,
-  ],
+  ];
 
-  routines: function () {
+  routines(): void {
     try {
       this.cleanMemory();
+      // creepService.clearCreepPathCache(5000);
+      // this.cacheGameRooms();
       this.creepsRoutines();
       buildService.build();
       this.structureRoutines();
       this.roomRoutines();
       workerService.manageWorkers();
+      // creepService.createStructureCache();
     } catch (error: any) {
       console.log(`Error in routines: ${error.message}`);
     }
-  },
+  }
 
-  cleanMemory: function () {
+  cleanMemory(): void {
     try {
       for (var name in Memory.creeps) {
         if (!Game.creeps[name]) {
@@ -45,16 +49,16 @@ const roomService = {
     } catch (error: any) {
       console.log(`Error in cleanMemory: ${error.message}`);
     }
-  },
+  }
 
-  creepsRoutines: function () {
+  creepsRoutines(): void {
     try {
       this.spawnCreeps();
       this.moveCreeps();
     } catch (error: any) {
       console.log(`Error in creepsRoutines: ${error.message}`);
     }
-  },
+  }
 
   spawnCreeps(): void {
     try {
@@ -189,9 +193,9 @@ const roomService = {
     } catch (error: any) {
       console.log(`Error in spawnCreeps: ${error.message}`);
     }
-  },
+  }
 
-  moveCreeps: function () {
+  moveCreeps(): void {
     try {
       for (const name in Game.creeps) {
         const creep = Game.creeps[name];
@@ -200,7 +204,7 @@ const roomService = {
         timeToCheck =
           creep.memory.role === roleScout.memoryKey ? 20 : timeToCheck;
 
-        if (Game.time % timeToCheck === 0) {
+        if (Game.time % timeToCheck === 2) {
           creepService.findIdleCreep(creep);
         }
 
@@ -216,43 +220,9 @@ const roomService = {
     } catch (error: any) {
       console.log(`Error in moveCreeps: ${error.message}`);
     }
-  },
+  }
 
-  // manageWorkers: function () {
-  //   for (let spawnName in Game.spawns) {
-  //     const spawn = Game.spawns[spawnName];
-  //     const room = spawn.room;
-
-  //     const workers = _.filter(
-  //       Game.creeps,
-  //       (creep) =>
-  //         creep.memory.role === "worker" &&
-  //         creep.room.name === spawn.room.name &&
-  //         creep.memory.task === WorkerTask.Idling
-  //     );
-
-  //     if (!roleWorker.tasksPerRoom) {
-  //       return;
-  //     }
-  //     const enabledTasks = Object.keys(roleWorker.tasksPerRoom);
-
-  //     for (let enabledTask of enabledTasks) {
-  //       const onTask = workers.filter((w) => w.memory.task === enabledTask);
-  //       const workersRequired =
-  //         roleWorker.tasksPerRoom[
-  //           enabledTask as keyof typeof roleWorker.tasksPerRoom
-  //         ];
-
-  //       // if (workersRequired > onTask.length) {
-
-  //       // }
-
-  //       console.warn(">>>>", workersRequired);
-  //     }
-  //   }
-  // },
-
-  structureRoutines: function () {
+  structureRoutines(): void {
     try {
       for (let roomName in Game.rooms) {
         const room = Game.rooms[roomName];
@@ -271,11 +241,19 @@ const roomService = {
     } catch (error: any) {
       console.log(`Error in structureRoutines: ${error.message}`);
     }
-  },
+  }
 
-  roomRoutines: function (): void {
-    utilsService.getRoomData();
-  },
-};
+  roomRoutines(): void {
+    if (Game.time % 5 === 0) {
+      utilsService.getRoomData();
+    }
+  }
 
-export default roomService;
+  // cacheGameRooms(): void {
+  //   // unset old cache.
+  //   Memory.cacheGameRooms = {};
+  //   Memory.cacheGameRooms = { ...Game.rooms };
+  // }
+}
+
+profiler.registerClass(RoomService, "RoomService");

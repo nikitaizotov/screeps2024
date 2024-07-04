@@ -1,5 +1,10 @@
-import roomService from "./services/room.service";
+import { RoomService } from "./services/room.service";
+const profiler = require("screeps-profiler");
 
+// profiler.enable();
+const roomService = new RoomService();
 module.exports.loop = function () {
-  roomService.routines();
+  profiler.wrap(function () {
+    roomService.routines();
+  });
 };

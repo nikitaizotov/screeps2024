@@ -54,7 +54,7 @@ const buildService = {
 
       const rooms = Game.rooms;
       for (let roomName in rooms) {
-        const room = rooms[roomName];
+        const room = Game.rooms[roomName];
 
         if (
           room.controller &&
@@ -699,7 +699,7 @@ const buildService = {
   checkConstructionSites(room: Room): boolean {
     try {
       const constructionSites = room.find(FIND_CONSTRUCTION_SITES);
-      return constructionSites.length > 50;
+      return constructionSites.length > 5;
     } catch (error: any) {
       console.log(`Error in checkConstructionSites: ${error.message}`);
       return false;

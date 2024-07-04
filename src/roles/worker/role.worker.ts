@@ -1,24 +1,25 @@
 import creepService from "../../services/creep.service";
 import { CreepRole } from "../role.interface";
 import { WorkerTask } from "../constants/role.worker.const";
+const profiler = require("./../../screeps-profiler");
 
 const roleWorker: CreepRole = {
-  creepsPerRoom: 6,
+  creepsPerRoom: 4,
   namePrefix: "Worker",
   memoryKey: "worker",
   bodyParts: [WORK, CARRY, MOVE],
   maxBodyPartsMultiplier: 10,
   creepsPerSourcePositions: {
     "1": 3,
-    "2": 5,
-    "3": 5,
-    "4": 6,
-    "5": 6,
-    "6": 7,
+    "2": 4,
+    "3": 4,
+    "4": 4,
+    "5": 4,
+    "6": 4,
   },
   tasksPerRoom: {
-    Transferring: { "1": 2, "2": 3, "3": 3, "4": 4, "5": 4 },
-    Upgrading: { "1": 1, "2": 2, "3": 2, "4": 2, "5": 2 },
+    Transferring: { "1": 2, "2": 2, "3": 2, "4": 2, "5": 2 },
+    Upgrading: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1 },
     Building: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1 },
   },
 
@@ -53,5 +54,7 @@ const roleWorker: CreepRole = {
     }
   },
 };
+
+// profiler.registerObject(roleWorker, "roleWorker");
 
 export default roleWorker;

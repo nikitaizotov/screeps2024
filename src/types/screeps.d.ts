@@ -1,6 +1,7 @@
 declare namespace NodeJS {
   interface Global {
     log: any;
+    profiler: any;
   }
 }
 
@@ -44,6 +45,12 @@ interface RoomData {
   junk?: any;
 }
 
+interface CachedCreepPath {
+  lastTimeAccessed: number;
+  path: PathStep[];
+  usedTimes: number;
+}
+
 interface Memory {
   uuid: number;
   log: any;
@@ -57,6 +64,16 @@ interface Memory {
   buildOrderPosition: { [roomName: string]: number };
   cachedPaths: { [roomName: string]: number };
   roomData: RoomData;
+  cacheCreepPaths: {
+    [roomName: string]: {
+      [key: string]: CachedCreepPath;
+    };
+  };
+  creepRoomCache: {
+    [roomName: string]: AnyStructure[];
+  };
+  profiler?: any;
+  duration?: any;
 }
 
 // `global` extension samples

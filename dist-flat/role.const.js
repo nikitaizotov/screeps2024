@@ -1,4 +1,4 @@
 "use strict";
-var RoleCreepsPerRoom = {
+const RoleCreepsPerRoom = {
     Dynamic: "DYNAMIC",
 };

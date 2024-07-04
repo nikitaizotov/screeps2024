@@ -3,14 +3,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var creep_service_1 = __importDefault(require("./creep.service"));
-var roleWallAndRampBuilder = {
+const creep_service_1 = __importDefault(require("./creep.service"));
+const roleWallAndRampBuilder = {
     creepsPerRoom: 1,
     namePrefix: "WallRampBuilder",
     memoryKey: "wallRampBuilder",
     bodyParts: [WORK, CARRY, MOVE],
     maxBodyPartsMultiplier: 5,
-    run: function (creep) {
+    run(creep) {
         if (creep.spawning) {
             return;
         }
@@ -32,7 +32,7 @@ var roleWallAndRampBuilder = {
             this.harvestEnergy(creep);
         }
     },
-    harvestEnergy: function (creep) {
+    harvestEnergy(creep) {
         if (!creep.memory.path) {
             creep_service_1.default.getPathToSource(creep);
         }
@@ -40,19 +40,17 @@ var roleWallAndRampBuilder = {
             creep_service_1.default.moveAndHarvest(creep);
         }
     },
-    repairWallsAndRamparts: function (creep) {
+    repairWallsAndRamparts(creep) {
         if (!creep.memory.path) {
-            var targets = creep.room.find(FIND_STRUCTURES, {
-                filter: function (structure) {
+            const targets = creep.room.find(FIND_STRUCTURES, {
+                filter: (structure) => {
                     return ((structure.structureType === STRUCTURE_WALL ||
                         structure.structureType === STRUCTURE_RAMPART) &&
                         structure.hits < structure.hitsMax);
                 },
             });
             if (targets.length > 0) {
-                targets.sort(function (a, b) {
-                    return a.hits - b.hits || creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b);
-                });
+                targets.sort((a, b) => a.hits - b.hits || creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b));
                 creep_service_1.default.getPathTotargets(creep, [targets[0]]);
             }
             else {
@@ -63,18 +61,18 @@ var roleWallAndRampBuilder = {
             this.moveAndRepair(creep);
         }
     },
-    moveAndRepair: function (creep) {
+    moveAndRepair(creep) {
         creep_service_1.default.drawPath(creep);
-        var target = Game.getObjectById(creep.memory.targetId);
+        const target = Game.getObjectById(creep.memory.targetId);
         if (!target) {
             creep.memory.path = undefined;
             creep.memory.targetId = null;
             return;
         }
         if (target.hitsMax > target.hits) {
-            var action = creep.repair(target);
+            const action = creep.repair(target);
             if (action === ERR_NOT_IN_RANGE) {
-                var moveResult = creep.moveByPath(creep.memory.path);
+                const moveResult = creep.moveByPath(creep.memory.path);
                 if (moveResult !== OK && moveResult !== ERR_TIRED) {
                     creep.memory.path = undefined;
                     creep.memory.targetId = null;

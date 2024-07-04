@@ -3,25 +3,26 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var creep_service_1 = __importDefault(require("./creep.service"));
-var role_worker_const_1 = require("./role.worker.const");
-var roleWorker = {
-    creepsPerRoom: 6,
+const creep_service_1 = __importDefault(require("./creep.service"));
+const role_worker_const_1 = require("./role.worker.const");
+const profiler = require("./screeps-profiler");
+const roleWorker = {
+    creepsPerRoom: 4,
     namePrefix: "Worker",
     memoryKey: "worker",
     bodyParts: [WORK, CARRY, MOVE],
     maxBodyPartsMultiplier: 10,
     creepsPerSourcePositions: {
         "1": 3,
-        "2": 5,
-        "3": 5,
-        "4": 6,
-        "5": 6,
-        "6": 7,
+        "2": 4,
+        "3": 4,
+        "4": 4,
+        "5": 4,
+        "6": 4,
     },
     tasksPerRoom: {
-        Transferring: { "1": 2, "2": 3, "3": 3, "4": 4, "5": 4 },
-        Upgrading: { "1": 1, "2": 2, "3": 2, "4": 2, "5": 2 },
+        Transferring: { "1": 2, "2": 2, "3": 2, "4": 2, "5": 2 },
+        Upgrading: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1 },
         Building: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1 },
     },
     run: function (creep) {
@@ -40,7 +41,7 @@ var roleWorker = {
                 creep_service_1.default.taskTransfer(creep);
                 break;
             case role_worker_const_1.WorkerTask.Idling:
-                console.log("Creep ".concat(creep.name, " is idling."));
+                console.log(`Creep ${creep.name} is idling.`);
                 break;
             case role_worker_const_1.WorkerTask.Upgrading:
                 creep_service_1.default.taskUpgrade(creep);
@@ -53,4 +54,5 @@ var roleWorker = {
         }
     },
 };
+// profiler.registerObject(roleWorker, "roleWorker");
 exports.default = roleWorker;

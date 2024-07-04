@@ -1,29 +1,30 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var utilsService = {
+const profiler = require("./screeps-profiler");
+const utilsService = {
     repeatArray: function (array, times) {
         try {
-            var repeatedArray = [];
-            for (var i = 0; i < times; i++) {
+            let repeatedArray = [];
+            for (let i = 0; i < times; i++) {
                 repeatedArray = repeatedArray.concat(array);
             }
             return repeatedArray;
         }
         catch (error) {
-            console.log("Error in repeatArray: ".concat(error.message));
+            console.log(`Error in repeatArray: ${error.message}`);
             return array;
         }
     },
     getTotalEnergyInExtensions: function (room) {
         try {
-            var extensions = room.find(FIND_MY_STRUCTURES, {
+            const extensions = room.find(FIND_MY_STRUCTURES, {
                 filter: { structureType: STRUCTURE_EXTENSION },
             });
-            var totalEnergy = extensions.reduce(function (sum, extension) { return sum + extension.energy; }, 0);
+            const totalEnergy = extensions.reduce((sum, extension) => sum + extension.energy, 0);
             return totalEnergy;
         }
         catch (error) {
-            console.log("Error in getTotalEnergyInExtensions: ".concat(error.message));
+            console.log(`Error in getTotalEnergyInExtensions: ${error.message}`);
             return 0;
         }
     },
@@ -36,32 +37,30 @@ var utilsService = {
             // Check if room is mine.
             if (room.controller && room.controller.my) {
                 // Check all structures in room excluding walls.
-                var structures = room.find(FIND_STRUCTURES, {
-                    filter: function (structure) {
-                        return structure.structureType !== STRUCTURE_WALL &&
-                            structure.structureType !== STRUCTURE_RAMPART &&
-                            structure.structureType !== STRUCTURE_ROAD &&
-                            structure.structureType !== STRUCTURE_CONTAINER;
-                    },
+                const structures = room.find(FIND_STRUCTURES, {
+                    filter: (structure) => structure.structureType !== STRUCTURE_WALL &&
+                        structure.structureType !== STRUCTURE_RAMPART &&
+                        structure.structureType !== STRUCTURE_ROAD &&
+                        structure.structureType !== STRUCTURE_CONTAINER,
                 });
                 // Check, if structure were attacked.
-                var structuresDamaged = structures.some(function (structure) { return structure.hits < structure.hitsMax; });
-                var hostiles = room.find(FIND_HOSTILE_CREEPS);
+                const structuresDamaged = structures.some((structure) => structure.hits < structure.hitsMax);
+                const hostiles = room.find(FIND_HOSTILE_CREEPS);
                 if (structuresDamaged && hostiles.length > 0) {
                     // Check, if there is a Safe Modes available.
                     if (room.controller.safeModeAvailable > 0) {
                         // Activate Safe Mode.
                         room.controller.activateSafeMode();
-                        console.log("Activated Safe Mode in room ".concat(room.name, " because of attack."));
+                        console.log(`Activated Safe Mode in room ${room.name} because of attack.`);
                     }
                     else {
-                        console.log("No available Safe Modes for activation in room ".concat(room.name, "."));
+                        console.log(`No available Safe Modes for activation in room ${room.name}.`);
                     }
                 }
             }
         }
         catch (error) {
-            console.log("Error in isSafeModeNeeded method, ".concat(error));
+            console.log(`Error in isSafeModeNeeded method, ${error}`);
         }
     },
     getRoomData: function () {
@@ -71,31 +70,28 @@ var utilsService = {
                     sourcePositions: {},
                 };
             }
-            var _loop_1 = function (roomName) {
-                var room = Game.rooms[roomName];
-                var controller = room.controller;
+            for (let roomName in Game.rooms) {
+                const room = Game.rooms[roomName];
+                const controller = room.controller;
                 if ((controller === null || controller === void 0 ? void 0 : controller.my) && !Memory.roomData.sourcePositions[roomName]) {
-                    var sources = room.find(FIND_SOURCES);
-                    var totalCount_1 = 0;
-                    for (var _i = 0, sources_1 = sources; _i < sources_1.length; _i++) {
-                        var source = sources_1[_i];
-                        var look = room.lookAtArea(source.pos.y - 1, source.pos.x - 1, source.pos.y + 1, source.pos.x + 1, true);
-                        look.forEach(function (item) {
+                    const sources = room.find(FIND_SOURCES);
+                    let totalCount = 0;
+                    for (let source of sources) {
+                        const look = room.lookAtArea(source.pos.y - 1, source.pos.x - 1, source.pos.y + 1, source.pos.x + 1, true);
+                        look.forEach((item) => {
                             if ((item === null || item === void 0 ? void 0 : item.terrain) === "swamp" || (item === null || item === void 0 ? void 0 : item.terrain) === "plain") {
-                                totalCount_1++;
+                                totalCount++;
                             }
                         });
                     }
-                    Memory.roomData.sourcePositions[roomName] = totalCount_1;
+                    Memory.roomData.sourcePositions[roomName] = totalCount;
                 }
-            };
-            for (var roomName in Game.rooms) {
-                _loop_1(roomName);
             }
         }
         catch (error) {
-            console.log("Error in getRoomMiningPositions: ".concat(error.message));
+            console.log(`Error in getRoomMiningPositions: ${error.message}`);
         }
     },
 };
+// profiler.registerObject(utilsService, "utilsService");
 exports.default = utilsService;

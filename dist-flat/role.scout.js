@@ -2,22 +2,21 @@
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.scoutRole = void 0;
-var build_service_1 = __importDefault(require("./build.service"));
-var creep_service_1 = __importDefault(require("./creep.service"));
+const build_service_1 = __importDefault(require("./build.service"));
+const creep_service_1 = __importDefault(require("./creep.service"));
 var scoutJobs;
 (function (scoutJobs) {
     scoutJobs[scoutJobs["MOVING_TO_NEXT_ROOM"] = 0] = "MOVING_TO_NEXT_ROOM";
     scoutJobs[scoutJobs["CLAIMING"] = 1] = "CLAIMING";
     scoutJobs[scoutJobs["BUILDING"] = 2] = "BUILDING";
 })(scoutJobs || (scoutJobs = {}));
-var scoutJobList = (_a = {},
-    _a[scoutJobs.MOVING_TO_NEXT_ROOM] = scoutJobs.MOVING_TO_NEXT_ROOM,
-    _a[scoutJobs.CLAIMING] = scoutJobs.CLAIMING,
-    _a[scoutJobs.BUILDING] = scoutJobs.BUILDING,
-    _a);
+const scoutJobList = {
+    [scoutJobs.MOVING_TO_NEXT_ROOM]: scoutJobs.MOVING_TO_NEXT_ROOM,
+    [scoutJobs.CLAIMING]: scoutJobs.CLAIMING,
+    [scoutJobs.BUILDING]: scoutJobs.BUILDING,
+};
 exports.scoutRole = {
     creepsPerRoom: 0,
     namePrefix: "Scout",
@@ -25,7 +24,7 @@ exports.scoutRole = {
     bodyParts: [MOVE, WORK, WORK, CARRY, CARRY, CARRY, CLAIM],
     baseBodyParts: [MOVE],
     maxBodyPartsMultiplier: 0,
-    run: function (creep) {
+    run(creep) {
         try {
             if (creep.spawning) {
                 return;
@@ -50,10 +49,10 @@ exports.scoutRole = {
             }
         }
         catch (error) {
-            console.log("Error in Scout run: ".concat(error.message));
+            console.log(`Error in Scout run: ${error.message}`);
         }
     },
-    initializeMemory: function (creep) {
+    initializeMemory(creep) {
         try {
             if (!Memory.scoutRooms) {
                 Memory.scoutRooms = {};
@@ -62,23 +61,23 @@ exports.scoutRole = {
             this.findNextRooms(creep);
         }
         catch (error) {
-            console.log("Error in initializeMemory: ".concat(error.message));
+            console.log(`Error in initializeMemory: ${error.message}`);
         }
     },
-    findNextRooms: function (creep) {
+    findNextRooms(creep) {
         try {
-            var exits = Game.map.describeExits(creep.room.name);
+            const exits = Game.map.describeExits(creep.room.name);
             if (!exits) {
                 return;
             }
             creep.memory.nextRooms = Object.values(exits);
-            console.log("".concat(creep.name, " found exits: ").concat(creep.memory.nextRooms));
+            console.log(`${creep.name} found exits: ${creep.memory.nextRooms}`);
         }
         catch (error) {
-            console.log("Error in findNextRooms: ".concat(error.message));
+            console.log(`Error in findNextRooms: ${error.message}`);
         }
     },
-    moveToNextRoom: function (creep) {
+    moveToNextRoom(creep) {
         try {
             if (!creep.memory.targetRoom || !creep.memory.path) {
                 this.getPathToNextRoom(creep);
@@ -88,22 +87,22 @@ exports.scoutRole = {
             }
         }
         catch (error) {
-            console.log("Scout error moveToNextRoom: ".concat(error));
+            console.log(`Scout error moveToNextRoom: ${error}`);
         }
     },
     getPathToNextRoom: function (creep) {
-        var rooms = creep.memory.nextRooms;
-        var roomName = rooms.shift();
+        const rooms = creep.memory.nextRooms;
+        const roomName = rooms.shift();
         if (roomName && creep.room !== roomName) {
-            var pos = new RoomPosition(25, 25, roomName);
+            const pos = new RoomPosition(25, 25, roomName);
             creep.memory.targetRoom = roomName;
             creep.memory.path = creep.pos.findPathTo(pos);
         }
     },
     moveToNextRoomController: function (creep) {
         if (creep.memory.targetRoom === creep.room.name) {
-            var target = creep.room.find(FIND_CONSTRUCTION_SITES, {
-                filter: function (site) { return site.structureType === STRUCTURE_SPAWN; },
+            const target = creep.room.find(FIND_CONSTRUCTION_SITES, {
+                filter: (site) => site.structureType === STRUCTURE_SPAWN,
             })[0];
             if (target) {
                 creep.memory.job = scoutJobs.BUILDING;
@@ -126,8 +125,8 @@ exports.scoutRole = {
     },
     claim: function (creep) {
         if (creep.room.controller) {
-            var controller = creep.room.controller;
-            var action = creep.claimController(controller);
+            const controller = creep.room.controller;
+            const action = creep.claimController(controller);
             if (controller.my) {
                 creep.memory.job = scoutJobs.BUILDING;
                 return;
@@ -143,12 +142,12 @@ exports.scoutRole = {
         }
     },
     findPathToController: function (creep) {
-        var controller = creep.room.controller;
+        const controller = creep.room.controller;
         if (controller && !controller.my) {
             creep.memory.path = creep.pos.findPathTo(controller);
         }
     },
-    buildOrFinishSpawn: function (creep) {
+    buildOrFinishSpawn(creep) {
         if (creep.memory.building === undefined ||
             (creep.memory.building && creep.store[RESOURCE_ENERGY] == 0)) {
             creep.memory.building = false;
@@ -170,7 +169,7 @@ exports.scoutRole = {
             this.harvestEnergy(creep);
         }
     },
-    harvestEnergy: function (creep) {
+    harvestEnergy(creep) {
         if (!creep.memory.path) {
             creep_service_1.default.getPathToSource(creep);
         }
@@ -178,24 +177,24 @@ exports.scoutRole = {
             creep_service_1.default.moveAndHarvest(creep);
         }
     },
-    transferEnergy: function (creep) {
+    transferEnergy(creep) {
         var _a;
         if (!creep.memory.path) {
             //creepService.findConstructionSite(creep);
             // const target = creep.room.find(FIND_CONSTRUCTION_SITES, {
             //   filter: (site) => site.structureType === STRUCTURE_SPAWN,
             // })[0];
-            var target = ((_a = creep.room.controller) === null || _a === void 0 ? void 0 : _a.level) === 1
+            const target = ((_a = creep.room.controller) === null || _a === void 0 ? void 0 : _a.level) === 1
                 ? creep.room.controller
                 : creep.room.find(FIND_CONSTRUCTION_SITES, {
-                    filter: function (site) { return site.structureType === STRUCTURE_SPAWN; },
+                    filter: (site) => site.structureType === STRUCTURE_SPAWN,
                 })[0];
             if (target) {
                 creep.memory.path = creep.pos.findPathTo(target);
                 creep.memory.targetId = target.id;
             }
             else {
-                var spawns = creep.room.find(FIND_MY_SPAWNS);
+                const spawns = creep.room.find(FIND_MY_SPAWNS);
                 if (spawns) {
                     this.getPathToNextRoom(creep);
                 }
@@ -209,23 +208,23 @@ exports.scoutRole = {
         // const target = creep.room.find(FIND_CONSTRUCTION_SITES, {
         //   filter: (site) => site.structureType === STRUCTURE_SPAWN,
         // })[0];
-        var target = Game.getObjectById(creep.memory.targetId);
+        const target = Game.getObjectById(creep.memory.targetId);
         if (!target) {
             // The target may have been completed, so we check this and clear the memory.
             if (creep.memory.targetId) {
-                var constructedStructure = Game.getObjectById(creep.memory.targetId);
+                const constructedStructure = Game.getObjectById(creep.memory.targetId);
                 if (constructedStructure) {
                     console.log("Construction completed:", constructedStructure.structureType);
                 }
                 else {
                     console.log("Target construction site not found and not completed.");
                 }
-                var result = build_service_1.default.buildSpawn(creep.room);
+                const result = build_service_1.default.buildSpawn(creep.room);
                 if (result === OK) {
-                    console.log("Construction site for spawn created successfully in ".concat(creep.room.name, "."));
+                    console.log(`Construction site for spawn created successfully in ${creep.room.name}.`);
                 }
                 else {
-                    console.log("Error creating construction site for spawn in ".concat(creep.room.name, ": ").concat(result));
+                    console.log(`Error creating construction site for spawn in ${creep.room.name}: ${result}`);
                 }
                 creep.memory.building = false;
                 creep.memory.path = undefined;
@@ -233,8 +232,8 @@ exports.scoutRole = {
             }
             return;
         }
-        var action;
-        var controller = creep.room.controller;
+        let action;
+        const controller = creep.room.controller;
         if (creep.memory.targetId === controller.id) {
             action = creep.upgradeController(controller);
         }
@@ -242,7 +241,7 @@ exports.scoutRole = {
             action = creep.build(target);
         }
         if (action === ERR_NOT_IN_RANGE) {
-            var moveResult = creep.moveByPath(creep.memory.path);
+            const moveResult = creep.moveByPath(creep.memory.path);
             if (moveResult !== OK && moveResult !== ERR_TIRED) {
                 console.log("Move by path failed, error:", moveResult);
                 creep.memory.path = undefined;
@@ -256,7 +255,7 @@ exports.scoutRole = {
         else if (action === OK) {
             if (creep.memory.targetId !== controller.id) {
                 // Check if the construction is completed.
-                var spawn = target;
+                const spawn = target;
                 if (!spawn.progressTotal || spawn.progress >= spawn.progressTotal) {
                     creep.memory.building = false;
                     creep.memory.path = undefined;

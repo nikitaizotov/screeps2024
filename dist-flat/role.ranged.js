@@ -3,9 +3,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var attack_service_1 = __importDefault(require("./attack.service"));
-var creep_service_1 = __importDefault(require("./creep.service"));
-var roleRanged = {
+const attack_service_1 = __importDefault(require("./attack.service"));
+const creep_service_1 = __importDefault(require("./creep.service"));
+const roleRanged = {
     creepsPerRoom: 0,
     namePrefix: "Ranged",
     memoryKey: "ranged",
@@ -21,17 +21,17 @@ var roleRanged = {
         MOVE,
         RANGED_ATTACK,
     ],
-    run: function (creep) {
+    run(creep) {
         var _a;
         if (creep.spawning) {
             return;
         }
-        var room = creep.room;
-        var controller = room.controller;
+        const room = creep.room;
+        const controller = room.controller;
         if (controller && controller.safeMode) {
-            var check = controller.safeMode - ((_a = creep.ticksToLive) !== null && _a !== void 0 ? _a : 0);
+            const check = controller.safeMode - ((_a = creep.ticksToLive) !== null && _a !== void 0 ? _a : 0);
             if (!(check < 0)) {
-                var flag = Game.flags["MoveToFlag"];
+                const flag = Game.flags["MoveToFlag"];
                 if (flag) {
                     this.goToFlag(creep, flag);
                 }
@@ -41,8 +41,8 @@ var roleRanged = {
                 return;
             }
         }
-        var tower = this.findClosestTower(creep);
-        var target = this.findRangedEnemiesCloserThanTower(creep, tower);
+        const tower = this.findClosestTower(creep);
+        let target = this.findRangedEnemiesCloserThanTower(creep, tower);
         if (!target && tower) {
             target = tower;
         }
@@ -58,7 +58,7 @@ var roleRanged = {
         if (target) {
             if (creep.pos.inRangeTo(target, 3)) {
                 creep.rangedAttack(target);
-                var path = PathFinder.search(creep.pos, {
+                const path = PathFinder.search(creep.pos, {
                     pos: target.pos,
                     range: 4,
                 }).path;
@@ -77,7 +77,7 @@ var roleRanged = {
             }
         }
         else {
-            var flag = Game.flags["MoveToFlag"];
+            const flag = Game.flags["MoveToFlag"];
             if (flag) {
                 this.goToFlag(creep, flag);
             }
@@ -86,8 +86,8 @@ var roleRanged = {
             }
         }
     },
-    goToFlag: function (creep, flag) {
-        var path;
+    goToFlag(creep, flag) {
+        let path;
         if (!creep.memory.path) {
             path = creep.pos.findPathTo(flag);
         }
@@ -97,8 +97,8 @@ var roleRanged = {
         creep.moveByPath(path);
         creep_service_1.default.drawPath(creep);
     },
-    randomlyPatrol: function (creep) {
-        var directions = [
+    randomlyPatrol(creep) {
+        const directions = [
             TOP,
             TOP_RIGHT,
             RIGHT,
@@ -108,21 +108,21 @@ var roleRanged = {
             LEFT,
             TOP_LEFT,
         ];
-        var randomDirection = directions[Math.floor(Math.random() * directions.length)];
+        const randomDirection = directions[Math.floor(Math.random() * directions.length)];
         creep.move(randomDirection);
     },
-    findClosestTower: function (creep) {
+    findClosestTower(creep) {
         return creep.pos.findClosestByPath(FIND_HOSTILE_STRUCTURES, {
-            filter: function (structure) {
+            filter: (structure) => {
                 return (structure.owner &&
                     !attack_service_1.default.avoidPlayers.includes(structure.owner.username) &&
                     structure.structureType === STRUCTURE_TOWER);
             },
         });
     },
-    findRangedEnemiesCloserThanTower: function (creep, tower) {
+    findRangedEnemiesCloserThanTower(creep, tower) {
         return creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS, {
-            filter: function (enemyCreep) {
+            filter: (enemyCreep) => {
                 return (!attack_service_1.default.avoidPlayers.includes(enemyCreep.owner.username) &&
                     enemyCreep.getActiveBodyparts(RANGED_ATTACK) > 0 &&
                     (!tower ||
@@ -130,25 +130,25 @@ var roleRanged = {
             },
         });
     },
-    findDangerousEnemies: function (creep) {
+    findDangerousEnemies(creep) {
         return creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS, {
-            filter: function (enemyCreep) {
+            filter: (enemyCreep) => {
                 return (!attack_service_1.default.avoidPlayers.includes(enemyCreep.owner.username) &&
                     (enemyCreep.getActiveBodyparts(ATTACK) > 0 ||
                         enemyCreep.getActiveBodyparts(RANGED_ATTACK) > 0));
             },
         });
     },
-    findAllEnemies: function (creep) {
+    findAllEnemies(creep) {
         return creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS, {
-            filter: function (enemyCreep) {
+            filter: (enemyCreep) => {
                 return !attack_service_1.default.avoidPlayers.includes(enemyCreep.owner.username);
             },
         });
     },
-    findStructuralTargets: function (creep) {
-        var hostileStructures = creep.room.find(FIND_HOSTILE_STRUCTURES, {
-            filter: function (structure) {
+    findStructuralTargets(creep) {
+        const hostileStructures = creep.room.find(FIND_HOSTILE_STRUCTURES, {
+            filter: (structure) => {
                 return (structure.owner &&
                     !attack_service_1.default.avoidPlayers.includes(structure.owner.username) &&
                     (structure.structureType === STRUCTURE_TOWER ||
@@ -156,7 +156,7 @@ var roleRanged = {
                         structure.structureType === STRUCTURE_EXTENSION));
             },
         });
-        hostileStructures.sort(function (a, b) {
+        hostileStructures.sort((a, b) => {
             if (a.structureType === b.structureType)
                 return 0;
             if (a.structureType === STRUCTURE_TOWER)

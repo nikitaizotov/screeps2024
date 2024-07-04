@@ -1,50 +1,53 @@
 "use strict";
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var lodash_1 = __importDefault(require("lodash"));
-var role_WallAndRampartBuilder_1 = __importDefault(require("./role.WallAndRampartBuilder"));
-var role_scout_1 = __importDefault(require("./role.scout"));
-var structure_tower_1 = __importDefault(require("./structure.tower"));
-var build_service_1 = __importDefault(require("./build.service"));
-var creep_service_1 = __importDefault(require("./creep.service"));
-var utils_service_1 = __importDefault(require("./utils.service"));
-var role_miner_1 = __importDefault(require("./role.miner"));
-var role_worker_1 = __importDefault(require("./role.worker"));
-var worker_service_1 = require("./worker.service");
-var workerService = new worker_service_1.WorkerService();
-var roomService = {
-    enabledRoles: [
-        role_worker_1.default,
-        role_miner_1.default,
-        // roleRanged,
-        role_WallAndRampartBuilder_1.default,
-        // roleScout,
-    ],
-    routines: function () {
+exports.RoomService = void 0;
+const lodash_1 = __importDefault(require("lodash"));
+const role_WallAndRampartBuilder_1 = __importDefault(require("./role.WallAndRampartBuilder"));
+const role_scout_1 = __importDefault(require("./role.scout"));
+const structure_tower_1 = __importDefault(require("./structure.tower"));
+const build_service_1 = __importDefault(require("./build.service"));
+const creep_service_1 = __importDefault(require("./creep.service"));
+const utils_service_1 = __importDefault(require("./utils.service"));
+const role_miner_1 = __importDefault(require("./role.miner"));
+const role_worker_1 = __importDefault(require("./role.worker"));
+const worker_service_1 = require("./worker.service");
+const profiler = require("./screeps-profiler");
+const workerService = new worker_service_1.WorkerService();
+class RoomService {
+    constructor() {
+        this.enabledRoles = [
+            role_worker_1.default,
+            role_miner_1.default,
+            // roleRanged,
+            role_WallAndRampartBuilder_1.default,
+            // roleScout,
+        ];
+        // cacheGameRooms(): void {
+        //   // unset old cache.
+        //   Memory.cacheGameRooms = {};
+        //   Memory.cacheGameRooms = { ...Game.rooms };
+        // }
+    }
+    routines() {
         try {
             this.cleanMemory();
+            // creepService.clearCreepPathCache(5000);
+            // this.cacheGameRooms();
             this.creepsRoutines();
             build_service_1.default.build();
             this.structureRoutines();
             this.roomRoutines();
             workerService.manageWorkers();
+            // creepService.createStructureCache();
         }
         catch (error) {
-            console.log("Error in routines: ".concat(error.message));
+            console.log(`Error in routines: ${error.message}`);
         }
-    },
-    cleanMemory: function () {
+    }
+    cleanMemory() {
         try {
             for (var name in Memory.creeps) {
                 if (!Game.creeps[name]) {
@@ -53,88 +56,85 @@ var roomService = {
             }
         }
         catch (error) {
-            console.log("Error in cleanMemory: ".concat(error.message));
+            console.log(`Error in cleanMemory: ${error.message}`);
         }
-    },
-    creepsRoutines: function () {
+    }
+    creepsRoutines() {
         try {
             this.spawnCreeps();
             this.moveCreeps();
         }
         catch (error) {
-            console.log("Error in creepsRoutines: ".concat(error.message));
+            console.log(`Error in creepsRoutines: ${error.message}`);
         }
-    },
-    spawnCreeps: function () {
+    }
+    spawnCreeps() {
         try {
             if (Game.time % 3) {
                 return;
             }
-            var _loop_1 = function (spawnName) {
-                var spawn = Game.spawns[spawnName];
-                var energyInExtensions = utils_service_1.default.getTotalEnergyInExtensions(spawn.room);
+            for (let spawnName in Game.spawns) {
+                const spawn = Game.spawns[spawnName];
+                const energyInExtensions = utils_service_1.default.getTotalEnergyInExtensions(spawn.room);
                 utils_service_1.default.isSafeModeNeeded(spawn.room);
                 if (spawn.spawning) {
-                    return "continue";
+                    continue;
                 }
-                var _loop_2 = function (role) {
-                    var selectedCreeps = lodash_1.default.filter(Game.creeps, function (creep) {
-                        return creep.memory.role == role.memoryKey &&
-                            creep.room.name == spawn.room.name;
-                    });
-                    var baseBodyParts = role.baseBodyParts || [];
-                    var bodyParts = role.bodyParts;
-                    var baseCost = baseBodyParts.reduce(function (sum, part) { return sum + BODYPART_COST[part]; }, 0);
-                    var bodyPartsCost = bodyParts.reduce(function (sum, part) { return sum + BODYPART_COST[part]; }, 0);
-                    var totalCost = baseCost + bodyPartsCost;
-                    var canAfford = energyInExtensions + spawn.store[RESOURCE_ENERGY] >= totalCost;
+                for (let role of this.enabledRoles) {
+                    const selectedCreeps = lodash_1.default.filter(Game.creeps, (creep) => creep.memory.role == role.memoryKey &&
+                        creep.room.name == spawn.room.name);
+                    const baseBodyParts = role.baseBodyParts || [];
+                    const bodyParts = role.bodyParts;
+                    const baseCost = baseBodyParts.reduce((sum, part) => sum + BODYPART_COST[part], 0);
+                    const bodyPartsCost = bodyParts.reduce((sum, part) => sum + BODYPART_COST[part], 0);
+                    const totalCost = baseCost + bodyPartsCost;
+                    const canAfford = energyInExtensions + spawn.store[RESOURCE_ENERGY] >= totalCost;
                     if (role.memoryKey === role_miner_1.default.memoryKey) {
-                        var containers = spawn.room.find(FIND_STRUCTURES, {
-                            filter: function (structure) {
-                                return structure.structureType === STRUCTURE_CONTAINER;
-                            },
+                        const containers = spawn.room.find(FIND_STRUCTURES, {
+                            filter: (structure) => structure.structureType === STRUCTURE_CONTAINER,
                         });
                         if (containers.length <= selectedCreeps.length) {
-                            return "continue";
+                            continue;
                         }
                     }
                     if (role.memoryKey === role_WallAndRampartBuilder_1.default.memoryKey) {
-                        var isReparableWallsAndRamps = spawn.room.find(FIND_STRUCTURES, {
-                            filter: function (structure) {
+                        const isReparableWallsAndRamps = spawn.room.find(FIND_STRUCTURES, {
+                            filter: (structure) => {
                                 return ((structure.structureType === STRUCTURE_WALL ||
                                     structure.structureType === STRUCTURE_RAMPART) &&
                                     structure.hits < structure.hitsMax);
                             },
                         });
                         if (!isReparableWallsAndRamps.length) {
-                            return "continue";
+                            continue;
                         }
                     }
                     if (role.memoryKey === role_scout_1.default.memoryKey) {
-                        var scoutsInRoom = lodash_1.default.filter(Game.creeps, function (creep) {
-                            return creep.memory.role == role.memoryKey &&
-                                creep.memory.spawnRoom == spawn.room.name;
-                        });
+                        const scoutsInRoom = lodash_1.default.filter(Game.creeps, (creep) => creep.memory.role == role.memoryKey &&
+                            creep.memory.spawnRoom == spawn.room.name);
                         if (spawn.room.controller.level < 5 ||
                             scoutsInRoom.length >= role_scout_1.default.creepsPerRoom) {
-                            return "continue";
+                            continue;
                         }
                     }
-                    var maxCreepsAllowed = role.creepsPerSourcePositions &&
+                    const maxCreepsAllowed = role.creepsPerSourcePositions &&
                         role.creepsPerSourcePositions[Memory.roomData.sourcePositions[spawn.room.name]]
                         ? role.creepsPerSourcePositions[Memory.roomData.sourcePositions[spawn.room.name]]
                         : role.creepsPerRoom;
                     if (selectedCreeps.length < maxCreepsAllowed && canAfford) {
-                        var newName = role.namePrefix + Game.time;
-                        var totalEnergyInRoom = energyInExtensions + spawn.store[RESOURCE_ENERGY];
-                        var bodyPartsMultiplier = role.memoryKey !== role_scout_1.default.memoryKey
+                        const newName = role.namePrefix + Game.time;
+                        const totalEnergyInRoom = energyInExtensions + spawn.store[RESOURCE_ENERGY];
+                        let bodyPartsMultiplier = role.memoryKey !== role_scout_1.default.memoryKey
                             ? Math.floor((totalEnergyInRoom - baseCost) / bodyPartsCost)
                             : 1;
                         if ((role === null || role === void 0 ? void 0 : role.maxBodyPartsMultiplier) &&
                             bodyPartsMultiplier > (role === null || role === void 0 ? void 0 : role.maxBodyPartsMultiplier)) {
                             bodyPartsMultiplier = role === null || role === void 0 ? void 0 : role.maxBodyPartsMultiplier;
                         }
-                        var finalBodyParts = __spreadArray(__spreadArray([], baseBodyParts, true), utils_service_1.default.repeatArray(bodyParts, bodyPartsMultiplier), true);
+                        const finalBodyParts = [
+                            ...baseBodyParts,
+                            ...utils_service_1.default.repeatArray(bodyParts, bodyPartsMultiplier),
+                        ];
                         if (spawn.spawnCreep(finalBodyParts, newName, {
                             memory: {
                                 role: role.memoryKey,
@@ -145,103 +145,63 @@ var roomService = {
                                         .padStart(6, "0"),
                             },
                         }) === OK) {
-                            return { value: void 0 };
+                            return;
                         }
                     }
-                };
-                for (var _i = 0, _a = this_1.enabledRoles; _i < _a.length; _i++) {
-                    var role = _a[_i];
-                    var state_2 = _loop_2(role);
-                    if (typeof state_2 === "object")
-                        return state_2;
                 }
-            };
-            var this_1 = this;
-            for (var spawnName in Game.spawns) {
-                var state_1 = _loop_1(spawnName);
-                if (typeof state_1 === "object")
-                    return state_1.value;
             }
         }
         catch (error) {
-            console.log("Error in spawnCreeps: ".concat(error.message));
+            console.log(`Error in spawnCreeps: ${error.message}`);
         }
-    },
-    moveCreeps: function () {
+    }
+    moveCreeps() {
         try {
-            var _loop_3 = function (name_1) {
-                var creep = Game.creeps[name_1];
-                var timeToCheck = creep.memory.role === role_miner_1.default.memoryKey ? 500 : 1;
+            for (const name in Game.creeps) {
+                const creep = Game.creeps[name];
+                let timeToCheck = creep.memory.role === role_miner_1.default.memoryKey ? 500 : 1;
                 timeToCheck =
                     creep.memory.role === role_scout_1.default.memoryKey ? 20 : timeToCheck;
-                if (Game.time % timeToCheck === 0) {
+                if (Game.time % timeToCheck === 2) {
                     creep_service_1.default.findIdleCreep(creep);
                 }
-                var role = this_2.enabledRoles.find(function (role) { return role.memoryKey === creep.memory.role; });
+                const role = this.enabledRoles.find((role) => role.memoryKey === creep.memory.role);
                 if (role) {
                     role.run(creep);
                 }
                 else {
                     console.log("Creep has unknown role", creep.memory.role);
                 }
-            };
-            var this_2 = this;
-            for (var name_1 in Game.creeps) {
-                _loop_3(name_1);
             }
         }
         catch (error) {
-            console.log("Error in moveCreeps: ".concat(error.message));
+            console.log(`Error in moveCreeps: ${error.message}`);
         }
-    },
-    // manageWorkers: function () {
-    //   for (let spawnName in Game.spawns) {
-    //     const spawn = Game.spawns[spawnName];
-    //     const room = spawn.room;
-    //     const workers = _.filter(
-    //       Game.creeps,
-    //       (creep) =>
-    //         creep.memory.role === "worker" &&
-    //         creep.room.name === spawn.room.name &&
-    //         creep.memory.task === WorkerTask.Idling
-    //     );
-    //     if (!roleWorker.tasksPerRoom) {
-    //       return;
-    //     }
-    //     const enabledTasks = Object.keys(roleWorker.tasksPerRoom);
-    //     for (let enabledTask of enabledTasks) {
-    //       const onTask = workers.filter((w) => w.memory.task === enabledTask);
-    //       const workersRequired =
-    //         roleWorker.tasksPerRoom[
-    //           enabledTask as keyof typeof roleWorker.tasksPerRoom
-    //         ];
-    //       // if (workersRequired > onTask.length) {
-    //       // }
-    //       console.warn(">>>>", workersRequired);
-    //     }
-    //   }
-    // },
-    structureRoutines: function () {
+    }
+    structureRoutines() {
         try {
-            for (var roomName in Game.rooms) {
-                var room = Game.rooms[roomName];
-                var spawns = room.find(FIND_MY_SPAWNS);
+            for (let roomName in Game.rooms) {
+                const room = Game.rooms[roomName];
+                const spawns = room.find(FIND_MY_SPAWNS);
                 if (spawns.length > 0) {
-                    var towers = room.find(FIND_MY_STRUCTURES, {
+                    const towers = room.find(FIND_MY_STRUCTURES, {
                         filter: { structureType: STRUCTURE_TOWER },
                     });
-                    towers.forEach(function (tower) {
+                    towers.forEach((tower) => {
                         structure_tower_1.default.run(tower);
                     });
                 }
             }
         }
         catch (error) {
-            console.log("Error in structureRoutines: ".concat(error.message));
+            console.log(`Error in structureRoutines: ${error.message}`);
         }
-    },
-    roomRoutines: function () {
-        utils_service_1.default.getRoomData();
-    },
-};
-exports.default = roomService;
+    }
+    roomRoutines() {
+        if (Game.time % 5 === 0) {
+            utils_service_1.default.getRoomData();
+        }
+    }
+}
+exports.RoomService = RoomService;
+profiler.registerClass(RoomService, "RoomService");

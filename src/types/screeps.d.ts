@@ -21,6 +21,8 @@ interface CreepMemory {
   repairing?: boolean;
   upgrading?: boolean;
   targetContainerId?: Id<StructureContainer> | null;
+  targetStructureId?: Id;
+  targetStorageId?: Id;
   targetSource?: Id<StructureContainer> | null;
   targetSourceId?: Id<Source>;
   harvestingFromContainer?: boolean;

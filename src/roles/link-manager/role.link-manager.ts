@@ -41,7 +41,7 @@ export class RoleLinkManager implements CreepRole {
           creep.memory.targetPos as RoomPosition
         );
       } else {
-        this.creepService.drawPath(creep);
+        //  this.creepService.drawPath(creep);
         creep.moveByPath(creep.memory.path);
         if (
           creep.pos.x === creep.memory.targetPos.x &&

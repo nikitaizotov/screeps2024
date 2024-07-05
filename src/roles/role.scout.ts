@@ -44,9 +44,9 @@ export const scoutRole: CreepRole = {
         return;
       }
 
-      if (creep.memory.path) {
-        creepService.drawPath(creep);
-      }
+      // if (creep.memory.path) {
+      //   creepService.drawPath(creep);
+      // }
 
       if (!creep.memory.initialized) {
         this.initializeMemory(creep);

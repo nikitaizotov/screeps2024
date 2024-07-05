@@ -231,6 +231,8 @@ export class RoomService {
       for (const name in Game.creeps) {
         const creep = Game.creeps[name];
 
+        this.creepService.drawPath(creep);
+
         let timeToCheck =
           creep.memory.role === this.roleMiner.memoryKey ||
           creep.memory.role === this.roleLinkManager.memoryKey

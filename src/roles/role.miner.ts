@@ -34,7 +34,7 @@ export class RoleMiner implements CreepRole {
       if (!creep.memory.targetPos || !creep.memory.path) {
         this.findContainerAndSource(creep);
       } else {
-        this.creepService.drawPath(creep);
+        // this.creepService.drawPath(creep);
         creep.moveByPath(creep.memory.path);
 
         if (

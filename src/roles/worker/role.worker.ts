@@ -34,7 +34,7 @@ const roleWorker: CreepRole = {
     //creep.say(creep.memory.task);
 
     // If creep has its path, let's show it!
-    creepService.drawPath(creep);
+    // creepService.drawPath(creep);
     switch (creep.memory.task) {
       case WorkerTask.Harvesting:
         creepService.taskHarvest(creep);

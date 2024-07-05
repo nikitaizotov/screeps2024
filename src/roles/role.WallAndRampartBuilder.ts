@@ -37,7 +37,8 @@ const roleWallAndRampBuilder: CreepRole = {
 
   harvestEnergy(creep: Creep): void {
     if (!creep.memory.path) {
-      creepService.getPathToSource(creep);
+      //creepService.getPathToSource(creep);
+      creepService.taskHarvest(creep);
     } else {
       creepService.moveAndHarvest(creep);
     }
@@ -70,7 +71,7 @@ const roleWallAndRampBuilder: CreepRole = {
   },
 
   moveAndRepair(creep: Creep): void {
-    creepService.drawPath(creep);
+    //creepService.drawPath(creep);
     const target = Game.getObjectById(
       creep.memory.targetId as Id<AnyStructure>
     );

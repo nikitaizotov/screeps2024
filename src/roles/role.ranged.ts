@@ -84,7 +84,7 @@ const roleRanged: CreepRole = {
           >;
         }
 
-        creepService.drawPath(creep);
+        //  creepService.drawPath(creep);
         creep.moveByPath(creep.memory.path);
       }
     } else {
@@ -106,7 +106,7 @@ const roleRanged: CreepRole = {
       path = creep.memory.path;
     }
     creep.moveByPath(path);
-    creepService.drawPath(creep);
+    // creepService.drawPath(creep);
   },
 
   randomlyPatrol(creep: Creep): void {

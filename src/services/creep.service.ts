@@ -212,7 +212,7 @@ export class CreepService {
       }
 
       if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
-        this.drawPath(creep);
+        //this.drawPath(creep);
 
         if (this.isCreepIsStuck(creep)) {
           this.getPathToSource(creep);
@@ -461,7 +461,7 @@ export class CreepService {
 
       if (action === ERR_NOT_IN_RANGE) {
         const moveResult = this.moveByPath(creep);
-        this.drawPath(creep);
+        // this.drawPath(creep);
 
         if (moveResult !== OK && moveResult !== ERR_TIRED) {
           this.getPathToController(creep);
@@ -651,18 +651,6 @@ export class CreepService {
     }
     return null;
   }
-
-  // createStructureCache(): void {
-  //   Memory.creepRoomCache = {};
-  //   const rooms = Game.rooms;
-  //   for (let roomName in rooms) {
-  //     const room = Game.rooms[roomName];
-  //     const structures = room.find(FIND_STRUCTURES);
-  //     if (structures) {
-  //       Memory.creepRoomCache[roomName] = structures;
-  //     }
-  //   }
-  // },
 }
 
 // profiler.registerClass(CreepService, "CreepService");

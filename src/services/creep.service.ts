@@ -329,8 +329,9 @@ export class CreepService {
   }
 
   taskHarvest(creep: Creep) {
-    if (creep.store.getFreeCapacity() == 0) {
+    if (creep.store.getFreeCapacity() === 0) {
       this.setTask(creep, WorkerTask.Idling);
+      return;
     }
 
     if (!creep.memory.focusOnLink) {
@@ -341,50 +342,32 @@ export class CreepService {
     }
 
     if (
-      (!creep.memory.path || !creep.memory.targetId) &&
-      creep.memory.focusOnLink === true
+      creep.memory.focusOnLink &&
+      (!creep.memory.path || !creep.memory.targetId)
     ) {
-      const storages = creep.room.find(FIND_STRUCTURES, {
+      const storage = creep.room.find(FIND_STRUCTURES, {
         filter: (structure) =>
           structure.structureType === STRUCTURE_STORAGE &&
           structure.store[RESOURCE_ENERGY] >= creep.store.getFreeCapacity(),
       }) as StructureStorage[];
 
-      if (storages.length === 0) {
+      if (storage.length > 0) {
+        const targetStorage = storage[0];
+        creep.memory.path = this.getPath(creep, targetStorage.pos);
+        creep.memory.targetId = targetStorage.id;
+      } else {
         creep.memory.focusOnLink = false;
       }
     }
 
     if (
-      creep.memory.focusOnLink &&
-      (!creep.memory.path || !creep.memory.targetId)
-    ) {
-      const storages = creep.room.find(FIND_STRUCTURES, {
-        filter: (structure) => structure.structureType === STRUCTURE_STORAGE,
-      }) as StructureStorage[];
-
-      if (storages.length) {
-        if (
-          storages[0].store.getCapacity(RESOURCE_ENERGY) >=
-          creep.store.getFreeCapacity()
-        ) {
-          creep.memory.path = this.getPath(creep, storages[0].pos as any);
-          creep.memory.targetId = storages[0].id as any;
-        } else {
-          creep.memory.focusOnLink = false;
-          creep.memory.path = undefined;
-          creep.memory.targetId = null;
-          this.getPathToSource(creep);
-        }
-      }
-    } else if (
       !creep.memory.focusOnLink &&
       (!creep.memory.path || !creep.memory.targetId)
     ) {
       this.getPathToSource(creep);
-    } else {
-      this.moveAndHarvest(creep);
     }
+
+    this.moveAndHarvest(creep);
   }
 
   taskTransfer(creep: Creep) {

@@ -1,6 +1,6 @@
-import buildService from "../services/build.service";
-import { CreepService } from "../services/creep.service";
-import { CreepRole } from "./role.interface";
+import buildService from "../../services/build.service";
+import { CreepService } from "../../services/creep.service";
+import { CreepRole } from "../role.interface";
 
 const creepService = new CreepService();
 
@@ -30,13 +30,13 @@ interface Memory {
 
 declare const Memory: Memory;
 
-export const scoutRole: CreepRole = {
-  creepsPerRoom: 0,
-  namePrefix: "Scout",
-  memoryKey: "scout",
-  bodyParts: [MOVE, WORK, WORK, CARRY, CARRY, CARRY, CLAIM],
-  baseBodyParts: [MOVE],
-  maxBodyPartsMultiplier: 0,
+export class RoleScout implements CreepRole {
+  creepsPerRoom = 0;
+  namePrefix = "Scout";
+  memoryKey = "scout";
+  bodyParts = [MOVE, WORK, WORK, CARRY, CARRY, CARRY, CLAIM];
+  baseBodyParts = [MOVE];
+  maxBodyPartsMultiplier = 0;
 
   run(creep: Creep): void {
     try {
@@ -67,7 +67,7 @@ export const scoutRole: CreepRole = {
     } catch (error: any) {
       console.log(`Error in Scout run: ${error.message}`);
     }
-  },
+  }
 
   initializeMemory(creep: Creep): void {
     try {
@@ -79,7 +79,7 @@ export const scoutRole: CreepRole = {
     } catch (error: any) {
       console.log(`Error in initializeMemory: ${error.message}`);
     }
-  },
+  }
 
   findNextRooms(creep: Creep): void {
     try {
@@ -92,7 +92,7 @@ export const scoutRole: CreepRole = {
     } catch (error: any) {
       console.log(`Error in findNextRooms: ${error.message}`);
     }
-  },
+  }
 
   moveToNextRoom(creep: Creep): void {
     try {
@@ -104,9 +104,9 @@ export const scoutRole: CreepRole = {
     } catch (error: any) {
       console.log(`Scout error moveToNextRoom: ${error}`);
     }
-  },
+  }
 
-  getPathToNextRoom: function (creep: Creep): void {
+  getPathToNextRoom(creep: Creep): void {
     const rooms: string[] = creep.memory.nextRooms as string[];
     const roomName = rooms.shift();
 
@@ -115,9 +115,9 @@ export const scoutRole: CreepRole = {
       creep.memory.targetRoom = roomName;
       creep.memory.path = creep.pos.findPathTo(pos);
     }
-  },
+  }
 
-  moveToNextRoomController: function (creep: Creep): void {
+  moveToNextRoomController(creep: Creep): void {
     if (creep.memory.targetRoom === creep.room.name) {
       const target = creep.room.find(FIND_CONSTRUCTION_SITES, {
         filter: (site) => site.structureType === STRUCTURE_SPAWN,
@@ -140,9 +140,9 @@ export const scoutRole: CreepRole = {
     } else {
       this.getPathToNextRoom(creep);
     }
-  },
+  }
 
-  claim: function (creep: Creep): void {
+  claim(creep: Creep): void {
     if (creep.room.controller) {
       const controller = creep.room.controller;
       const action = creep.claimController(controller);
@@ -160,14 +160,14 @@ export const scoutRole: CreepRole = {
         }
       }
     }
-  },
+  }
 
-  findPathToController: function (creep: Creep): void {
+  findPathToController(creep: Creep): void {
     const controller = creep.room.controller;
     if (controller && !controller.my) {
       creep.memory.path = creep.pos.findPathTo(controller);
     }
-  },
+  }
 
   buildOrFinishSpawn(creep: Creep) {
     if (
@@ -191,7 +191,7 @@ export const scoutRole: CreepRole = {
     } else {
       this.harvestEnergy(creep);
     }
-  },
+  }
 
   harvestEnergy(creep: Creep): void {
     if (!creep.memory.path) {
@@ -199,7 +199,7 @@ export const scoutRole: CreepRole = {
     } else {
       creepService.moveAndHarvest(creep);
     }
-  },
+  }
 
   transferEnergy(creep: Creep): void {
     if (!creep.memory.path) {
@@ -228,9 +228,9 @@ export const scoutRole: CreepRole = {
     } else {
       this.moveAndTransfer(creep);
     }
-  },
+  }
 
-  moveAndTransfer: function (creep: Creep): void {
+  moveAndTransfer(creep: Creep): void {
     // const target = creep.room.find(FIND_CONSTRUCTION_SITES, {
     //   filter: (site) => site.structureType === STRUCTURE_SPAWN,
     // })[0];
@@ -304,7 +304,5 @@ export const scoutRole: CreepRole = {
         }
       }
     }
-  },
-};
-
-export default scoutRole;
+  }
+}

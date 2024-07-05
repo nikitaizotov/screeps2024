@@ -1,4 +1,4 @@
-import { RoleLinkManager } from "../roles/link-manager/role.link-manager";
+import { RoleLinkManager } from "../roles/room-creeps/link-manager/role.link-manager";
 
 export class LinkManager {
   roleLinkManager = new RoleLinkManager();

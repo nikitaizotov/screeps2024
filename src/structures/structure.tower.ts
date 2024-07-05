@@ -1,16 +1,18 @@
-import attackService from "../services/attack.service";
+import { AttackService } from "../services/attack.service";
 
-const towerManager = {
-  run(tower: StructureTower): void {
+export class TowerManager {
+  attackService = new AttackService();
+  work(tower: StructureTower): void {
     if (tower) {
-      // First, look for the closest hostile creep with HEAL body part
+      // First, look for the closest hostile creep with HEAL body part.
       const closestHostileWithHeal = tower.pos.findClosestByPath(
         FIND_HOSTILE_CREEPS,
         {
           filter: (enemyCreep: Creep) => {
             return (
-              !attackService.avoidPlayers.includes(enemyCreep.owner.username) &&
-              enemyCreep.body.some((part) => part.type === HEAL)
+              !this.attackService.avoidPlayers.includes(
+                enemyCreep.owner.username
+              ) && enemyCreep.body.some((part) => part.type === HEAL)
             );
           },
         }
@@ -19,12 +21,12 @@ const towerManager = {
       if (closestHostileWithHeal) {
         tower.attack(closestHostileWithHeal);
       } else {
-        // If no hostile creeps with HEAL are found, look for the closest hostile creep
+        // If no hostile creeps with HEAL are found, look for the closest hostile creep.
         const closestHostile = tower.pos.findClosestByPath(
           FIND_HOSTILE_CREEPS,
           {
             filter: (enemyCreep: Creep) => {
-              return !attackService.avoidPlayers.includes(
+              return !this.attackService.avoidPlayers.includes(
                 enemyCreep.owner.username
               );
             },
@@ -34,7 +36,7 @@ const towerManager = {
         if (closestHostile) {
           tower.attack(closestHostile);
         } else {
-          // If no hostile creeps are found, look for the closest damaged ally creep
+          // If no hostile creeps are found, look for the closest damaged ally creep.
           const closestDamagedAlly = tower.pos.findClosestByRange(
             FIND_MY_CREEPS,
             {
@@ -45,7 +47,7 @@ const towerManager = {
           if (closestDamagedAlly) {
             tower.heal(closestDamagedAlly);
           } else {
-            // If no damaged ally creeps are found, look for the closest damaged structure
+            // If no damaged ally creeps are found, look for the closest damaged structure.
             const closestDamagedStructure = tower.pos.findClosestByRange(
               FIND_STRUCTURES,
               {
@@ -59,7 +61,7 @@ const towerManager = {
             if (closestDamagedStructure) {
               tower.repair(closestDamagedStructure);
 
-              // If the structure is fully repaired, clear the memory of any creeps targeting it
+              // If the structure is fully repaired, clear the memory of any creeps targeting it.
               if (
                 closestDamagedStructure.hits === closestDamagedStructure.hitsMax
               ) {
@@ -76,7 +78,5 @@ const towerManager = {
         }
       }
     }
-  },
-};
-
-export default towerManager;
+  }
+}

@@ -1,7 +1,8 @@
-import { CreepRole } from "../role.interface";
-import { WorkerTask } from "../constants/role.worker.const";
-import { CreepService } from "../../services/creep.service";
 // const profiler = require("./../../screeps-profiler");
+
+import { CreepService } from "../../../services/creep.service";
+import { WorkerTask } from "../../constants/role.worker.const";
+import { CreepRole } from "../../role.interface";
 
 const creepService = new CreepService();
 
@@ -12,17 +13,18 @@ const roleWorker: CreepRole = {
   bodyParts: [WORK, CARRY, MOVE],
   maxBodyPartsMultiplier: 10,
   creepsPerSourcePositions: {
-    "1": 2,
-    "2": 2,
+    "1": 3,
+    "2": 3,
     "3": 3,
     "4": 3,
     "5": 3,
-    "6": 3,
+    "6": 4,
+    "7": 4,
   },
   tasksPerRoom: {
-    Transferring: { "1": 1, "2": 1, "3": 2, "4": 2, "5": 2 },
-    Upgrading: { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 },
-    Building: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1 },
+    Transferring: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 2, "7": 2 },
+    Upgrading: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 2 },
+    Building: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1, "6": 1, "7": 1 },
   },
 
   run: function (creep: Creep) {

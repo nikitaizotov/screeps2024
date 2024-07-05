@@ -1,5 +1,5 @@
-const containerService = {
-  buildContainers: function (room: Room) {
+export class ContainerService {
+  buildContainers(room: Room) {
     if (room.controller && room.controller.my) {
       const sources = room.find(FIND_SOURCES);
 
@@ -22,9 +22,9 @@ const containerService = {
         }
       }
     }
-  },
+  }
 
-  findBestContainerPosition: function (
+  findBestContainerPosition(
     room: Room,
     sourcePos: RoomPosition
   ): RoomPosition | null {
@@ -77,7 +77,5 @@ const containerService = {
     }
 
     return bestPosition;
-  },
-};
-
-export default containerService;
+  }
+}

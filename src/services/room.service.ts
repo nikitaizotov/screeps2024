@@ -1,25 +1,34 @@
 import _ from "lodash";
-import roleWallAndRampBuilder from "../roles/role.WallAndRampartBuilder";
-import roleScout from "../roles/role.scout";
-import structureTower from "../structures/structure.tower";
 import buildService from "./build.service";
-import utilsService from "./utils.service";
-import roleWorker from "../roles/worker/role.worker";
-import { WorkerService } from "../roles/worker/worker.service";
-import { RoleMiner } from "../roles/role.miner";
+import { RoleMiner } from "../roles/room-creeps/role.miner";
 import { CreepRole } from "../roles/role.interface";
 import { CreepService } from "./creep.service";
-import { RoleLinkManager } from "../roles/link-manager/role.link-manager";
 import { LinkManager } from "../structures/structure.link";
+import { UtilsService } from "./utils.service";
+import { TowerManager } from "../structures/structure.tower";
+import { RoleLinkManager } from "../roles/room-creeps/link-manager/role.link-manager";
+import roleWorker from "../roles/room-creeps/worker/role.worker";
+import { WorkerService } from "../roles/room-creeps/worker/worker.service";
+import { RoleScout } from "../roles/room-creeps/role.scout";
+import { RoleWallAndRampBuilder } from "../roles/room-creeps/role.WallAndRampartBuilder";
 // const profiler = require("./../screeps-profiler");
 
 export class RoomService {
+  // Roles.
   private roleMiner = new RoleMiner();
-  private workerService = new WorkerService();
   private enabledRoles: CreepRole[] = [];
-  private creepService = new CreepService();
   private roleLinkManager = new RoleLinkManager();
+  private roleScout = new RoleScout();
+  private roleWallAndRampBuilder = new RoleWallAndRampBuilder();
+
+  // Structures.
   private linkManager = new LinkManager();
+  private towerManager = new TowerManager();
+
+  // Services.
+  private workerService = new WorkerService();
+  private utilsService = new UtilsService();
+  private creepService = new CreepService();
 
   constructor() {
     this.enabledRoles = [
@@ -27,7 +36,7 @@ export class RoomService {
       this.roleMiner,
       this.roleLinkManager,
       // roleRanged,
-      roleWallAndRampBuilder,
+      this.roleWallAndRampBuilder,
       // roleScout,
     ];
   }
@@ -75,22 +84,29 @@ export class RoomService {
 
   private spawnCreeps(): void {
     try {
+      // Run the following code only every 3 ticks.
       if (Game.time % 3) {
         return;
       }
 
+      // Iterate through all spawns in the game.
       for (let spawnName in Game.spawns) {
         const spawn: StructureSpawn = Game.spawns[spawnName];
-        const energyInExtensions = utilsService.getTotalEnergyInExtensions(
+        // Get the total energy available in extensions in the spawn's room.
+        const energyInExtensions = this.utilsService.getTotalEnergyInExtensions(
           spawn.room
         );
-        utilsService.isSafeModeNeeded(spawn.room);
+        // Check if safe mode is needed for the spawn's room.
+        this.utilsService.isSafeModeNeeded(spawn.room);
 
+        // Skip this spawn if it is already spawning a creep.
         if (spawn.spawning) {
           continue;
         }
 
+        // Iterate through all enabled roles.
         for (let role of this.enabledRoles) {
+          // Filter creeps by role and room.
           const selectedCreeps = _.filter(
             Game.creeps,
             (creep) =>
@@ -99,46 +115,59 @@ export class RoomService {
           );
           const baseBodyParts: BodyPartConstant[] = role.baseBodyParts || [];
           const bodyParts: BodyPartConstant[] = role.bodyParts;
+          // Calculate the base cost of body parts.
           const baseCost = baseBodyParts.reduce(
             (sum, part) => sum + BODYPART_COST[part],
             0
           );
+          // Calculate the cost of additional body parts.
           const bodyPartsCost = bodyParts.reduce(
             (sum, part) => sum + BODYPART_COST[part],
             0
           );
+          // Calculate the total cost of the creep.
           const totalCost = baseCost + bodyPartsCost;
+          // Check if the spawn can afford the creep.
           const canAfford =
             energyInExtensions + spawn.store[RESOURCE_ENERGY] >= totalCost;
 
+          // Get the storage link ID for the room.
           const linkId = this.roleLinkManager.getStorageLinkId(spawn.room);
 
+          // Special conditions for miners.
           if (role.memoryKey === this.roleMiner.memoryKey) {
             const linkedStorage = this.roleLinkManager.getStorageLinkId(
               spawn.room
             );
 
+            // Find all containers in the room.
             const containers = spawn.room.find(FIND_STRUCTURES, {
               filter: (structure) =>
                 structure.structureType === STRUCTURE_CONTAINER,
             });
 
+            // Calculate the needed count of miners.
             const neededCount = linkedStorage
               ? Object.keys(Memory?.roomData?.links[spawn.room.name]).length - 1
               : containers.length;
 
+            // Skip if the current count of miners is sufficient.
             if (neededCount <= selectedCreeps.length) {
               continue;
             }
           }
 
+          // Special conditions for link managers.
           if (role.memoryKey === this.roleLinkManager.memoryKey) {
+            // Skip if no link ID or if there are already link managers.
             if (!linkId || selectedCreeps.length > 0) {
               continue;
             }
           }
 
-          if (role.memoryKey === roleWallAndRampBuilder.memoryKey) {
+          // Special conditions for wall and rampart builders.
+          if (role.memoryKey === this.roleWallAndRampBuilder.memoryKey) {
+            // Find all reparable walls and ramparts in the room.
             const isReparableWallsAndRamps = spawn.room.find(FIND_STRUCTURES, {
               filter: (structure: Structure) => {
                 return (
@@ -149,12 +178,15 @@ export class RoomService {
               },
             });
 
+            // Skip if there are no reparable walls or ramparts.
             if (!isReparableWallsAndRamps.length) {
               continue;
             }
           }
 
-          if (role.memoryKey === roleScout.memoryKey) {
+          // Special conditions for scouts.
+          if (role.memoryKey === this.roleScout.memoryKey) {
+            // Find all scouts in the room.
             const scoutsInRoom = _.filter(
               Game.creeps,
               (creep) =>
@@ -162,14 +194,16 @@ export class RoomService {
                 creep.memory.spawnRoom == spawn.room.name
             );
 
+            // Skip if the controller level is less than 5 or if the number of scouts is sufficient.
             if (
               spawn.room.controller!.level < 5 ||
-              scoutsInRoom.length >= roleScout.creepsPerRoom
+              scoutsInRoom.length >= this.roleScout.creepsPerRoom
             ) {
               continue;
             }
           }
 
+          // Determine the maximum allowed creeps for this role.
           const maxCreepsAllowed =
             role.creepsPerSourcePositions &&
             role.creepsPerSourcePositions[
@@ -180,15 +214,17 @@ export class RoomService {
                 ]
               : role.creepsPerRoom;
 
+          // If the number of creeps is less than the allowed maximum and the spawn can afford it, create a new creep.
           if (selectedCreeps.length < maxCreepsAllowed && canAfford) {
             const newName = role.namePrefix + Game.time;
             const totalEnergyInRoom =
               energyInExtensions + spawn.store[RESOURCE_ENERGY];
             let bodyPartsMultiplier =
-              role.memoryKey !== roleScout.memoryKey
+              role.memoryKey !== this.roleScout.memoryKey
                 ? Math.floor((totalEnergyInRoom - baseCost) / bodyPartsCost)
                 : 1;
 
+            // Ensure the body parts multiplier does not exceed the maximum allowed.
             if (
               role?.maxBodyPartsMultiplier &&
               bodyPartsMultiplier > role?.maxBodyPartsMultiplier
@@ -196,11 +232,13 @@ export class RoomService {
               bodyPartsMultiplier = role?.maxBodyPartsMultiplier;
             }
 
+            // Combine base body parts with additional body parts.
             const finalBodyParts = [
               ...baseBodyParts,
-              ...utilsService.repeatArray(bodyParts, bodyPartsMultiplier),
+              ...this.utilsService.repeatArray(bodyParts, bodyPartsMultiplier),
             ];
 
+            // Spawn the new creep and set its memory.
             if (
               spawn.spawnCreep(finalBodyParts, newName, {
                 memory: {
@@ -222,6 +260,7 @@ export class RoomService {
         }
       }
     } catch (error: any) {
+      // Log any errors encountered during the function execution.
       console.log(`Error in spawnCreeps: ${error.message}`);
     }
   }
@@ -239,7 +278,7 @@ export class RoomService {
             ? 500
             : 1;
         timeToCheck =
-          creep.memory.role === roleScout.memoryKey ? 20 : timeToCheck;
+          creep.memory.role === this.roleScout.memoryKey ? 20 : timeToCheck;
 
         if (Game.time % timeToCheck === 0) {
           this.creepService.findIdleCreep(creep);
@@ -261,22 +300,33 @@ export class RoomService {
 
   private manageStructures(): void {
     try {
+      // Iterate through all rooms in the game.
       for (let roomName in Game.rooms) {
         const room = Game.rooms[roomName];
-        const spawns = room.find(FIND_MY_SPAWNS);
 
-        if (spawns.length > 0) {
-          const towers: StructureTower[] = room.find(FIND_MY_STRUCTURES, {
-            filter: { structureType: STRUCTURE_TOWER },
+        if (room?.controller && room.controller?.my) {
+          // Find all towers and links in the room in a single search.
+          const structures = room.find(FIND_MY_STRUCTURES, {
+            filter: (structure) =>
+              structure.structureType === STRUCTURE_TOWER ||
+              structure.structureType === STRUCTURE_LINK,
           });
+
+          // Filter and handle towers.
+          const towers = structures.filter(
+            (structure): structure is StructureTower =>
+              structure.structureType === STRUCTURE_TOWER
+          );
 
           towers.forEach((tower: StructureTower) => {
-            structureTower.run(tower);
+            this.towerManager.work(tower);
           });
 
-          const links: StructureLink[] = room.find(FIND_MY_STRUCTURES, {
-            filter: { structureType: STRUCTURE_LINK },
-          });
+          // Filter and handle links.
+          const links = structures.filter(
+            (structure): structure is StructureLink =>
+              structure.structureType === STRUCTURE_LINK
+          );
 
           links.forEach((link: StructureLink) => {
             this.linkManager.work(link);
@@ -284,13 +334,14 @@ export class RoomService {
         }
       }
     } catch (error: any) {
+      // Log any errors encountered during the function execution.
       console.log(`Error in manageStructures: ${error.message}`);
     }
   }
 
   private roomRoutines(): void {
     if (Game.time % 5 === 0) {
-      utilsService.getRoomData();
+      this.utilsService.getRoomData();
     }
   }
 }

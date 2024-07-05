@@ -1,14 +1,12 @@
-import attackService from "../services/attack.service";
+import { AttackService } from "../services/attack.service";
 import { CreepService } from "../services/creep.service";
 import { CreepRole } from "./role.interface";
 
-const creepService = new CreepService();
-
-const roleRanged: CreepRole = {
-  creepsPerRoom: 0,
-  namePrefix: "Ranged",
-  memoryKey: "ranged",
-  bodyParts: [
+export class RoleRanged implements CreepRole {
+  creepsPerRoom = 0;
+  namePrefix = "Ranged";
+  memoryKey = "ranged";
+  bodyParts = [
     TOUGH,
     TOUGH,
     TOUGH,
@@ -19,7 +17,10 @@ const roleRanged: CreepRole = {
     MOVE,
     MOVE,
     RANGED_ATTACK,
-  ],
+  ];
+
+  private creepService = new CreepService();
+  private attackService = new AttackService();
 
   run(creep: Creep): void {
     if (creep.spawning) {
@@ -95,7 +96,7 @@ const roleRanged: CreepRole = {
         this.randomlyPatrol(creep);
       }
     }
-  },
+  }
 
   goToFlag(creep: Creep, flag: Flag): void {
     let path;
@@ -107,7 +108,7 @@ const roleRanged: CreepRole = {
     }
     creep.moveByPath(path);
     // creepService.drawPath(creep);
-  },
+  }
 
   randomlyPatrol(creep: Creep): void {
     const directions = [
@@ -123,19 +124,19 @@ const roleRanged: CreepRole = {
     const randomDirection =
       directions[Math.floor(Math.random() * directions.length)];
     creep.move(randomDirection);
-  },
+  }
 
   findClosestTower(creep: Creep): StructureTower | null {
     return creep.pos.findClosestByPath(FIND_HOSTILE_STRUCTURES, {
       filter: (structure: AnyOwnedStructure) => {
         return (
           structure.owner &&
-          !attackService.avoidPlayers.includes(structure.owner.username) &&
+          !this.attackService.avoidPlayers.includes(structure.owner.username) &&
           structure.structureType === STRUCTURE_TOWER
         );
       },
     }) as StructureTower | null;
-  },
+  }
 
   findRangedEnemiesCloserThanTower(
     creep: Creep,
@@ -144,41 +145,47 @@ const roleRanged: CreepRole = {
     return creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS, {
       filter: (enemyCreep: Creep) => {
         return (
-          !attackService.avoidPlayers.includes(enemyCreep.owner.username) &&
+          !this.attackService.avoidPlayers.includes(
+            enemyCreep.owner.username
+          ) &&
           enemyCreep.getActiveBodyparts(RANGED_ATTACK) > 0 &&
           (!tower ||
             creep.pos.getRangeTo(enemyCreep) < creep.pos.getRangeTo(tower))
         );
       },
     });
-  },
+  }
 
   findDangerousEnemies(creep: Creep): Creep | null {
     return creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS, {
       filter: (enemyCreep: Creep) => {
         return (
-          !attackService.avoidPlayers.includes(enemyCreep.owner.username) &&
+          !this.attackService.avoidPlayers.includes(
+            enemyCreep.owner.username
+          ) &&
           (enemyCreep.getActiveBodyparts(ATTACK) > 0 ||
             enemyCreep.getActiveBodyparts(RANGED_ATTACK) > 0)
         );
       },
     });
-  },
+  }
 
   findAllEnemies(creep: Creep): Creep | null {
     return creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS, {
       filter: (enemyCreep: Creep) => {
-        return !attackService.avoidPlayers.includes(enemyCreep.owner.username);
+        return !this.attackService.avoidPlayers.includes(
+          enemyCreep.owner.username
+        );
       },
     });
-  },
+  }
 
   findStructuralTargets(creep: Creep): AnyOwnedStructure | null {
     const hostileStructures = creep.room.find(FIND_HOSTILE_STRUCTURES, {
       filter: (structure: AnyOwnedStructure) => {
         return (
           structure.owner &&
-          !attackService.avoidPlayers.includes(structure.owner.username) &&
+          !this.attackService.avoidPlayers.includes(structure.owner.username) &&
           (structure.structureType === STRUCTURE_TOWER ||
             structure.structureType === STRUCTURE_SPAWN ||
             structure.structureType === STRUCTURE_EXTENSION)
@@ -196,7 +203,5 @@ const roleRanged: CreepRole = {
     });
 
     return hostileStructures[0] || null;
-  },
-};
-
-export default roleRanged;
+  }
+}

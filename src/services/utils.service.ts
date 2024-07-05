@@ -1,7 +1,5 @@
-// const profiler = require("./../screeps-profiler");
-
-const utilsService = {
-  repeatArray: function (array: any[], times: number) {
+export class UtilsService {
+  repeatArray(array: any[], times: number) {
     try {
       let repeatedArray: any[] = [];
       for (let i = 0; i < times; i++) {
@@ -12,9 +10,9 @@ const utilsService = {
       console.log(`Error in repeatArray: ${error.message}`);
       return array;
     }
-  },
+  }
 
-  getTotalEnergyInExtensions: function (room: any) {
+  getTotalEnergyInExtensions(room: any) {
     try {
       const extensions: any[] = room.find(FIND_MY_STRUCTURES, {
         filter: { structureType: STRUCTURE_EXTENSION },
@@ -30,13 +28,13 @@ const utilsService = {
       console.log(`Error in getTotalEnergyInExtensions: ${error.message}`);
       return 0;
     }
-  },
+  }
 
   /**
    * Will activate Safe Mode if needed and if there is Safe Mode to activate.
    * @param {*} room
    */
-  isSafeModeNeeded: function (room: any) {
+  isSafeModeNeeded(room: any) {
     try {
       // Check if room is mine.
       if (room.controller && room.controller.my) {
@@ -74,9 +72,9 @@ const utilsService = {
     } catch (error) {
       console.log(`Error in isSafeModeNeeded method, ${error}`);
     }
-  },
+  }
 
-  getRoomData: function (): void {
+  getRoomData(): void {
     try {
       if (!Memory.roomData) {
         Memory.roomData = {
@@ -115,9 +113,5 @@ const utilsService = {
     } catch (error: any) {
       console.log(`Error in getRoomMiningPositions: ${error.message}`);
     }
-  },
-};
-
-// profiler.registerObject(utilsService, "utilsService");
-
-export default utilsService;
+  }
+}

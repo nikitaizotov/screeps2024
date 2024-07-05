@@ -1,5 +1,3 @@
-const attackService = {
-  avoidPlayers: ["Aleksandra"],
-};
-
-export default attackService;
+export class AttackService {
+  avoidPlayers: string[] = [];
+}

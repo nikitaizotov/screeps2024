@@ -1,4 +1,4 @@
-class LinkService {
+export class LinkService {
   isLinksAvailable(room: Room): boolean {
     if (room.controller && room.controller.level >= 5) {
       const links = room.find(FIND_STRUCTURES, {

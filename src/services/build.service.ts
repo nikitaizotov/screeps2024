@@ -1,5 +1,4 @@
-import { reverse } from "lodash";
-import containerService from "./container.service";
+import { ContainerService } from "./container.service";
 import LinkService from "./link.service";
 
 interface PositionSegment {
@@ -27,6 +26,7 @@ interface StructureCache {
 }
 
 const linkService = new LinkService();
+const containerService = new ContainerService();
 
 const buildService = {
   structureCache: {} as { [roomName: string]: StructureCache },
@@ -59,7 +59,7 @@ const buildService = {
         if (
           room.controller &&
           room.controller.my &&
-          !this.checkConstructionSites(room)
+          !this.checkConstructionSites(room, 5)
         ) {
           if (!Memory.structureCache[room.name]) {
             Memory.structureCache[room.name] = {
@@ -672,10 +672,10 @@ const buildService = {
     }
   },
 
-  checkConstructionSites(room: Room): boolean {
+  checkConstructionSites(room: Room, max: number): boolean {
     try {
       const constructionSites = room.find(FIND_CONSTRUCTION_SITES);
-      return constructionSites.length > 5;
+      return constructionSites.length > max;
     } catch (error: any) {
       console.log(`Error in checkConstructionSites: ${error.message}`);
       return false;

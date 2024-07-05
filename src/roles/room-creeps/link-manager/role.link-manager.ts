@@ -1,5 +1,5 @@
-import { CreepRole } from "../role.interface";
-import { CreepService } from "../../services/creep.service";
+import { CreepService } from "../../../services/creep.service";
+import { CreepRole } from "../../role.interface";
 
 export class RoleLinkManager implements CreepRole {
   creepsPerRoom = 999;

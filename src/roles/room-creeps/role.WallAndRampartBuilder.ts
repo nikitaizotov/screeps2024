@@ -1,14 +1,14 @@
-import { CreepService } from "../services/creep.service";
-import { CreepRole } from "./role.interface";
+import { CreepService } from "../../services/creep.service";
+import { CreepRole } from "../role.interface";
 
-const creepService = new CreepService();
+export class RoleWallAndRampBuilder implements CreepRole {
+  creepsPerRoom = 1;
+  namePrefix = "WallRampBuilder";
+  memoryKey = "wallRampBuilder";
+  bodyParts = [WORK, CARRY, MOVE];
+  maxBodyPartsMultiplier = 3;
 
-const roleWallAndRampBuilder: CreepRole = {
-  creepsPerRoom: 1,
-  namePrefix: "WallRampBuilder",
-  memoryKey: "wallRampBuilder",
-  bodyParts: [WORK, CARRY, MOVE],
-  maxBodyPartsMultiplier: 3,
+  private creepService = new CreepService();
 
   run(creep: Creep): void {
     if (creep.spawning) {
@@ -33,16 +33,16 @@ const roleWallAndRampBuilder: CreepRole = {
     } else {
       this.harvestEnergy(creep);
     }
-  },
+  }
 
   harvestEnergy(creep: Creep): void {
     if (!creep.memory.path) {
       //creepService.getPathToSource(creep);
-      creepService.taskHarvest(creep);
+      this.creepService.taskHarvest(creep);
     } else {
-      creepService.moveAndHarvest(creep);
+      this.creepService.moveAndHarvest(creep);
     }
-  },
+  }
 
   repairWallsAndRamparts(creep: Creep): void {
     if (!creep.memory.path) {
@@ -61,14 +61,14 @@ const roleWallAndRampBuilder: CreepRole = {
           (a, b) =>
             a.hits - b.hits || creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b)
         );
-        creepService.getPathTotargets(creep, [targets[0]]);
+        this.creepService.getPathTotargets(creep, [targets[0]]);
       } else {
         console.log("No targets for repair found");
       }
     } else {
       this.moveAndRepair(creep);
     }
-  },
+  }
 
   moveAndRepair(creep: Creep): void {
     //creepService.drawPath(creep);
@@ -99,7 +99,5 @@ const roleWallAndRampBuilder: CreepRole = {
       creep.memory.path = undefined;
       creep.memory.targetId = null;
     }
-  },
-};
-
-export default roleWallAndRampBuilder;
+  }
+}

@@ -1,6 +1,6 @@
 import _ from "lodash";
-import { CreepRole } from "./role.interface";
-import { CreepService } from "../services/creep.service";
+import { CreepRole } from "../role.interface";
+import { CreepService } from "../../services/creep.service";
 import { RoleLinkManager } from "./link-manager/role.link-manager";
 
 export class RoleMiner implements CreepRole {

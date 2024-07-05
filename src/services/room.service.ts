@@ -9,6 +9,8 @@ import { WorkerService } from "../roles/worker/worker.service";
 import { RoleMiner } from "../roles/role.miner";
 import { CreepRole } from "../roles/role.interface";
 import { CreepService } from "./creep.service";
+import { RoleLinkManager } from "../roles/link-manager/role.link-manager";
+import { LinkManager } from "../structures/structure.link";
 // const profiler = require("./../screeps-profiler");
 
 export class RoomService {
@@ -16,11 +18,14 @@ export class RoomService {
   private workerService = new WorkerService();
   private enabledRoles: CreepRole[] = [];
   private creepService = new CreepService();
+  private roleLinkManager = new RoleLinkManager();
+  private linkManager = new LinkManager();
 
   constructor() {
     this.enabledRoles = [
       roleWorker,
       this.roleMiner,
+      this.roleLinkManager,
       // roleRanged,
       roleWallAndRampBuilder,
       // roleScout,
@@ -106,13 +111,29 @@ export class RoomService {
           const canAfford =
             energyInExtensions + spawn.store[RESOURCE_ENERGY] >= totalCost;
 
+          const linkId = this.roleLinkManager.getStorageLinkId(spawn.room);
+
           if (role.memoryKey === this.roleMiner.memoryKey) {
+            const linkedStorage = this.roleLinkManager.getStorageLinkId(
+              spawn.room
+            );
+
             const containers = spawn.room.find(FIND_STRUCTURES, {
               filter: (structure) =>
                 structure.structureType === STRUCTURE_CONTAINER,
             });
 
-            if (containers.length <= selectedCreeps.length) {
+            const neededCount = linkedStorage
+              ? Object.keys(Memory?.roomData?.links[spawn.room.name]).length - 1
+              : containers.length;
+
+            if (neededCount <= selectedCreeps.length) {
+              continue;
+            }
+          }
+
+          if (role.memoryKey === this.roleLinkManager.memoryKey) {
+            if (!linkId || selectedCreeps.length > 0) {
               continue;
             }
           }
@@ -152,10 +173,10 @@ export class RoomService {
           const maxCreepsAllowed =
             role.creepsPerSourcePositions &&
             role.creepsPerSourcePositions[
-              Memory.roomData.sourcePositions[spawn.room.name]
+              Memory?.roomData?.sourcePositions[spawn.room.name]
             ]
               ? role.creepsPerSourcePositions[
-                  Memory.roomData.sourcePositions[spawn.room.name]
+                  Memory?.roomData?.sourcePositions[spawn.room.name]
                 ]
               : role.creepsPerRoom;
 
@@ -211,7 +232,10 @@ export class RoomService {
         const creep = Game.creeps[name];
 
         let timeToCheck =
-          creep.memory.role === this.roleMiner.memoryKey ? 500 : 1;
+          creep.memory.role === this.roleMiner.memoryKey ||
+          creep.memory.role === this.roleLinkManager.memoryKey
+            ? 500
+            : 1;
         timeToCheck =
           creep.memory.role === roleScout.memoryKey ? 20 : timeToCheck;
 
@@ -246,6 +270,14 @@ export class RoomService {
 
           towers.forEach((tower: StructureTower) => {
             structureTower.run(tower);
+          });
+
+          const links: StructureLink[] = room.find(FIND_MY_STRUCTURES, {
+            filter: { structureType: STRUCTURE_LINK },
+          });
+
+          links.forEach((link: StructureLink) => {
+            this.linkManager.work(link);
           });
         }
       }

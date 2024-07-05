@@ -1,19 +1,33 @@
 import _ from "lodash";
 import { CreepRole } from "./role.interface";
 import { CreepService } from "../services/creep.service";
+import { RoleLinkManager } from "./link-manager/role.link-manager";
 
 export class RoleMiner implements CreepRole {
   creepsPerRoom = 99;
   namePrefix = "Miner";
   memoryKey = "miner";
-  bodyParts = [WORK, WORK, WORK, WORK];
+  bodyParts = [WORK];
   baseBodyParts = [WORK, MOVE, CARRY];
-  maxBodyPartsMultiplier = 3;
+  maxBodyPartsMultiplier = 12;
   creepService = new CreepService();
+  roleLinkManager = new RoleLinkManager();
 
   run(creep: Creep): void {
     if (creep.spawning) {
       return;
+    }
+
+    if (creep.memory.focusOnLink === undefined || !creep.memory.focusOnLink) {
+      const isStoragesLinked = this.roleLinkManager.getStorageLinkId(
+        creep.room
+      );
+      if (isStoragesLinked) {
+        creep.memory.focusOnLink = true;
+        creep.memory.working = false;
+        creep.memory.targetPos = undefined;
+        creep.memory.path = undefined;
+      }
     }
 
     if (!creep.memory.working) {
@@ -51,27 +65,39 @@ export class RoleMiner implements CreepRole {
    * @param creep
    */
   findContainerAndSource(creep: Creep): void {
-    const containers = creep.room.find(FIND_STRUCTURES, {
-      filter: (structure) => structure.structureType === STRUCTURE_CONTAINER,
-    }) as StructureContainer[];
+    const targets = creep.memory.focusOnLink
+      ? (creep.room.find(FIND_STRUCTURES, {
+          filter: (structure) => structure.structureType === STRUCTURE_LINK,
+        }) as any[])
+      : (creep.room.find(FIND_STRUCTURES, {
+          filter: (structure) =>
+            structure.structureType === STRUCTURE_CONTAINER,
+        }) as any[]);
 
-    for (const container of containers) {
-      const miners = container.pos
+    for (let target of targets) {
+      const miners = target.pos
         .findInRange(FIND_MY_CREEPS, 1)
-        .filter((c) => c.memory.role === "miner");
+        .filter((c: Creep) => c.memory.role === "miner" && c?.id !== creep?.id);
 
       if (miners.length === 0) {
-        const sources = container.pos.findInRange(FIND_SOURCES, 2);
-        const pos = this.findPositionBetween(container.pos, sources[0].pos);
+        const sources = target.pos.findInRange(FIND_SOURCES, 2);
+        const pos = this.findPositionBetween(target.pos);
         const creepsHeadingTo = _.filter(
           Object.values(Game.creeps),
-          (c: Creep) => c.memory.targetPos === pos && c.memory.role === "miner"
+          (c: Creep) =>
+            c.memory.targetPos === pos &&
+            c.memory.role === "miner" &&
+            c.id !== creep.id
         );
 
-        if (creepsHeadingTo.length === 0) {
+        if (
+          creepsHeadingTo.length === 0 &&
+          sources[sources.length - 1]?.id &&
+          target?.id
+        ) {
           creep.memory.targetPos = pos;
-          creep.memory.targetContainerId = container.id;
-          creep.memory.targetSourceId = sources[sources.length - 1].id;
+          creep.memory.targetContainerId = target?.id;
+          creep.memory.targetSourceId = sources[sources.length - 1]?.id;
           creep.memory.path = creep.pos.findPathTo(pos as any);
           return;
         }
@@ -79,23 +105,18 @@ export class RoleMiner implements CreepRole {
     }
   }
 
-  findPositionBetween(
-    containerPos: RoomPosition,
-    sourcePos: RoomPosition
-  ): RoomPosition | null {
-    const terrain = Game.map.getRoomTerrain(containerPos.roomName);
+  findPositionBetween(posA: RoomPosition): RoomPosition | null {
+    const room = Game.rooms[posA.roomName];
 
     for (let dx = -1; dx <= 1; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
         if (dx === 0 && dy === 0) continue;
-        const x = containerPos.x + dx;
-        const y = containerPos.y + dy;
+        const pos = new RoomPosition(posA.x + dx, posA.y + dy, posA.roomName);
 
-        if (terrain.get(x, y) !== TERRAIN_MASK_WALL) {
-          const pos = new RoomPosition(x, y, containerPos.roomName);
-          if (pos.getRangeTo(sourcePos) <= 1) {
-            return pos;
-          }
+        const resourcesInRange = pos.findInRange(FIND_SOURCES, 1);
+
+        if (resourcesInRange.length > 0) {
+          return pos;
         }
       }
     }

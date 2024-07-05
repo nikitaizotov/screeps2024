@@ -25,13 +25,13 @@ export class RoleLinkManager implements CreepRole {
           !creep.memory.targetPos
         ) {
           const storage = this.getStorage(creep);
-          const linkId = this.getStorageLinkId(creep);
+          const linkId = this.getStorageLinkId(creep.room);
           const link: StructureLink = Game.getObjectById(
-            linkId as string
+            linkId as any
           ) as StructureLink;
 
           if (link && storage) {
-            const position = this.findPositionBetween(storage.pos, link.pos);
+            const position = this.findPositionBetween(storage.pos);
             creep.memory.targetStructureId = linkId;
             creep.memory.targetStorageId = storage.id;
             creep.memory.targetPos = position;
@@ -73,8 +73,8 @@ export class RoleLinkManager implements CreepRole {
     }
   }
 
-  getStorageLinkId(creep: Creep): string | null {
-    const cache = Memory.roomData.links[creep.room.name];
+  getStorageLinkId(room: Room): string | null {
+    const cache = Memory.roomData.links[room.name];
     const linkIds = Object.keys(cache);
     for (let linkId of linkIds) {
       if (cache[linkId].storageLink === true) {
@@ -96,23 +96,21 @@ export class RoleLinkManager implements CreepRole {
     return null;
   }
 
-  findPositionBetween(
-    positionA: RoomPosition,
-    positionB: RoomPosition
-  ): RoomPosition | null {
-    const terrain = Game.map.getRoomTerrain(positionA.roomName);
+  findPositionBetween(posA: RoomPosition): RoomPosition | null {
+    const room = Game.rooms[posA.roomName];
 
     for (let dx = -1; dx <= 1; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
         if (dx === 0 && dy === 0) continue;
-        const x = positionA.x + dx;
-        const y = positionA.y + dy;
+        const pos = new RoomPosition(posA.x + dx, posA.y + dy, posA.roomName);
 
-        if (terrain.get(x, y) !== TERRAIN_MASK_WALL) {
-          const pos = new RoomPosition(x, y, positionA.roomName);
-          if (pos.getRangeTo(positionB) <= 1) {
-            return pos;
-          }
+        const structure = pos.findInRange(FIND_STRUCTURES, 1);
+        const links = structure.filter(
+          (structure) => structure.structureType === STRUCTURE_LINK
+        );
+
+        if (links.length > 0) {
+          return pos;
         }
       }
     }

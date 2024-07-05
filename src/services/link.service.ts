@@ -71,6 +71,23 @@ class LinkService {
     room: Room,
     sourcePos: RoomPosition
   ): RoomPosition | null {
+    const areaAroundStorage = room.lookForAtArea(
+      LOOK_STRUCTURES,
+      sourcePos.y - 2,
+      sourcePos.x - 2,
+      sourcePos.y + 2,
+      sourcePos.x + 2,
+      true
+    );
+
+    const linksInArea = areaAroundStorage.filter(
+      (spot) => spot.structure.structureType === STRUCTURE_LINK
+    );
+
+    if (linksInArea.length) {
+      return null;
+    }
+
     const terrain = room.getTerrain();
     const offsets = [
       { x: -2, y: -2 },
@@ -134,6 +151,23 @@ class LinkService {
     room: Room,
     storagePos: RoomPosition
   ): RoomPosition | null {
+    const areaAroundStorage = room.lookForAtArea(
+      LOOK_STRUCTURES,
+      storagePos.y - 2,
+      storagePos.x - 2,
+      storagePos.y + 2,
+      storagePos.x + 2,
+      true
+    );
+
+    const linksInArea = areaAroundStorage.filter(
+      (spot) => spot.structure.structureType === STRUCTURE_LINK
+    );
+
+    if (linksInArea.length) {
+      return null;
+    }
+
     const terrain = room.getTerrain();
     const offsets = [
       { x: -2, y: -2 },

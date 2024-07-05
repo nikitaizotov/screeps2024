@@ -193,12 +193,14 @@ export class CreepService {
   }
 
   moveAndHarvest(creep: Creep): void {
-    const objectToCheck = Game.getObjectById(
-      creep.memory.targetId as Id<StructureContainer>
-    );
+    const objectToCheck = Game.getObjectById(creep.memory.targetId as Id<any>);
 
-    if (objectToCheck && objectToCheck.structureType === STRUCTURE_CONTAINER) {
-      this.moveAndCollectFromContainer(creep, objectToCheck);
+    if (
+      objectToCheck &&
+      (objectToCheck.structureType === STRUCTURE_CONTAINER ||
+        objectToCheck.structureType === STRUCTURE_STORAGE)
+    ) {
+      this.moveAndCollectFromContainerOrStorage(creep, objectToCheck);
     } else {
       let source = Game.getObjectById(creep.memory.targetId as Id<Source>);
 
@@ -266,21 +268,31 @@ export class CreepService {
     }
   }
 
-  moveAndCollectFromContainer(
+  moveAndCollectFromContainerOrStorage(
     creep: Creep,
-    container: StructureContainer
+    structure: StructureContainer | StructureStorage
   ): void {
     if (!creep.memory.path || !creep.memory.path.length) {
-      creep.memory.path = creep.pos.findPathTo(container.pos);
+      creep.memory.path = creep.pos.findPathTo(structure.pos);
     }
 
-    const action = creep.withdraw(container, RESOURCE_ENERGY);
+    if (
+      structure.structureType === STRUCTURE_STORAGE &&
+      structure.store.getCapacity(RESOURCE_ENERGY) <
+        creep.store.getFreeCapacity()
+    ) {
+      creep.memory.focusOnLink = false;
+      creep.memory.path = undefined;
+      creep.memory.targetId = null;
+    }
+
+    const action = creep.withdraw(structure, RESOURCE_ENERGY);
 
     if (action === ERR_NOT_IN_RANGE) {
       const moveResult = this.moveByPath(creep);
 
       if (moveResult === ERR_NOT_FOUND || moveResult === ERR_INVALID_ARGS) {
-        creep.memory.path = creep.pos.findPathTo(container.pos);
+        creep.memory.path = creep.pos.findPathTo(structure.pos);
       }
     } else if (
       action === ERR_INVALID_TARGET ||
@@ -321,7 +333,54 @@ export class CreepService {
       this.setTask(creep, WorkerTask.Idling);
     }
 
-    if (!creep.memory.path || !creep.memory.targetId) {
+    if (!creep.memory.focusOnLink) {
+      const linkId = this.getStorageLinkId(creep.room);
+      if (linkId) {
+        creep.memory.focusOnLink = true;
+      }
+    }
+
+    if (
+      (!creep.memory.path || !creep.memory.targetId) &&
+      creep.memory.focusOnLink === true
+    ) {
+      const storages = creep.room.find(FIND_STRUCTURES, {
+        filter: (structure) =>
+          structure.structureType === STRUCTURE_STORAGE &&
+          structure.store[RESOURCE_ENERGY] >= creep.store.getFreeCapacity(),
+      }) as StructureStorage[];
+
+      if (storages.length === 0) {
+        creep.memory.focusOnLink = false;
+      }
+    }
+
+    if (
+      creep.memory.focusOnLink &&
+      (!creep.memory.path || !creep.memory.targetId)
+    ) {
+      const storages = creep.room.find(FIND_STRUCTURES, {
+        filter: (structure) => structure.structureType === STRUCTURE_STORAGE,
+      }) as StructureStorage[];
+
+      if (storages.length) {
+        if (
+          storages[0].store.getCapacity(RESOURCE_ENERGY) >=
+          creep.store.getFreeCapacity()
+        ) {
+          creep.memory.path = this.getPath(creep, storages[0].pos as any);
+          creep.memory.targetId = storages[0].id as any;
+        } else {
+          creep.memory.focusOnLink = false;
+          creep.memory.path = undefined;
+          creep.memory.targetId = null;
+          this.getPathToSource(creep);
+        }
+      }
+    } else if (
+      !creep.memory.focusOnLink &&
+      (!creep.memory.path || !creep.memory.targetId)
+    ) {
       this.getPathToSource(creep);
     } else {
       this.moveAndHarvest(creep);
@@ -496,6 +555,10 @@ export class CreepService {
    * @param endPos
    */
   getPath(creep: Creep, endPos: RoomPosition): PathStep[] {
+    if ((endPos.x === undefined, endPos.y === undefined)) {
+      console.log(`${creep.memory.role} has undefined shit as destination`);
+    }
+
     const startPos: RoomPosition = creep.pos;
     const roomName = startPos.roomName;
     const cacheKey = `${startPos.x},${startPos.y}:${endPos.x},${endPos.y}`;
@@ -593,6 +656,17 @@ export class CreepService {
         Memory.cacheCreepPaths[roomName] = sortedCache;
       }
     }
+  }
+
+  getStorageLinkId(room: Room): string | null {
+    const cache = Memory.roomData.links[room.name];
+    const linkIds = Object.keys(cache);
+    for (let linkId of linkIds) {
+      if (cache[linkId].storageLink === true) {
+        return linkId;
+      }
+    }
+    return null;
   }
 
   // createStructureCache(): void {

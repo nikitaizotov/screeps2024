@@ -25,6 +25,7 @@ interface CreepMemory {
   targetStorageId?: Id;
   targetSource?: Id<StructureContainer> | null;
   targetSourceId?: Id<Source>;
+  focusOnLink?: boolean;
   harvestingFromContainer?: boolean;
   working?: boolean;
   targetRoom?: string;

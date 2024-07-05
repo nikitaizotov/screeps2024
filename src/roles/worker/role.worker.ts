@@ -6,21 +6,21 @@ import { CreepService } from "../../services/creep.service";
 const creepService = new CreepService();
 
 const roleWorker: CreepRole = {
-  creepsPerRoom: 4,
+  creepsPerRoom: 3,
   namePrefix: "Worker",
   memoryKey: "worker",
   bodyParts: [WORK, CARRY, MOVE],
   maxBodyPartsMultiplier: 10,
   creepsPerSourcePositions: {
-    "1": 3,
-    "2": 3,
+    "1": 2,
+    "2": 2,
     "3": 3,
     "4": 3,
     "5": 3,
     "6": 3,
   },
   tasksPerRoom: {
-    Transferring: { "1": 2, "2": 2, "3": 2, "4": 2, "5": 2 },
+    Transferring: { "1": 1, "2": 1, "3": 2, "4": 2, "5": 2 },
     Upgrading: { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 },
     Building: { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1 },
   },

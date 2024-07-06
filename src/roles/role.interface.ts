@@ -16,7 +16,7 @@ export interface CreepRole {
   creepsPerSourcePositions?: CreepPerSourcePositions;
   tasksPerRoom?: {
     Transferring: CreepPerSourcePositions;
-    Upgrading: CreepPerSourcePositions;
     Building: CreepPerSourcePositions;
+    Upgrading: CreepPerSourcePositions;
   };
 }

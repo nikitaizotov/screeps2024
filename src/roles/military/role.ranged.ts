@@ -1,6 +1,6 @@
-import { AttackService } from "../services/attack.service";
-import { CreepService } from "../services/creep.service";
-import { CreepRole } from "./role.interface";
+import { AttackService } from "../../services/attack.service";
+import { CreepService } from "../../services/creep.service";
+import { CreepRole } from "../role.interface";
 
 export class RoleRanged implements CreepRole {
   creepsPerRoom = 0;

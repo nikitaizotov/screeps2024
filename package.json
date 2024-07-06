@@ -10,7 +10,7 @@
     "typescript": "^5.5.2"
   },
   "scripts": {
-    "build": "tsc && node flattenDist.js",
-    "build-push": "tsc && node flattenDist.js && grunt screeps"
+    "local": "rm -Rf dist/* &&tsc && node flattenDist.js",
+    "build": "tsc && node flattenDist.js && grunt screeps"
   }
 }

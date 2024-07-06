@@ -1,6 +1,7 @@
 import _ from "lodash";
 import roleWorker from "./role.worker";
 import { WorkerTask } from "../../constants/role.worker.const";
+import { WORKER_MEMORY_KEY } from "./worker.const";
 // const profiler = require("./../../screeps-profiler");
 
 export class WorkerService {
@@ -12,7 +13,7 @@ export class WorkerService {
       const workersIdling = _.filter(
         Game.creeps,
         (creep) =>
-          creep.memory.role === "worker" &&
+          creep.memory.role === WORKER_MEMORY_KEY &&
           creep.room.name === spawn.room.name &&
           creep.memory.task === WorkerTask.Idling
       );
@@ -51,10 +52,17 @@ export class WorkerService {
         const workersOnTask = _.filter(
           Game.creeps,
           (creep) =>
-            creep.memory.role === "worker" &&
+            creep.memory.role === roleWorker.memoryKey &&
             creep.room.name === spawn.room.name &&
             creep.memory.task === enabledTask
         );
+
+        // Debug
+        if (enabledTask === WorkerTask.Building) {
+          console.log(
+            `BUILDERS: ${workersOnTask.length} IDLING: ${workersIdling.length}`
+          );
+        }
 
         if (
           workersIdling.length !== 0 &&

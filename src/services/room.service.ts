@@ -1,5 +1,4 @@
 import _ from "lodash";
-import buildService from "./build.service";
 import { RoleMiner } from "../roles/room-creeps/role.miner";
 import { CreepRole } from "../roles/role.interface";
 import { CreepService } from "./creep.service";
@@ -11,6 +10,7 @@ import roleWorker from "../roles/room-creeps/worker/role.worker";
 import { WorkerService } from "../roles/room-creeps/worker/worker.service";
 import { RoleScout } from "../roles/room-creeps/role.scout";
 import { RoleWallAndRampBuilder } from "../roles/room-creeps/role.WallAndRampartBuilder";
+import { BuildService } from "./build-service/build.service";
 // const profiler = require("./../screeps-profiler");
 
 export class RoomService {
@@ -29,6 +29,7 @@ export class RoomService {
   private workerService = new WorkerService();
   private utilsService = new UtilsService();
   private creepService = new CreepService();
+  private buildService = new BuildService();
 
   constructor() {
     this.enabledRoles = [
@@ -63,7 +64,7 @@ export class RoomService {
 
   structureRoutines(): void {
     try {
-      buildService.build();
+      this.buildService.build();
       this.manageStructures();
     } catch (error: any) {
       console.log(`Error in structureRoutines: ${error.message}`);

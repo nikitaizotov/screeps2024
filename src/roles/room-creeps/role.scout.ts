@@ -1,4 +1,4 @@
-import buildService from "../../services/build.service";
+import { BuildService } from "../../services/build-service/build.service";
 import { CreepService } from "../../services/creep.service";
 import { CreepRole } from "../role.interface";
 
@@ -37,6 +37,8 @@ export class RoleScout implements CreepRole {
   bodyParts = [MOVE, WORK, WORK, CARRY, CARRY, CARRY, CLAIM];
   baseBodyParts = [MOVE];
   maxBodyPartsMultiplier = 0;
+
+  private buildService = new BuildService();
 
   run(creep: Creep): void {
     try {
@@ -252,7 +254,7 @@ export class RoleScout implements CreepRole {
           console.log("Target construction site not found and not completed.");
         }
 
-        const result = buildService.buildSpawn(creep.room) as any;
+        const result = this.buildService.buildSpawn(creep.room) as any;
         if (result === OK) {
           console.log(
             `Construction site for spawn created successfully in ${creep.room.name}.`

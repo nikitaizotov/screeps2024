@@ -251,6 +251,7 @@ export class RoomService {
               : role.creepsPerRoom;
 
           // If the number of creeps is less than the allowed maximum and the spawn can afford it, create a new creep.
+
           if (selectedCreeps.length < maxCreepsAllowed && canAfford) {
             const newName = role.namePrefix + Game.time;
             const totalEnergyInRoom =
@@ -274,22 +275,22 @@ export class RoomService {
               ...this.utilsService.repeatArray(bodyParts, bodyPartsMultiplier),
             ];
 
+            const spawnAttempt = spawn.spawnCreep(finalBodyParts, newName, {
+              memory: {
+                role: role.memoryKey,
+                spawnRoom: spawn.room.name,
+                pathColor:
+                  "#" +
+                  ((Math.random() * 0xffffff) << 0)
+                    .toString(16)
+                    .padStart(6, "0"),
+                idleTicks: 0,
+                pathName: "",
+              },
+            });
+
             // Spawn the new creep and set its memory.
-            if (
-              spawn.spawnCreep(finalBodyParts, newName, {
-                memory: {
-                  role: role.memoryKey,
-                  spawnRoom: spawn.room.name,
-                  pathColor:
-                    "#" +
-                    ((Math.random() * 0xffffff) << 0)
-                      .toString(16)
-                      .padStart(6, "0"),
-                  idleTicks: 0,
-                  pathName: "",
-                },
-              }) === OK
-            ) {
+            if (spawnAttempt === OK) {
               return;
             }
           }

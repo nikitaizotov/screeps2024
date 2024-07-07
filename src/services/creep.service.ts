@@ -731,7 +731,16 @@ export class CreepService {
   }
 
   getStorageLinkId(room: Room): string | null {
-    const cache = Memory.roomData.links[room.name];
+    if (!Memory.roomData?.links) {
+      return null;
+    }
+
+    const cache = Memory.roomData?.links[room.name];
+
+    if (!cache) {
+      return null;
+    }
+
     const linkIds = Object.keys(cache);
     for (let linkId of linkIds) {
       if (cache[linkId].storageLink === true) {

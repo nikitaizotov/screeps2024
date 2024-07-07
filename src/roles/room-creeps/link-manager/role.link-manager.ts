@@ -5,20 +5,31 @@ export class RoleLinkManager implements CreepRole {
   creepsPerRoom = 999;
   namePrefix = "Link_Manager";
   memoryKey = "linkManager";
-  bodyParts = [CARRY];
-  baseBodyParts = [MOVE, CARRY];
-  maxBodyPartsMultiplier = 7;
+  bodyParts = [MOVE, CARRY];
 
   creepService = new CreepService();
 
   run(creep: Creep): void {
-    // Do not disturb creep while its inside the spawn!
+    // Do not disturb creep while it's inside the spawn.
     if (creep.spawning) {
       return;
     }
 
+    // If the creep is carrying any resource, transfer it to storage.
+    if (creep.store.getUsedCapacity() > 0) {
+      const storage = this.getStorage(creep);
+      if (storage) {
+        for (const resourceType in creep.store) {
+          creep.transfer(storage, resourceType as ResourceConstant);
+        }
+      }
+      return;
+    }
+
+    // If the creep is not working, find target positions and paths.
     if (!creep.memory.working) {
       if (!creep.memory.targetPos || !creep.memory.path) {
+        // If no targets are set, find storage and link structures.
         if (
           !creep.memory.targetStructureId &&
           !creep.memory.targetStorageId &&
@@ -37,11 +48,12 @@ export class RoleLinkManager implements CreepRole {
             creep.memory.targetPos = position;
           }
         }
+        // Find a path to the target position.
         creep.memory.path = creep.pos.findPathTo(
           creep.memory.targetPos as RoomPosition
         );
       } else {
-        //  this.creepService.drawPath(creep);
+        // Move to the target position using the stored path.
         creep.moveByPath(creep.memory.path);
         if (
           creep.pos.x === creep.memory.targetPos.x &&
@@ -52,6 +64,7 @@ export class RoleLinkManager implements CreepRole {
         }
       }
     } else {
+      // If the creep is working, either withdraw energy from the link or transfer it to storage.
       if (creep.store.getFreeCapacity() > 0) {
         const target = Game.getObjectById(
           creep.memory.targetStructureId as any
@@ -61,7 +74,7 @@ export class RoleLinkManager implements CreepRole {
           creep.withdraw(target, RESOURCE_ENERGY);
         } else {
           console.log(
-            `No link with id ${creep.memory.targetStructureId} found in a room ${creep.room.name}`
+            `No link with id ${creep.memory.targetStructureId} found in room ${creep.room.name}`
           );
         }
       } else {
@@ -73,6 +86,11 @@ export class RoleLinkManager implements CreepRole {
     }
   }
 
+  /**
+   * Get the ID of the storage link in the room.
+   * @param room The room to search in.
+   * @returns The ID of the storage link, or null if not found.
+   */
   getStorageLinkId(room: Room): string | null {
     const cache = Memory.roomData.links[room.name];
     const linkIds = Object.keys(cache);
@@ -84,6 +102,11 @@ export class RoleLinkManager implements CreepRole {
     return null;
   }
 
+  /**
+   * Get the storage structure in the room.
+   * @param creep The creep to search with.
+   * @returns The storage structure, or null if not found.
+   */
   getStorage(creep: Creep): StructureStorage | null {
     const storages = creep.room.find(FIND_STRUCTURES, {
       filter: (structure) => structure.structureType === STRUCTURE_STORAGE,
@@ -96,6 +119,11 @@ export class RoleLinkManager implements CreepRole {
     return null;
   }
 
+  /**
+   * Find a position between a given position and a link.
+   * @param posA The given position.
+   * @returns The position between the given position and a link, or null if none found.
+   */
   findPositionBetween(posA: RoomPosition): RoomPosition | null {
     const room = Game.rooms[posA.roomName];
 

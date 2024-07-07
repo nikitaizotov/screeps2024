@@ -8,7 +8,7 @@ import { TowerManager } from "../structures/structure.tower";
 import { RoleLinkManager } from "../roles/room-creeps/link-manager/role.link-manager";
 import roleWorker from "../roles/room-creeps/worker/role.worker";
 import { WorkerService } from "../roles/room-creeps/worker/worker.service";
-import { RoleScout } from "../roles/room-creeps/role.scout";
+import { RoleScout } from "../roles/room-creeps/scout/role.scout";
 import { RoleWallAndRampBuilder } from "../roles/room-creeps/role.WallAndRampartBuilder";
 import { BuildService } from "./build-service/build.service";
 // const profiler = require("./../screeps-profiler");
@@ -38,7 +38,7 @@ export class RoomService {
       this.roleLinkManager,
       // roleRanged,
       this.roleWallAndRampBuilder,
-      // roleScout,
+      this.roleScout,
     ];
   }
 
@@ -194,6 +194,41 @@ export class RoomService {
                 creep.memory.role == role.memoryKey &&
                 creep.memory.spawnRoom == spawn.room.name
             );
+
+            // Check neighboring rooms
+            const exits = Game.map.describeExits(spawn.room.name);
+            let needScout = false;
+            let allNeighboringRoomsUnsafe = true;
+
+            if (exits) {
+              for (let exit in exits) {
+                const roomName = exits[exit as keyof ExitsInformation];
+                if (roomName) {
+                  const neighboringRoomMemory = Memory.scoutRooms[roomName];
+                  if (
+                    !neighboringRoomMemory ||
+                    !neighboringRoomMemory.attacked
+                  ) {
+                    allNeighboringRoomsUnsafe = false;
+                  }
+                  if (
+                    !neighboringRoomMemory ||
+                    neighboringRoomMemory.attacked !== true
+                  ) {
+                    const neighboringRoom = Game.rooms[roomName];
+                    if (!neighboringRoom || !neighboringRoom.controller?.my) {
+                      needScout = true;
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+
+            // Skip if no scout is needed or if all neighboring rooms are unsafe.
+            if (!needScout || allNeighboringRoomsUnsafe) {
+              continue;
+            }
 
             // Skip if the controller level is less than 5 or if the number of scouts is sufficient.
             if (

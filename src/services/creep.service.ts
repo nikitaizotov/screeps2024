@@ -195,35 +195,74 @@ export class CreepService {
   moveAndHarvest(creep: Creep): void {
     const objectToCheck = Game.getObjectById(creep.memory.targetId as Id<any>);
 
-    if (
-      objectToCheck &&
-      (objectToCheck.structureType === STRUCTURE_CONTAINER ||
-        objectToCheck.structureType === STRUCTURE_STORAGE)
-    ) {
-      this.moveAndCollectFromContainerOrStorage(creep, objectToCheck);
-    } else {
-      let source = Game.getObjectById(creep.memory.targetId as Id<Source>);
-
-      if (!source) {
-        creep.memory.targetId = null;
-        creep.memory.path = undefined;
-        this.getPathToSource(creep);
-        return;
+    if (objectToCheck) {
+      // Check if the target is a container or storage structure
+      if (
+        objectToCheck.structureType === STRUCTURE_CONTAINER ||
+        objectToCheck.structureType === STRUCTURE_STORAGE
+      ) {
+        this.moveAndCollectFromContainerOrStorage(creep, objectToCheck);
       }
-
-      if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
-        //this.drawPath(creep);
-
-        if (this.isCreepIsStuck(creep)) {
-          this.getPathToSource(creep);
-        } else {
-          let moveResult = this.moveByPath(creep);
-
-          if (moveResult === ERR_NOT_FOUND || moveResult === ERR_INVALID_ARGS) {
+      // Check if the target is a dropped resource
+      else if (objectToCheck instanceof Resource) {
+        // Attempt to pick up the resource
+        if (creep.pickup(objectToCheck) === ERR_NOT_IN_RANGE) {
+          // If the creep is stuck, get a new path
+          if (this.isCreepIsStuck(creep)) {
             this.getPathToSource(creep);
+          }
+          // Otherwise, move by the existing path
+          else {
+            let moveResult = this.moveByPath(creep);
+
+            // If the move result is invalid, get a new path
+            if (
+              moveResult === ERR_NOT_FOUND ||
+              moveResult === ERR_INVALID_ARGS
+            ) {
+              this.getPathToSource(creep);
+            }
           }
         }
       }
+      // Check if the target is a source
+      else {
+        let source = Game.getObjectById(creep.memory.targetId as Id<Source>);
+
+        // If the source is not found, reset the target and path
+        if (!source) {
+          creep.memory.targetId = null;
+          creep.memory.path = undefined;
+          this.getPathToSource(creep);
+          return;
+        }
+
+        // Attempt to harvest from the source
+        if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
+          // If the creep is stuck, get a new path
+          if (this.isCreepIsStuck(creep)) {
+            this.getPathToSource(creep);
+          }
+          // Otherwise, move by the existing path
+          else {
+            let moveResult = this.moveByPath(creep);
+
+            // If the move result is invalid, get a new path
+            if (
+              moveResult === ERR_NOT_FOUND ||
+              moveResult === ERR_INVALID_ARGS
+            ) {
+              this.getPathToSource(creep);
+            }
+          }
+        }
+      }
+    }
+    // If the target is not found, reset the target and path
+    else {
+      creep.memory.targetId = null;
+      creep.memory.path = undefined;
+      this.getPathToSource(creep);
     }
   }
 
@@ -329,11 +368,13 @@ export class CreepService {
   }
 
   taskHarvest(creep: Creep) {
+    // If the creep's store is full, set its task to Idling and return.
     if (creep.store.getFreeCapacity() === 0) {
       this.setTask(creep, WorkerTask.Idling);
       return;
     }
 
+    // If the creep is not focused on the link, try to get the storage link ID.
     if (!creep.memory.focusOnLink) {
       const linkId = this.getStorageLinkId(creep.room);
       if (linkId) {
@@ -341,6 +382,52 @@ export class CreepService {
       }
     }
 
+    // Step 1: Prioritize picking up resources from the ground.
+    if (!creep.memory.path || !creep.memory.targetId) {
+      const droppedResources = creep.room.find(FIND_DROPPED_RESOURCES, {
+        filter: (resource) => resource.resourceType === RESOURCE_ENERGY,
+      }) as Resource[];
+
+      if (droppedResources.length > 0) {
+        const freeCapacity = creep.store.getFreeCapacity();
+
+        // Find the nearest resource that is not already targeted by other creeps.
+        let closestResource: Resource | null = null;
+        let closestDistance = Infinity;
+
+        for (const resource of droppedResources) {
+          const creepsHeading = creep.room.find(FIND_MY_CREEPS, {
+            filter: (c) => c.memory.targetId === (resource.id as any),
+          }).length;
+
+          // Check if it makes sense to pick up this resource and if it is not already occupied by another creep.
+          if (resource.amount > creepsHeading * freeCapacity) {
+            const distance = creep.pos.getRangeTo(resource.pos);
+            const creepOnResource = creep.room.lookForAt(
+              LOOK_CREEPS,
+              resource.pos
+            );
+
+            if (distance < closestDistance && creepOnResource.length === 0) {
+              closestResource = resource;
+              closestDistance = distance;
+            }
+          }
+        }
+
+        if (closestResource) {
+          // Try to find a path to the resource.
+          const path = this.getPath(creep, closestResource.pos);
+          if (path.length > 0) {
+            creep.memory.path = path;
+            creep.memory.targetId = closestResource.id as any;
+            creep.memory.focusOnLink = false;
+          }
+        }
+      }
+    }
+
+    // If focused on the link and no target/path is set, find storage structures.
     if (
       creep.memory.focusOnLink &&
       (!creep.memory.path || !creep.memory.targetId)
@@ -360,6 +447,7 @@ export class CreepService {
       }
     }
 
+    // If not focused on the link and no target/path is set, get a path to a source.
     if (
       !creep.memory.focusOnLink &&
       (!creep.memory.path || !creep.memory.targetId)
@@ -367,6 +455,7 @@ export class CreepService {
       this.getPathToSource(creep);
     }
 
+    // Move and harvest resources based on the set path and target.
     this.moveAndHarvest(creep);
   }
 

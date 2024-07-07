@@ -14,10 +14,12 @@ export class RoleMiner implements CreepRole {
   roleLinkManager = new RoleLinkManager();
 
   run(creep: Creep): void {
+    // If the creep is still spawning, do nothing.
     if (creep.spawning) {
       return;
     }
 
+    // Check if the creep should focus on the link.
     if (creep.memory.focusOnLink === undefined || !creep.memory.focusOnLink) {
       const isStoragesLinked = this.roleLinkManager.getStorageLinkId(
         creep.room
@@ -30,13 +32,15 @@ export class RoleMiner implements CreepRole {
       }
     }
 
+    // If the creep is not working, find a container and source or move to the target position.
     if (!creep.memory.working) {
       if (!creep.memory.targetPos || !creep.memory.path) {
         this.findContainerAndSource(creep);
       } else {
-        // this.creepService.drawPath(creep);
+        // Move to the target position using the stored path.
         creep.moveByPath(creep.memory.path);
 
+        // If the creep reaches the target position, set it to working.
         if (
           creep.pos.x === creep.memory.targetPos.x &&
           creep.pos.y === creep.memory.targetPos.y &&
@@ -46,6 +50,7 @@ export class RoleMiner implements CreepRole {
         }
       }
     } else {
+      // If the creep is working, either harvest from the source or transfer energy to the container.
       if (creep.store.getFreeCapacity() > 0) {
         const targetSource = Game.getObjectById(
           creep.memory.targetSourceId as any
@@ -62,7 +67,7 @@ export class RoleMiner implements CreepRole {
 
   /**
    * Searches for a container with a miner near it, if the container has a free space, adds the path and id to the creep's memory.
-   * @param creep
+   * @param creep The creep that is searching for a container and source.
    */
   findContainerAndSource(creep: Creep): void {
     const targets = creep.memory.focusOnLink
@@ -85,11 +90,14 @@ export class RoleMiner implements CreepRole {
         const creepsHeadingTo = _.filter(
           Object.values(Game.creeps),
           (c: Creep) =>
-            c.memory.targetPos === pos &&
+            c.memory.targetPos?.x === pos?.x &&
+            c.memory.targetPos?.y === pos?.y &&
+            c.memory.targetPos?.roomName === pos?.roomName &&
             c.memory.role === "miner" &&
             c.id !== creep.id
         );
 
+        // Ensure no other miner is heading to the same target position before setting the current creep's target.
         if (
           creepsHeadingTo.length === 0 &&
           sources[sources.length - 1]?.id &&
@@ -105,6 +113,11 @@ export class RoleMiner implements CreepRole {
     }
   }
 
+  /**
+   * Finds a position between a given position and a source.
+   * @param posA The given position.
+   * @returns The position between the given position and a source, or null if none found.
+   */
   findPositionBetween(posA: RoomPosition): RoomPosition | null {
     const room = Game.rooms[posA.roomName];
 

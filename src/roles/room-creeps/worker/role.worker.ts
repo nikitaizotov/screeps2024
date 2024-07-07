@@ -9,7 +9,7 @@ const creepService = new CreepService();
 
 const roleWorker: CreepRole = {
   // creepsPerRoom: 3,
-  creepsPerRoom: 6,
+  creepsPerRoom: 4,
   namePrefix: "Worker",
   memoryKey: WORKER_MEMORY_KEY,
   bodyParts: [WORK, CARRY, MOVE],
@@ -21,9 +21,9 @@ const roleWorker: CreepRole = {
     "4": 3,
     "5": 3,
     "6": 4,
-    "7": 6,
-    "8": 6,
-    "9": 6,
+    "7": 4,
+    "8": 4,
+    "9": 4,
   },
   tasksPerRoom: {
     Transferring: {
@@ -44,9 +44,9 @@ const roleWorker: CreepRole = {
       "4": 1,
       "5": 1,
       "6": 1,
-      "7": 3,
-      "8": 3,
-      "9": 3,
+      "7": 1,
+      "8": 1,
+      "9": 1,
     },
     Upgrading: {
       "1": 1,

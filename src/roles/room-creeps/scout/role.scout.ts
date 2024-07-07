@@ -1,32 +1,7 @@
-import { BuildService } from "../../services/build-service/build.service";
-import { CreepService } from "../../services/creep.service";
-import { CreepRole } from "../role.interface";
-
-const creepService = new CreepService();
-
-interface ScoutRoomMemory {
-  scouted: boolean;
-  lastScouted: number;
-  empty: boolean;
-  attacked: boolean;
-  attacker: string | null;
-}
-
-enum scoutJobs {
-  MOVING_TO_NEXT_ROOM,
-  CLAIMING,
-  BUILDING,
-}
-
-const scoutJobList = {
-  [scoutJobs.MOVING_TO_NEXT_ROOM]: scoutJobs.MOVING_TO_NEXT_ROOM,
-  [scoutJobs.CLAIMING]: scoutJobs.CLAIMING,
-  [scoutJobs.BUILDING]: scoutJobs.BUILDING,
-};
-
-interface Memory {
-  scoutRooms: { [roomName: string]: ScoutRoomMemory };
-}
+import { BuildService } from "../../../services/build-service/build.service";
+import { CreepService } from "../../../services/creep.service";
+import { CreepRole } from "../../role.interface";
+import { scoutJobs } from "./scout.cont";
 
 declare const Memory: Memory;
 
@@ -35,10 +10,10 @@ export class RoleScout implements CreepRole {
   namePrefix = "Scout";
   memoryKey = "scout";
   bodyParts = [MOVE, WORK, WORK, CARRY, CARRY, CARRY, CLAIM];
-  baseBodyParts = [MOVE];
   maxBodyPartsMultiplier = 0;
 
   private buildService = new BuildService();
+  private creepService = new CreepService();
 
   run(creep: Creep): void {
     try {
@@ -46,13 +21,15 @@ export class RoleScout implements CreepRole {
         return;
       }
 
-      // if (creep.memory.path) {
-      //   creepService.drawPath(creep);
-      // }
-
       if (!creep.memory.initialized) {
         this.initializeMemory(creep);
         creep.memory.job = scoutJobs.MOVING_TO_NEXT_ROOM;
+      }
+
+      if (this.checkForEnemies(creep)) {
+        creep.memory.job = scoutJobs.MOVING_TO_NEXT_ROOM;
+        this.getPathToNextRoom(creep);
+        return;
       }
 
       switch (creep.memory.job) {
@@ -89,7 +66,13 @@ export class RoleScout implements CreepRole {
       if (!exits) {
         return;
       }
-      creep.memory.nextRooms = Object.values(exits) as string[];
+
+      const nextRooms = Object.values(exits).filter(
+        (roomName) =>
+          !Memory.scoutRooms[roomName] || !Memory.scoutRooms[roomName].attacked
+      ) as string[];
+
+      creep.memory.nextRooms = nextRooms;
       console.log(`${creep.name} found exits: ${creep.memory.nextRooms}`);
     } catch (error: any) {
       console.log(`Error in findNextRooms: ${error.message}`);
@@ -110,12 +93,41 @@ export class RoleScout implements CreepRole {
 
   getPathToNextRoom(creep: Creep): void {
     const rooms: string[] = creep.memory.nextRooms as string[];
-    const roomName = rooms.shift();
+    let roomName = rooms.shift();
 
-    if (roomName && creep.room !== (roomName as any)) {
-      const pos = new RoomPosition(25, 25, roomName);
-      creep.memory.targetRoom = roomName;
-      creep.memory.path = creep.pos.findPathTo(pos);
+    while (
+      roomName &&
+      Memory.scoutRooms[roomName] &&
+      Memory.scoutRooms[roomName].attacked
+    ) {
+      roomName = rooms.shift();
+    }
+
+    if (roomName && creep.room.name !== roomName) {
+      const route = Game.map.findRoute(creep.room.name, roomName);
+      if (route !== ERR_NO_PATH) {
+        creep.memory.targetRoom = roomName;
+        const path = this.getMultiRoomPath(
+          creep.pos,
+          new RoomPosition(25, 25, roomName)
+        );
+        if (path) {
+          creep.memory.path = path;
+          console.log(
+            `${creep.name} is moving to ${roomName} via path: ${JSON.stringify(
+              path
+            )}`
+          );
+        } else {
+          console.log(`${creep.name} could not find a path to ${roomName}`);
+        }
+      } else {
+        console.log(`${creep.name} found no route to ${roomName}`);
+      }
+    } else {
+      console.log(
+        `${creep.name} found no suitable next room or is already in the target room`
+      );
     }
   }
 
@@ -138,10 +150,80 @@ export class RoleScout implements CreepRole {
     }
 
     if (creep.memory.path) {
-      creep.moveByPath(creep.memory.path);
+      const moveResult = creep.moveByPath(creep.memory.path);
+      if (moveResult !== OK && moveResult !== ERR_TIRED) {
+        console.log(`${creep.name} moveByPath failed, error: ${moveResult}`);
+        if (moveResult === ERR_NOT_FOUND) {
+          // Path no longer valid, find a new path
+          console.log(
+            `${creep.name} is finding a new path to ${creep.memory.targetRoom}`
+          );
+          this.getPathToNextRoom(creep);
+        } else {
+          creep.memory.path = undefined;
+          creep.memory.targetId = null;
+        }
+      } else {
+        console.log(`${creep.name} is moving by path`);
+      }
     } else {
       this.getPathToNextRoom(creep);
     }
+  }
+
+  getMultiRoomPath(startPos: RoomPosition, endPos: RoomPosition): PathStep[] {
+    const path = PathFinder.search(
+      startPos,
+      { pos: endPos, range: 1 },
+      {
+        plainCost: 2,
+        swampCost: 10,
+        roomCallback: (roomName) => {
+          let room = Game.rooms[roomName];
+          if (!room) return false;
+          let costs = new PathFinder.CostMatrix();
+          room.find(FIND_STRUCTURES).forEach((structure) => {
+            if (structure.structureType === STRUCTURE_ROAD) {
+              costs.set(structure.pos.x, structure.pos.y, 1);
+            } else if (
+              structure.structureType !== STRUCTURE_CONTAINER &&
+              (structure.structureType !== STRUCTURE_RAMPART || !structure.my)
+            ) {
+              costs.set(structure.pos.x, structure.pos.y, 255);
+            }
+          });
+          room.find(FIND_MY_CONSTRUCTION_SITES).forEach((site) => {
+            if (
+              site.structureType !== STRUCTURE_CONTAINER &&
+              (site.structureType !== STRUCTURE_RAMPART || !site.my)
+            ) {
+              costs.set(site.pos.x, site.pos.y, 255);
+            }
+          });
+          return costs;
+        },
+      }
+    );
+
+    return path.path.map((pos, index, arr) => {
+      const nextPos = arr[index + 1];
+      if (nextPos) {
+        return {
+          x: pos.x,
+          y: pos.y,
+          dx: nextPos.x - pos.x,
+          dy: nextPos.y - pos.y,
+          direction: pos.getDirectionTo(nextPos) as DirectionConstant,
+        } as PathStep;
+      }
+      return {
+        x: pos.x,
+        y: pos.y,
+        dx: 0,
+        dy: 0,
+        direction: 0 as DirectionConstant,
+      } as PathStep;
+    });
   }
 
   claim(creep: Creep): void {
@@ -181,7 +263,6 @@ export class RoleScout implements CreepRole {
       creep.memory.targetId = null;
       creep.say("🔄 harvest");
     }
-    // Check if the creep should start transferring energy.
     if (!creep.memory.building && creep.store.getFreeCapacity() == 0) {
       creep.memory.building = true;
       creep.memory.path = undefined;
@@ -197,20 +278,14 @@ export class RoleScout implements CreepRole {
 
   harvestEnergy(creep: Creep): void {
     if (!creep.memory.path) {
-      creepService.getPathToSource(creep);
+      this.creepService.getPathToSource(creep);
     } else {
-      creepService.moveAndHarvest(creep);
+      this.creepService.moveAndHarvest(creep);
     }
   }
 
   transferEnergy(creep: Creep): void {
     if (!creep.memory.path) {
-      //creepService.findConstructionSite(creep);
-
-      // const target = creep.room.find(FIND_CONSTRUCTION_SITES, {
-      //   filter: (site) => site.structureType === STRUCTURE_SPAWN,
-      // })[0];
-
       const target =
         creep.room.controller?.level === 1
           ? creep.room.controller
@@ -233,14 +308,9 @@ export class RoleScout implements CreepRole {
   }
 
   moveAndTransfer(creep: Creep): void {
-    // const target = creep.room.find(FIND_CONSTRUCTION_SITES, {
-    //   filter: (site) => site.structureType === STRUCTURE_SPAWN,
-    // })[0];
-
     const target = Game.getObjectById(creep.memory.targetId as any);
 
     if (!target) {
-      // The target may have been completed, so we check this and clear the memory.
       if (creep.memory.targetId) {
         const constructedStructure = Game.getObjectById(
           creep.memory.targetId as Id<Structure>
@@ -294,8 +364,6 @@ export class RoleScout implements CreepRole {
       creep.memory.targetId = null;
     } else if (action === OK) {
       if (creep.memory.targetId !== controller.id) {
-        // Check if the construction is completed.
-
         const spawn = target as any;
 
         if (!spawn.progressTotal || spawn.progress >= spawn.progressTotal) {
@@ -306,5 +374,28 @@ export class RoleScout implements CreepRole {
         }
       }
     }
+  }
+
+  checkForEnemies(creep: Creep): boolean {
+    const enemies = creep.room.find(FIND_HOSTILE_CREEPS);
+    if (enemies.length > 0) {
+      if (!Memory.scoutRooms[creep.room.name]) {
+        Memory.scoutRooms[creep.room.name] = {
+          scouted: true,
+          lastScouted: Game.time,
+          empty: false,
+          attacked: true,
+          attacker: enemies[0].owner.username,
+        };
+      } else {
+        Memory.scoutRooms[creep.room.name].scouted = true;
+        Memory.scoutRooms[creep.room.name].lastScouted = Game.time;
+        Memory.scoutRooms[creep.room.name].empty = false;
+        Memory.scoutRooms[creep.room.name].attacked = true;
+        Memory.scoutRooms[creep.room.name].attacker = enemies[0].owner.username;
+      }
+      return true;
+    }
+    return false;
   }
 }

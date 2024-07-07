@@ -6,7 +6,9 @@ declare namespace NodeJS {
 
 interface CreepMemory {
   path?: PathStep[];
-  targetId?: Id<Source | Structure | ConstructionSite> | null;
+  targetId?: Id<
+    Source | Structure | ConstructionSite | ResourceConstant
+  > | null;
   building?: boolean;
   targetPos?: RoomPosition | null;
   lastPos?: { x: number; y: number; energy: number };

@@ -58,11 +58,11 @@ export class WorkerService {
         );
 
         // Debug
-        if (enabledTask === WorkerTask.Building) {
-          console.log(
-            `BUILDERS: ${workersOnTask.length} IDLING: ${workersIdling.length}`
-          );
-        }
+        // if (enabledTask === WorkerTask.Building) {
+        //   console.log(
+        //     `BUILDERS: ${workersOnTask.length} IDLING: ${workersIdling.length}`
+        //   );
+        // }
 
         if (
           workersIdling.length !== 0 &&

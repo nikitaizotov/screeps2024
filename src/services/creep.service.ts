@@ -633,7 +633,7 @@ export class CreepService {
 
     const startPos: RoomPosition = creep.pos;
     const roomName = startPos.roomName;
-    const cacheKey = `${startPos.x},${startPos.y}:${endPos.x},${endPos.y}`;
+    const cacheKey = `${startPos.x},${startPos.y}:${endPos.roomName},${endPos.x},${endPos.y}`;
     const currentTick = Game.time;
 
     if (!Memory.cacheCreepPaths) {

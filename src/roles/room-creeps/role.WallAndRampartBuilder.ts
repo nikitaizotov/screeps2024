@@ -2,7 +2,7 @@ import { CreepService } from "../../services/creep.service";
 import { CreepRole } from "../role.interface";
 
 export class RoleWallAndRampBuilder implements CreepRole {
-  creepsPerRoom = 1;
+  creepsPerRoom = 0;
   namePrefix = "WallRampBuilder";
   memoryKey = "wallRampBuilder";
   bodyParts = [WORK, CARRY, MOVE];

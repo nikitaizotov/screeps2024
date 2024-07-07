@@ -1,6 +1,6 @@
 import _ from "lodash";
 import roleWorker from "./role.worker";
-import { WorkerTask } from "../../constants/role.worker.const";
+import { WorkerTask } from "./worker.const";
 import { WORKER_MEMORY_KEY } from "./worker.const";
 // const profiler = require("./../../screeps-profiler");
 
@@ -38,6 +38,13 @@ export class WorkerService {
         }
 
         if (enabledTask === WorkerTask.Building && !this.isBuildNeeded(spawn)) {
+          continue;
+        }
+
+        if (
+          enabledTask === WorkerTask.FixingRampartsAndWalls &&
+          !this.ifWallsAndRampartFixingNeeded(spawn)
+        ) {
           continue;
         }
 
@@ -123,6 +130,24 @@ export class WorkerService {
       if (constructionSites.length > 0) {
         return true;
       }
+    }
+
+    return false;
+  }
+
+  ifWallsAndRampartFixingNeeded(spawn: StructureSpawn): boolean {
+    const targets = spawn.room.find(FIND_STRUCTURES, {
+      filter: (structure: AnyStructure) => {
+        return (
+          (structure.structureType === STRUCTURE_WALL ||
+            structure.structureType === STRUCTURE_RAMPART) &&
+          structure.hits < structure.hitsMax
+        );
+      },
+    });
+
+    if (targets.length > 0) {
+      return true;
     }
 
     return false;

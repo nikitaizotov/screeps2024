@@ -1,5 +1,3 @@
-import { WorkerTask } from "../constants/role.worker.const";
-
 export interface CreepPerSourcePositions {
   [num: number]: number;
 }

@@ -315,7 +315,7 @@ export class RoomService {
             ? 500
             : 1;
         timeToCheck =
-          creep.memory.role === this.roleScout.memoryKey ? 20 : timeToCheck;
+          creep.memory.role === this.roleScout.memoryKey ? 99999 : timeToCheck;
 
         if (Game.time % timeToCheck === 0) {
           this.creepService.findIdleCreep(creep);

@@ -1,7 +1,7 @@
 // const profiler = require("./../../screeps-profiler");
 
 import { CreepService } from "../../../services/creep.service";
-import { WorkerTask } from "../../constants/role.worker.const";
+import { WorkerTask } from "./worker.const";
 import { CreepRole } from "../../role.interface";
 import { WORKER_MEMORY_KEY } from "./worker.const";
 
@@ -9,7 +9,7 @@ const creepService = new CreepService();
 
 const roleWorker: CreepRole = {
   // creepsPerRoom: 3,
-  creepsPerRoom: 4,
+  creepsPerRoom: 3,
   namePrefix: "Worker",
   memoryKey: WORKER_MEMORY_KEY,
   bodyParts: [WORK, CARRY, MOVE],
@@ -20,10 +20,10 @@ const roleWorker: CreepRole = {
     "3": 3,
     "4": 3,
     "5": 3,
-    "6": 4,
-    "7": 4,
-    "8": 4,
-    "9": 4,
+    "6": 3,
+    "7": 3,
+    "8": 3,
+    "9": 3,
   },
   tasksPerRoom: {
     Transferring: {
@@ -32,10 +32,10 @@ const roleWorker: CreepRole = {
       "3": 1,
       "4": 1,
       "5": 1,
-      "6": 2,
-      "7": 2,
-      "8": 2,
-      "9": 2,
+      "6": 1,
+      "7": 1,
+      "8": 1,
+      "9": 1,
     },
     Building: {
       "1": 1,
@@ -49,6 +49,17 @@ const roleWorker: CreepRole = {
       "9": 1,
     },
     Upgrading: {
+      "1": 1,
+      "2": 1,
+      "3": 1,
+      "4": 1,
+      "5": 1,
+      "6": 1,
+      "7": 1,
+      "8": 1,
+      "9": 1,
+    },
+    FixingRampartsAndWalls: {
       "1": 1,
       "2": 1,
       "3": 1,
@@ -86,6 +97,9 @@ const roleWorker: CreepRole = {
         break;
       case WorkerTask.Building:
         creepService.taskBuild(creep);
+        break;
+      case WorkerTask.FixingRampartsAndWalls:
+        creepService.taskFixingWallsAndRamparts(creep);
         break;
       default:
         creep.memory.task = WorkerTask.Harvesting;

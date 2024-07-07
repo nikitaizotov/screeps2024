@@ -5,9 +5,9 @@ export class RoleLinkManager implements CreepRole {
   creepsPerRoom = 999;
   namePrefix = "Link_Manager";
   memoryKey = "linkManager";
-  bodyParts = [MOVE, CARRY];
-
-  maxBodyPartsMultiplier = 1;
+  bodyParts = [CARRY];
+  baseBodyParts = [MOVE, CARRY];
+  maxBodyPartsMultiplier = 3;
 
   creepService = new CreepService();
 

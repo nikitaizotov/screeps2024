@@ -35,6 +35,13 @@ interface CreepMemory {
   job?: scoutJobs;
   task?: WorkerTask;
   pathName: string;
+  // Used by scouts.
+  route?:
+    | Array<{
+        exit: ExitConstant;
+        room: string;
+      }>
+    | ERR_NO_PATH;
 }
 
 interface RoomData {

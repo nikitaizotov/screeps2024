@@ -470,7 +470,6 @@ export class CreepService {
 
       let target: AnyStoreStructure | null = null;
 
-      // Поиск ближайшей цели среди спаунов и экстеншенов
       const targets = room.find(FIND_STRUCTURES, {
         filter: (structure: AnyStoreStructure) => {
           return (
@@ -489,7 +488,6 @@ export class CreepService {
         target = creep.pos.findClosestByPath(targets) as any;
       }
 
-      // Если нет подходящих спаунов и экстеншенов, ищем ближайшую башню
       if (!target) {
         const towers = room.find(FIND_STRUCTURES, {
           filter: (structure: AnyStoreStructure) => {

@@ -9,7 +9,6 @@ import { RoleLinkManager } from "../roles/room-creeps/link-manager/role.link-man
 import roleWorker from "../roles/room-creeps/worker/role.worker";
 import { WorkerService } from "../roles/room-creeps/worker/worker.service";
 import { RoleScout } from "../roles/room-creeps/scout/role.scout";
-import { RoleWallAndRampBuilder } from "../roles/room-creeps/role.WallAndRampartBuilder";
 import { BuildService } from "./build-service/build.service";
 // const profiler = require("./../screeps-profiler");
 
@@ -19,7 +18,6 @@ export class RoomService {
   private enabledRoles: CreepRole[] = [];
   private roleLinkManager = new RoleLinkManager();
   private roleScout = new RoleScout();
-  private roleWallAndRampBuilder = new RoleWallAndRampBuilder();
 
   // Structures.
   private linkManager = new LinkManager();
@@ -37,7 +35,6 @@ export class RoomService {
       this.roleMiner,
       this.roleLinkManager,
       // roleRanged,
-      this.roleWallAndRampBuilder,
       this.roleScout,
     ];
   }
@@ -162,25 +159,6 @@ export class RoomService {
           if (role.memoryKey === this.roleLinkManager.memoryKey) {
             // Skip if no link ID or if there are already link managers.
             if (!linkId || selectedCreeps.length > 0) {
-              continue;
-            }
-          }
-
-          // Special conditions for wall and rampart builders.
-          if (role.memoryKey === this.roleWallAndRampBuilder.memoryKey) {
-            // Find all reparable walls and ramparts in the room.
-            const isReparableWallsAndRamps = spawn.room.find(FIND_STRUCTURES, {
-              filter: (structure: Structure) => {
-                return (
-                  (structure.structureType === STRUCTURE_WALL ||
-                    structure.structureType === STRUCTURE_RAMPART) &&
-                  structure.hits < structure.hitsMax
-                );
-              },
-            });
-
-            // Skip if there are no reparable walls or ramparts.
-            if (!isReparableWallsAndRamps.length) {
               continue;
             }
           }

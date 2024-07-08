@@ -8,22 +8,21 @@ import { WORKER_MEMORY_KEY } from "./worker.const";
 const creepService = new CreepService();
 
 const roleWorker: CreepRole = {
-  // creepsPerRoom: 3,
-  creepsPerRoom: 3,
+  creepsPerRoom: 4,
   namePrefix: "Worker",
   memoryKey: WORKER_MEMORY_KEY,
   bodyParts: [WORK, CARRY, MOVE],
   maxBodyPartsMultiplier: 10,
   creepsPerSourcePositions: {
-    "1": 3,
-    "2": 3,
-    "3": 3,
-    "4": 3,
-    "5": 3,
-    "6": 3,
-    "7": 3,
-    "8": 3,
-    "9": 3,
+    "1": 4,
+    "2": 4,
+    "3": 4,
+    "4": 4,
+    "5": 4,
+    "6": 4,
+    "7": 4,
+    "8": 4,
+    "9": 4,
   },
   tasksPerRoom: {
     Transferring: {

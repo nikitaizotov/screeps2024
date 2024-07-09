@@ -7,7 +7,8 @@ export type WorkerTaskType =
   | "Building"
   | "Fixing"
   | "FixingRampartsAndWalls"
-  | "Idling";
+  | "Idling"
+  | "ReturnHome";
 
 export const WorkerTask: any = {
   Harvesting: "Harvesting" as WorkerTaskType,
@@ -17,4 +18,5 @@ export const WorkerTask: any = {
   Fixing: "Fixing" as WorkerTaskType,
   Idling: "Idling" as WorkerTaskType,
   FixingRampartsAndWalls: "FixingRampartsAndWalls" as WorkerTaskType,
+  ReturnHome: "ReturnHome" as WorkerTaskType,
 };

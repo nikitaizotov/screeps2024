@@ -603,6 +603,38 @@ export class CreepService {
     }
   }
 
+  taskReturnHome(creep: Creep): void {
+    if (!creep.memory.spawnRoom) {
+      return;
+    }
+
+    if (!creep.memory.path) {
+      const room = Game.rooms[creep.memory.spawnRoom];
+      const controller = room.controller;
+      if (controller) {
+        creep.memory.path = this.getPath(creep, controller.pos);
+        creep.memory.targetId = controller.id;
+      }
+    } else {
+      const moveResult = creep.moveByPath(creep.memory.path as PathStep[]);
+
+      if (moveResult !== OK && moveResult !== ERR_TIRED) {
+        creep.memory.path = undefined;
+        creep.memory.targetId = null;
+      }
+
+      if (
+        creep.room.name === creep.memory.spawnRoom &&
+        creep.pos.x > 2 &&
+        creep.pos.x < 48 &&
+        creep.pos.y > 2 &&
+        creep.pos.y < 48
+      ) {
+        this.setTask(creep, WorkerTask.Idling);
+      }
+    }
+  }
+
   taskFixingWallsAndRamparts(creep: Creep): void {
     if (creep.store[RESOURCE_ENERGY] == 0) {
       this.setTask(creep, WorkerTask.Harvesting);

@@ -77,6 +77,34 @@ const roleWorker: CreepRole = {
       return;
     }
 
+    // if (creep.name === "Worker60015595")
+    //   console.log(
+    //     creep.room.name,
+    //     creep.memory.spawnRoom,
+    //     creep.memory.task,
+    //     "#",
+    //     creep.room.name !== creep.memory.spawnRoom,
+    //     creep.memory.task === WorkerTask.idling
+    //   );
+
+    // if (
+    //   creep.room.name !== creep.memory.spawnRoom &&
+    //   creep.memory.task === WorkerTask.idling
+    // ) {
+    //   creepService.setTask(creep, WorkerTask.ReturnHome);
+    //   creep.say("HOME");
+    // }
+
+    // if (creep.name === "Worker60015595")
+    //   console.log(
+    //     creep.room.name,
+    //     creep.memory.spawnRoom,
+    //     creep.memory.task,
+    //     "@",
+    //     creep.room.name !== creep.memory.spawnRoom,
+    //     creep.memory.task === WorkerTask.idling
+    //   );
+
     //creep.say(creep.memory.task);
 
     // If creep has its path, let's show it!
@@ -89,6 +117,10 @@ const roleWorker: CreepRole = {
         creepService.taskTransfer(creep);
         break;
       case WorkerTask.Idling:
+        if (creep.room.name !== creep.memory.spawnRoom) {
+          creepService.setTask(creep, WorkerTask.ReturnHome);
+        }
+
         console.log(`Creep ${creep.name} is idling.`);
         break;
       case WorkerTask.Upgrading:
@@ -99,6 +131,9 @@ const roleWorker: CreepRole = {
         break;
       case WorkerTask.FixingRampartsAndWalls:
         creepService.taskFixingWallsAndRamparts(creep);
+        break;
+      case WorkerTask.ReturnHome:
+        creepService.taskReturnHome(creep);
         break;
       default:
         creep.memory.task = WorkerTask.Harvesting;

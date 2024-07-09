@@ -238,7 +238,8 @@ export class RoomService {
           if (
             Memory.roomData.fixingWallsRampartsEnabled &&
             role.memoryKey === roleWorker.memoryKey &&
-            Memory.roomData.fixingWallsRampartsEnabled[spawn.room.name]
+            Memory.roomData.fixingWallsRampartsEnabled[spawn.room.name] ===
+              false
           ) {
             maxCreepsAllowed--;
           }

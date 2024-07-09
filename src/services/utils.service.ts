@@ -80,6 +80,7 @@ export class UtilsService {
         Memory.roomData = {
           sourcePositions: {},
           links: {},
+          fixingWallsRampartsEnabled: {},
         };
       }
 

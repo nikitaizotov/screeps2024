@@ -1,7 +1,7 @@
-import { BuildService } from "../../../services/build-service/build.service";
-import { CreepService } from "../../../services/creep.service";
+// import { BuildService } from "../../../services/build-service/build.service";
+// import { CreepService } from "../../../services/creep.service";
 import { CreepRole } from "../../role.interface";
-import { scoutJobs } from "./scout.cont";
+// import { scoutJobs } from "./scout.cont";
 
 declare const Memory: Memory;
 
@@ -12,8 +12,8 @@ export class RoleScout implements CreepRole {
   bodyParts = [MOVE, WORK, WORK, CARRY, CARRY, CARRY, CLAIM];
   maxBodyPartsMultiplier = 0;
 
-  private buildService = new BuildService();
-  private creepService = new CreepService();
+  // private buildService = new BuildService();
+  // private creepService = new CreepService();
 
   run(creep: Creep): void {
     try {
@@ -24,29 +24,29 @@ export class RoleScout implements CreepRole {
       ////////////////////////////////////////////////////////////////
       ////////////////////////////////////////////////////////////////
 
-      if (!creep.memory.initialized) {
-        this.initializeMemory(creep);
-        creep.memory.job = scoutJobs.MOVING_TO_NEXT_ROOM;
-      }
+      // if (!creep.memory.initialized) {
+      //   this.initializeMemory(creep);
+      //   creep.memory.job = scoutJobs.MOVING_TO_NEXT_ROOM;
+      // }
 
-      if (this.checkForEnemies(creep)) {
-        creep.memory.job = scoutJobs.MOVING_TO_NEXT_ROOM;
-        creep.say("NOOOOOOOOOO!");
-        //this.getPathToNextRoom(creep);
-        return;
-      }
+      // if (this.checkForEnemies(creep)) {
+      //   creep.memory.job = scoutJobs.MOVING_TO_NEXT_ROOM;
+      //   creep.say("NOOOOOOOOOO!");
+      //   //this.getPathToNextRoom(creep);
+      //   return;
+      // }
 
-      switch (creep.memory.job) {
-        case scoutJobs.MOVING_TO_NEXT_ROOM:
-          this.moveToNextRoom(creep);
-          break;
-        // case scoutJobs.CLAIMING:
-        //   this.claim(creep);
-        //   break;
-        // case scoutJobs.BUILDING:
-        //   this.buildOrFinishSpawn(creep);
-        //   break;
-      }
+      // switch (creep.memory.job) {
+      //   case scoutJobs.MOVING_TO_NEXT_ROOM:
+      //     this.moveToNextRoom(creep);
+      //     break;
+      //   // case scoutJobs.CLAIMING:
+      //   //   this.claim(creep);
+      //   //   break;
+      //   // case scoutJobs.BUILDING:
+      //   //   this.buildOrFinishSpawn(creep);
+      //   //   break;
+      // }
 
       ////////////////////////////////////////////////////////////////
       ////////////////////////////////////////////////////////////////
@@ -78,76 +78,76 @@ export class RoleScout implements CreepRole {
     }
   }
 
-  initializeMemory(creep: Creep): void {
-    try {
-      if (!Memory.scoutRooms) {
-        Memory.scoutRooms = {};
-      }
-      creep.memory.initialized = true;
-      this.findNextRooms(creep);
-    } catch (error: any) {
-      console.log(`Error in initializeMemory: ${error.message}`);
-    }
-  }
+  // initializeMemory(creep: Creep): void {
+  //   try {
+  //     if (!Memory.scoutRooms) {
+  //       Memory.scoutRooms = {};
+  //     }
+  //     creep.memory.initialized = true;
+  //     this.findNextRooms(creep);
+  //   } catch (error: any) {
+  //     console.log(`Error in initializeMemory: ${error.message}`);
+  //   }
+  // }
 
-  private findNextRooms(creep: Creep): void {
-    try {
-      const exits = Game.map.describeExits(creep.room.name);
-      if (!exits) {
-        return;
-      }
+  // private findNextRooms(creep: Creep): void {
+  //   try {
+  //     const exits = Game.map.describeExits(creep.room.name);
+  //     if (!exits) {
+  //       return;
+  //     }
 
-      const nextRooms = Object.values(exits).filter(
-        (roomName) =>
-          !Memory.scoutRooms[roomName] || !Memory.scoutRooms[roomName].attacked
-      ) as string[];
+  //     const nextRooms = Object.values(exits).filter(
+  //       (roomName) =>
+  //         !Memory.scoutRooms[roomName] || !Memory.scoutRooms[roomName].attacked
+  //     ) as string[];
 
-      creep.memory.nextRooms = nextRooms;
-      console.log(`${creep.name} found exits: ${creep.memory.nextRooms}`);
-    } catch (error: any) {
-      console.log(`Error in findNextRooms: ${error.message}`);
-    }
-  }
+  //     creep.memory.nextRooms = nextRooms;
+  //     console.log(`${creep.name} found exits: ${creep.memory.nextRooms}`);
+  //   } catch (error: any) {
+  //     console.log(`Error in findNextRooms: ${error.message}`);
+  //   }
+  // }
 
-  private checkForEnemies(creep: Creep): boolean {
-    const enemies = creep.room.find(FIND_HOSTILE_CREEPS);
-    if (enemies.length > 0) {
-      if (!Memory.scoutRooms[creep.room.name]) {
-        Memory.scoutRooms[creep.room.name] = {
-          scouted: true,
-          lastScouted: Game.time,
-          empty: false,
-          attacked: true,
-          attacker: enemies[0].owner.username,
-        };
-      } else {
-        Memory.scoutRooms[creep.room.name].scouted = true;
-        Memory.scoutRooms[creep.room.name].lastScouted = Game.time;
-        Memory.scoutRooms[creep.room.name].empty = false;
-        Memory.scoutRooms[creep.room.name].attacked = true;
-        Memory.scoutRooms[creep.room.name].attacker = enemies[0].owner.username;
-      }
-      return true;
-    }
-    return false;
-  }
+  // private checkForEnemies(creep: Creep): boolean {
+  //   const enemies = creep.room.find(FIND_HOSTILE_CREEPS);
+  //   if (enemies.length > 0) {
+  //     if (!Memory.scoutRooms[creep.room.name]) {
+  //       Memory.scoutRooms[creep.room.name] = {
+  //         scouted: true,
+  //         lastScouted: Game.time,
+  //         empty: false,
+  //         attacked: true,
+  //         attacker: enemies[0].owner.username,
+  //       };
+  //     } else {
+  //       Memory.scoutRooms[creep.room.name].scouted = true;
+  //       Memory.scoutRooms[creep.room.name].lastScouted = Game.time;
+  //       Memory.scoutRooms[creep.room.name].empty = false;
+  //       Memory.scoutRooms[creep.room.name].attacked = true;
+  //       Memory.scoutRooms[creep.room.name].attacker = enemies[0].owner.username;
+  //     }
+  //     return true;
+  //   }
+  //   return false;
+  // }
 
-  private moveToNextRoom(creep: Creep): void {
-    if (!creep.memory.targetRoom) {
-      creep.memory.route = undefined;
-      const rooms: string[] = creep.memory.nextRooms as string[];
-      let roomName = rooms.shift();
-      creep.memory.targetRoom = roomName;
-      // const route = Game.map.findRoute(creep.room.name, roomName);
-    }
+  // private moveToNextRoom(creep: Creep): void {
+  //   if (!creep.memory.targetRoom) {
+  //     creep.memory.route = undefined;
+  //     const rooms: string[] = creep.memory.nextRooms as string[];
+  //     let roomName = rooms.shift();
+  //     creep.memory.targetRoom = roomName;
+  //     // const route = Game.map.findRoute(creep.room.name, roomName);
+  //   }
 
-    if (creep.memory.targetRoom && !creep.memory.route) {
-      creep.memory.route = Game.map.findRoute(
-        creep.room.name,
-        creep.memory.targetRoom
-      );
-    }
-  }
+  //   if (creep.memory.targetRoom && !creep.memory.route) {
+  //     creep.memory.route = Game.map.findRoute(
+  //       creep.room.name,
+  //       creep.memory.targetRoom
+  //     );
+  //   }
+  // }
 
   ////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////

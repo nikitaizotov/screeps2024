@@ -11,6 +11,6 @@
   },
   "scripts": {
     "local": "rm -Rf dist/* &&tsc && node flattenDist.js",
-    "build": "tsc && node flattenDist.js && grunt screeps"
+    "build": "rm -Rf dist/* && rm -Rf dist-flat/* &&tsc && node flattenDist.js && grunt screeps"
   }
 }

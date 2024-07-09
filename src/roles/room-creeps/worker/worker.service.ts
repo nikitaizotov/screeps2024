@@ -43,7 +43,8 @@ export class WorkerService {
 
         if (
           enabledTask === WorkerTask.FixingRampartsAndWalls &&
-          !this.ifWallsAndRampartFixingNeeded(spawn)
+          (!this.ifWallsAndRampartFixingNeeded(spawn) ||
+            !Memory.roomData.fixingWallsRampartsEnabled[room.name])
         ) {
           continue;
         }
@@ -152,6 +153,19 @@ export class WorkerService {
 
     return false;
   }
+
+  // isFixingRampartsAndWallsNeeded(room: Room): boolean {
+  //   const targets: AnyStructure[] = room.find(FIND_STRUCTURES, {
+  //     filter: (structure) => {
+  //       return (
+  //         10000 < structure.hitsMax &&
+  //         structure.structureType !== STRUCTURE_WALL &&
+  //         structure.structureType !== STRUCTURE_RAMPART
+  //       );
+  //     },
+  //   });
+  //   return false;
+  // }
 }
 
 // profiler.registerClass(WorkerService, "WorkerService");

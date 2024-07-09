@@ -61,6 +61,9 @@ interface RoomData {
       };
     };
   };
+  fixingWallsRampartsEnabled: {
+    [roomName: string]: boolean;
+  };
   junk?: any;
 }
 

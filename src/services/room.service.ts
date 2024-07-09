@@ -10,6 +10,7 @@ import roleWorker from "../roles/room-creeps/worker/role.worker";
 import { WorkerService } from "../roles/room-creeps/worker/worker.service";
 import { RoleScout } from "../roles/room-creeps/scout/role.scout";
 import { BuildService } from "./build-service/build.service";
+import { CacheService } from "./cache.service";
 // const profiler = require("./../screeps-profiler");
 
 export class RoomService {
@@ -28,6 +29,7 @@ export class RoomService {
   private utilsService = new UtilsService();
   private creepService = new CreepService();
   private buildService = new BuildService();
+  private cacheService = new CacheService();
 
   constructor() {
     this.enabledRoles = [
@@ -35,7 +37,7 @@ export class RoomService {
       this.roleMiner,
       this.roleLinkManager,
       // roleRanged,
-      this.roleScout,
+      // this.roleScout,
     ];
   }
 
@@ -53,7 +55,11 @@ export class RoomService {
     try {
       this.cleanMemory();
       this.roomRoutines();
-      this.creepService.clearCreepPathCache();
+      this.cacheService.clearCreepPathCache();
+
+      if (Game.time % 15 === 0) {
+        this.isFixingWallsNeeded();
+      }
     } catch (error: any) {
       console.log(`Error in cacheRoutines: ${error.message}`);
     }
@@ -83,7 +89,7 @@ export class RoomService {
   private spawnCreeps(): void {
     try {
       // Run the following code only every 3 ticks.
-      if (Game.time % 3) {
+      if (Game.time % 5 !== 0) {
         return;
       }
 
@@ -164,61 +170,61 @@ export class RoomService {
           }
 
           // Special conditions for scouts.
-          if (role.memoryKey === this.roleScout.memoryKey) {
-            // Find all scouts in the room.
-            const scoutsInRoom = _.filter(
-              Game.creeps,
-              (creep) =>
-                creep.memory.role == role.memoryKey &&
-                creep.memory.spawnRoom == spawn.room.name
-            );
+          // if (role.memoryKey === this.roleScout.memoryKey) {
+          //   // Find all scouts in the room.
+          //   const scoutsInRoom = _.filter(
+          //     Game.creeps,
+          //     (creep) =>
+          //       creep.memory.role == role.memoryKey &&
+          //       creep.memory.spawnRoom == spawn.room.name
+          //   );
 
-            // Check neighboring rooms
-            const exits = Game.map.describeExits(spawn.room.name);
-            let needScout = false;
-            let allNeighboringRoomsUnsafe = true;
+          //   // Check neighboring rooms
+          //   const exits = Game.map.describeExits(spawn.room.name);
+          //   let needScout = false;
+          //   let allNeighboringRoomsUnsafe = true;
 
-            if (exits) {
-              for (let exit in exits) {
-                const roomName = exits[exit as keyof ExitsInformation];
-                if (roomName) {
-                  const neighboringRoomMemory = Memory.scoutRooms[roomName];
-                  if (
-                    !neighboringRoomMemory ||
-                    !neighboringRoomMemory.attacked
-                  ) {
-                    allNeighboringRoomsUnsafe = false;
-                  }
-                  if (
-                    !neighboringRoomMemory ||
-                    neighboringRoomMemory.attacked !== true
-                  ) {
-                    const neighboringRoom = Game.rooms[roomName];
-                    if (!neighboringRoom || !neighboringRoom.controller?.my) {
-                      needScout = true;
-                      break;
-                    }
-                  }
-                }
-              }
-            }
+          //   if (exits) {
+          //     for (let exit in exits) {
+          //       const roomName = exits[exit as keyof ExitsInformation];
+          //       if (roomName) {
+          //         const neighboringRoomMemory = Memory.scoutRooms[roomName];
+          //         if (
+          //           !neighboringRoomMemory ||
+          //           !neighboringRoomMemory.attacked
+          //         ) {
+          //           allNeighboringRoomsUnsafe = false;
+          //         }
+          //         if (
+          //           !neighboringRoomMemory ||
+          //           neighboringRoomMemory.attacked !== true
+          //         ) {
+          //           const neighboringRoom = Game.rooms[roomName];
+          //           if (!neighboringRoom || !neighboringRoom.controller?.my) {
+          //             needScout = true;
+          //             break;
+          //           }
+          //         }
+          //       }
+          //     }
+          //   }
 
-            // Skip if no scout is needed or if all neighboring rooms are unsafe.
-            if (!needScout || allNeighboringRoomsUnsafe) {
-              continue;
-            }
+          //   // Skip if no scout is needed or if all neighboring rooms are unsafe.
+          //   if (!needScout || allNeighboringRoomsUnsafe) {
+          //     continue;
+          //   }
 
-            // Skip if the controller level is less than 5 or if the number of scouts is sufficient.
-            if (
-              spawn.room.controller!.level < 5 ||
-              scoutsInRoom.length >= this.roleScout.creepsPerRoom
-            ) {
-              continue;
-            }
-          }
+          //   // Skip if the controller level is less than 5 или if the number of scouts is sufficient.
+          //   if (
+          //     spawn.room.controller!.level < 5 ||
+          //     scoutsInRoom.length >= this.roleScout.creepsPerRoom
+          //   ) {
+          //     continue;
+          //   }
+          // }
 
           // Determine the maximum allowed creeps for this role.
-          const maxCreepsAllowed =
+          let maxCreepsAllowed =
             role.creepsPerSourcePositions &&
             role.creepsPerSourcePositions[
               Memory?.roomData?.sourcePositions[spawn.room.name]
@@ -227,6 +233,13 @@ export class RoomService {
                   Memory?.roomData?.sourcePositions[spawn.room.name]
                 ]
               : role.creepsPerRoom;
+
+          if (
+            role.memoryKey === roleWorker.memoryKey &&
+            Memory.roomData.fixingWallsRampartsEnabled[spawn.room.name]
+          ) {
+            maxCreepsAllowed--;
+          }
 
           // If the number of creeps is less than the allowed maximum and the spawn can afford it, create a new creep.
 
@@ -357,6 +370,49 @@ export class RoomService {
   private roomRoutines(): void {
     if (Game.time % 5 === 0) {
       this.utilsService.getRoomData();
+    }
+  }
+
+  isFixingWallsNeeded(): void {
+    try {
+      for (const roomName in Game.rooms) {
+        const room: Room = Game.rooms[roomName];
+
+        if (!room.controller?.my) {
+          continue;
+        }
+
+        if (!Memory.roomData.fixingWallsRampartsEnabled) {
+          Memory.roomData.fixingWallsRampartsEnabled = {};
+        }
+
+        if (
+          Memory.roomData.fixingWallsRampartsEnabled[room.name] === undefined
+        ) {
+          Memory.roomData.fixingWallsRampartsEnabled[room.name] = true;
+        }
+
+        const repairThreshold = 1000000;
+        const repairNeededThreshold = 900000;
+
+        const fixingNeeded =
+          Memory.roomData.fixingWallsRampartsEnabled[room.name];
+
+        const targets: AnyStructure[] = room.find(FIND_STRUCTURES, {
+          filter: (structure) =>
+            (fixingNeeded
+              ? structure.hits > repairThreshold
+              : structure.hits < repairNeededThreshold) &&
+            (structure.structureType === STRUCTURE_WALL ||
+              structure.structureType === STRUCTURE_RAMPART),
+        });
+
+        Memory.roomData.fixingWallsRampartsEnabled[room.name] = fixingNeeded
+          ? targets.length === 0
+          : targets.length > 0;
+      }
+    } catch (error: any) {
+      console.log(`Error in isFixingWallsNeeded: ${error.message}`);
     }
   }
 }

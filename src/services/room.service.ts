@@ -57,7 +57,7 @@ export class RoomService {
       this.roomRoutines();
       this.cacheService.clearCreepPathCache();
 
-      if (Game.time % 15 === 0) {
+      if (Game.time % 500 === 0) {
         this.isFixingWallsNeeded();
       }
     } catch (error: any) {

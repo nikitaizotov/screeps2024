@@ -94,6 +94,9 @@ export class RoleLinkManager implements CreepRole {
    * @returns The ID of the storage link, or null if not found.
    */
   getStorageLinkId(room: Room): string | null {
+    if (!Memory.roomData.links[room.name]) {
+      return null;
+    }
     const cache = Memory.roomData.links[room.name];
     const linkIds = Object.keys(cache);
     for (let linkId of linkIds) {

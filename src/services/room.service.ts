@@ -96,10 +96,12 @@ export class RoomService {
       // Iterate through all spawns in the game.
       for (let spawnName in Game.spawns) {
         const spawn: StructureSpawn = Game.spawns[spawnName];
+
         // Get the total energy available in extensions in the spawn's room.
         const energyInExtensions = this.utilsService.getTotalEnergyInExtensions(
           spawn.room
         );
+
         // Check if safe mode is needed for the spawn's room.
         this.utilsService.isSafeModeNeeded(spawn.room);
 
@@ -119,18 +121,22 @@ export class RoomService {
           );
           const baseBodyParts: BodyPartConstant[] = role.baseBodyParts || [];
           const bodyParts: BodyPartConstant[] = role.bodyParts;
+
           // Calculate the base cost of body parts.
           const baseCost = baseBodyParts.reduce(
             (sum, part) => sum + BODYPART_COST[part],
             0
           );
+
           // Calculate the cost of additional body parts.
           const bodyPartsCost = bodyParts.reduce(
             (sum, part) => sum + BODYPART_COST[part],
             0
           );
+
           // Calculate the total cost of the creep.
           const totalCost = baseCost + bodyPartsCost;
+
           // Check if the spawn can afford the creep.
           const canAfford =
             energyInExtensions + spawn.store[RESOURCE_ENERGY] >= totalCost;
@@ -168,7 +174,6 @@ export class RoomService {
               continue;
             }
           }
-
           // Special conditions for scouts.
           // if (role.memoryKey === this.roleScout.memoryKey) {
           //   // Find all scouts in the room.
@@ -178,12 +183,10 @@ export class RoomService {
           //       creep.memory.role == role.memoryKey &&
           //       creep.memory.spawnRoom == spawn.room.name
           //   );
-
           //   // Check neighboring rooms
           //   const exits = Game.map.describeExits(spawn.room.name);
           //   let needScout = false;
           //   let allNeighboringRoomsUnsafe = true;
-
           //   if (exits) {
           //     for (let exit in exits) {
           //       const roomName = exits[exit as keyof ExitsInformation];
@@ -208,12 +211,10 @@ export class RoomService {
           //       }
           //     }
           //   }
-
           //   // Skip if no scout is needed or if all neighboring rooms are unsafe.
           //   if (!needScout || allNeighboringRoomsUnsafe) {
           //     continue;
           //   }
-
           //   // Skip if the controller level is less than 5 или if the number of scouts is sufficient.
           //   if (
           //     spawn.room.controller!.level < 5 ||
@@ -222,6 +223,7 @@ export class RoomService {
           //     continue;
           //   }
           // }
+          ///////////////////////////////////
 
           // Determine the maximum allowed creeps for this role.
           let maxCreepsAllowed =
@@ -233,8 +235,8 @@ export class RoomService {
                   Memory?.roomData?.sourcePositions[spawn.room.name]
                 ]
               : role.creepsPerRoom;
-
           if (
+            Memory.roomData.fixingWallsRampartsEnabled &&
             role.memoryKey === roleWorker.memoryKey &&
             Memory.roomData.fixingWallsRampartsEnabled[spawn.room.name]
           ) {
@@ -242,7 +244,6 @@ export class RoomService {
           }
 
           // If the number of creeps is less than the allowed maximum and the spawn can afford it, create a new creep.
-
           if (selectedCreeps.length < maxCreepsAllowed && canAfford) {
             const newName = role.namePrefix + Game.time;
             const totalEnergyInRoom =
@@ -265,7 +266,6 @@ export class RoomService {
               ...baseBodyParts,
               ...this.utilsService.repeatArray(bodyParts, bodyPartsMultiplier),
             ];
-
             const spawnAttempt = spawn.spawnCreep(finalBodyParts, newName, {
               memory: {
                 role: role.memoryKey,
@@ -392,8 +392,8 @@ export class RoomService {
           Memory.roomData.fixingWallsRampartsEnabled[room.name] = true;
         }
 
-        const repairThreshold = 1000000;
-        const repairNeededThreshold = 900000;
+        const repairThreshold = 700000;
+        const repairNeededThreshold = 650000;
 
         const fixingNeeded =
           Memory.roomData.fixingWallsRampartsEnabled[room.name];

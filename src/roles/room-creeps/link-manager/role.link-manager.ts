@@ -137,6 +137,12 @@ export class RoleLinkManager implements CreepRole {
         if (dx === 0 && dy === 0) continue;
         const pos = new RoomPosition(posA.x + dx, posA.y + dy, posA.roomName);
 
+        // Check if there are any structures on the position
+        const structuresAtPos = pos
+          .lookFor(LOOK_STRUCTURES)
+          .filter((structure) => structure.structureType !== STRUCTURE_ROAD);
+        if (structuresAtPos.length > 0) continue;
+
         const structure = pos.findInRange(FIND_STRUCTURES, 1);
         const links = structure.filter(
           (structure) => structure.structureType === STRUCTURE_LINK

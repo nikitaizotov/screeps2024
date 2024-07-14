@@ -483,12 +483,33 @@ export class BuildService {
     }
   }
 
+  /**
+   * Checks if the number of construction sites in the room exceeds the specified maximum.
+   * @param room The room to check for construction sites.
+   * @param max The maximum number of construction sites allowed.
+   * @returns True if the number of construction sites is greater than the specified maximum, false otherwise.
+   */
   checkConstructionSites(room: Room, max: number): boolean {
     try {
       const constructionSites = room.find(FIND_CONSTRUCTION_SITES);
       return constructionSites.length > max;
     } catch (error: any) {
       console.log(`Error in checkConstructionSites: ${error.message}`);
+      return false;
+    }
+  }
+
+  /**
+   * Checks if there are any construction sites in the room.
+   * @param room The room to check for construction sites.
+   * @returns True if there are construction sites in the room, false otherwise.
+   */
+  isThereSomethingToBuild(room: Room): boolean {
+    try {
+      const constructionSites = room.find(FIND_CONSTRUCTION_SITES);
+      return constructionSites.length > 0;
+    } catch (error: any) {
+      console.log(`Error in isThereSomethingToBuild: ${error.message}`);
       return false;
     }
   }

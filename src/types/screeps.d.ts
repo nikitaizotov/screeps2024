@@ -96,6 +96,11 @@ interface Memory {
   };
   profiler?: any;
   duration?: any;
+  cache: {
+    sources: {
+      [roomName: string]: Id<Source>[];
+    };
+  };
 }
 
 // `global` extension samples

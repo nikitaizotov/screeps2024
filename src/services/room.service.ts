@@ -56,7 +56,7 @@ export class RoomService {
       this.cleanMemory();
       this.roomRoutines();
       this.cacheService.clearCreepPathCache();
-
+      this.cacheStructures(1000);
       if (Game.time % 500 === 0) {
         this.isFixingWallsNeeded();
       }
@@ -71,6 +71,17 @@ export class RoomService {
       this.manageStructures();
     } catch (error: any) {
       console.log(`Error in structureRoutines: ${error.message}`);
+    }
+  }
+
+  private cacheStructures(checkEveryNTicks: number = 100): void {
+    if (Game.time % checkEveryNTicks !== 0) {
+      return;
+    }
+
+    for (let roomName in Game.rooms) {
+      const room = Game.rooms[roomName];
+      this.cacheService.cacheSources(room);
     }
   }
 
@@ -235,13 +246,19 @@ export class RoomService {
                   Memory?.roomData?.sourcePositions[spawn.room.name]
                 ]
               : role.creepsPerRoom;
-          if (
-            Memory.roomData.fixingWallsRampartsEnabled &&
-            role.memoryKey === roleWorker.memoryKey &&
-            Memory.roomData.fixingWallsRampartsEnabled[spawn.room.name] ===
-              false
-          ) {
-            maxCreepsAllowed--;
+
+          if (role.memoryKey === roleWorker.memoryKey) {
+            if (
+              Memory.roomData.fixingWallsRampartsEnabled &&
+              Memory.roomData.fixingWallsRampartsEnabled[spawn.room.name] ===
+                false
+            ) {
+              maxCreepsAllowed--;
+            }
+
+            if (!this.buildService.isThereSomethingToBuild(spawn.room)) {
+              maxCreepsAllowed--;
+            }
           }
 
           // If the number of creeps is less than the allowed maximum and the spawn can afford it, create a new creep.

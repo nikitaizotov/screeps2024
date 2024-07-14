@@ -77,36 +77,6 @@ const roleWorker: CreepRole = {
       return;
     }
 
-    // if (creep.name === "Worker60015595")
-    //   console.log(
-    //     creep.room.name,
-    //     creep.memory.spawnRoom,
-    //     creep.memory.task,
-    //     "#",
-    //     creep.room.name !== creep.memory.spawnRoom,
-    //     creep.memory.task === WorkerTask.idling
-    //   );
-
-    // if (
-    //   creep.room.name !== creep.memory.spawnRoom &&
-    //   creep.memory.task === WorkerTask.idling
-    // ) {
-    //   creepService.setTask(creep, WorkerTask.ReturnHome);
-    //   creep.say("HOME");
-    // }
-
-    // if (creep.name === "Worker60015595")
-    //   console.log(
-    //     creep.room.name,
-    //     creep.memory.spawnRoom,
-    //     creep.memory.task,
-    //     "@",
-    //     creep.room.name !== creep.memory.spawnRoom,
-    //     creep.memory.task === WorkerTask.idling
-    //   );
-
-    //creep.say(creep.memory.task);
-
     // If creep has its path, let's show it!
     // creepService.drawPath(creep);
     switch (creep.memory.task) {

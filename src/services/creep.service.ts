@@ -1,8 +1,11 @@
 import _ from "lodash";
 import { WorkerTask } from "./../roles/room-creeps/worker/worker.const";
+import { CacheService } from "./cache.service";
 // const profiler = require("./../screeps-profiler");
 
 export class CreepService {
+  private cacheService = new CacheService();
+
   drawPath(creep: Creep, forceDraw: boolean = true): void {
     if (!creep.memory.path || !forceDraw) {
       return;
@@ -47,9 +50,7 @@ export class CreepService {
       return;
     }
 
-    const sources = creep.room.find(FIND_SOURCES, {
-      filter: (source) => source.energy > 0,
-    });
+    const sources = this.cacheService.findSources(creep);
 
     const closest = creep.pos.findClosestByPath(sources);
 
@@ -345,11 +346,7 @@ export class CreepService {
     creep.memory.targetId = null;
     creep.memory.path = undefined;
 
-    const containers = creep.room.find(FIND_STRUCTURES, {
-      filter: (structure) =>
-        structure.structureType === STRUCTURE_CONTAINER &&
-        structure.store[RESOURCE_ENERGY] > 0,
-    }) as StructureContainer[];
+    const containers = this.cacheService.findContainers(creep);
 
     if (containers.length === 0) return;
 
@@ -384,9 +381,7 @@ export class CreepService {
 
     // Step 1: Prioritize picking up resources from the ground.
     if (!creep.memory.path || !creep.memory.targetId) {
-      const droppedResources = creep.room.find(FIND_DROPPED_RESOURCES, {
-        filter: (resource) => resource.resourceType === RESOURCE_ENERGY,
-      }) as Resource[];
+      const droppedResources = this.cacheService.findDroppedResources(creep);
 
       if (droppedResources.length > 0) {
         const freeCapacity = creep.store.getFreeCapacity();
@@ -432,11 +427,7 @@ export class CreepService {
       creep.memory.focusOnLink &&
       (!creep.memory.path || !creep.memory.targetId)
     ) {
-      const storage = creep.room.find(FIND_STRUCTURES, {
-        filter: (structure) =>
-          structure.structureType === STRUCTURE_STORAGE &&
-          structure.store[RESOURCE_ENERGY] >= creep.store.getFreeCapacity(),
-      }) as StructureStorage[];
+      const storage = this.cacheService.findStorages(creep);
 
       if (storage.length > 0) {
         const targetStorage = storage[0];
@@ -470,6 +461,7 @@ export class CreepService {
 
       let target: AnyStoreStructure | null = null;
 
+      console.log("FIND NOT MIGRATED YET");
       const targets = room.find(FIND_STRUCTURES, {
         filter: (structure: AnyStoreStructure) => {
           return (
@@ -738,6 +730,7 @@ export class CreepService {
     if (cachedPath) {
       cachedPath.lastAccessed = currentTick;
       cachedPath.usedTimes = cachedPath.usedTimes + 1;
+      creep.memory.pathName = cacheKey;
       return cachedPath.path;
     }
 
@@ -771,13 +764,17 @@ export class CreepService {
 
       delete creep.memory.path;
     } else if (moveResult === ERR_BUSY || moveResult === OK) {
-      if (creep.memory.idleTicks > 3) {
+      if (creep.memory.idleTicks > 2) {
         if (Memory.cacheCreepPaths && Memory.cacheCreepPaths[roomName]) {
           delete Memory.cacheCreepPaths[roomName][creep.memory.pathName];
         }
 
+        const target: any = Game.getObjectById(creep.memory?.targetId as any);
+
         creep.memory.idleTicks = 0;
-        creep.memory.path = undefined;
+        if (target) {
+          creep.memory.path = this.getPath(creep, target.pos);
+        }
       }
     }
 

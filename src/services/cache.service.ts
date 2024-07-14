@@ -55,6 +55,34 @@ export class CacheService {
     Memory.cache.sources[room.name] = sourceIds;
   }
 
+  cacheStorages(room: Room): void {
+    if (!Memory.cache.storages[room.name]) {
+      Memory.cache.storages[room.name] = [];
+    }
+
+    const storages = room.find(FIND_STRUCTURES, {
+      filter: (structure) => structure.structureType === STRUCTURE_STORAGE,
+    });
+
+    const ids = storages.map((storage) => storage.id);
+
+    Memory.cache.storages[room.name] = ids;
+  }
+
+  cacheContainers(room: Room): void {
+    if (!Memory.cache.containers[room.name]) {
+      Memory.cache.containers[room.name] = [];
+    }
+
+    const containers = room.find(FIND_STRUCTURES, {
+      filter: (structure) => structure.structureType === STRUCTURE_CONTAINER,
+    });
+
+    const ids = containers.map((container) => container.id);
+
+    Memory.cache.containers[room.name] = ids;
+  }
+
   getFromCache<T extends _HasId>(ids: Id<T>[]): (T | null)[] | null {
     try {
       const objects = ids.map((id) => Game.getObjectById(id));
@@ -73,6 +101,10 @@ export class CacheService {
   findSources(creep: Creep): Source[] {
     try {
       this.initCacheIfNotExist();
+
+      if (!Memory.cache.sources) {
+        Memory.cache.sources = {};
+      }
 
       if (!Memory.cache.sources[creep.room.name]) {
         Memory.cache.sources[creep.room.name] = [];
@@ -116,27 +148,100 @@ export class CacheService {
   }
 
   findStorages(creep: Creep): StructureStorage[] {
-    console.log("FIND: StructureStorage");
-    return creep.room.find(FIND_STRUCTURES, {
-      filter: (structure) =>
-        structure.structureType === STRUCTURE_STORAGE &&
-        structure.store[RESOURCE_ENERGY] >= creep.store.getFreeCapacity(),
-    });
+    try {
+      this.initCacheIfNotExist();
+
+      if (!Memory.cache.storages) {
+        Memory.cache.storages = {};
+      }
+
+      if (!Memory.cache.storages[creep.room.name]) {
+        Memory.cache.storages[creep.room.name] = [];
+      }
+
+      // Try to get from the cache.
+      const cachedIds = Memory.cache.storages[creep.room.name];
+
+      if (cachedIds && cachedIds.length > 0) {
+        const storages = this.getFromCache(cachedIds);
+
+        if (storages) {
+          const availableStructures = storages.filter(
+            (structure: any): structure is StructureStorage =>
+              structure.store[RESOURCE_ENERGY] >= creep.store.getFreeCapacity()
+          );
+          if (availableStructures.length > 0) {
+            return availableStructures;
+          } else {
+            return [];
+          }
+        } else {
+          this.cacheStorages(creep.room);
+        }
+      }
+
+      return creep.room.find(FIND_STRUCTURES, {
+        filter: (structure) =>
+          structure.structureType === STRUCTURE_STORAGE &&
+          structure.store[RESOURCE_ENERGY] >= creep.store.getFreeCapacity(),
+      });
+    } catch (error: any) {
+      console.log(`Error in findStorages: ${error.message}`);
+      return [];
+    }
   }
 
   findContainers(creep: Creep): StructureContainer[] {
-    console.log("FIND: StructureContainer");
-    return creep.room.find(FIND_STRUCTURES, {
-      filter: (structure) =>
-        structure.structureType === STRUCTURE_CONTAINER &&
-        structure.store[RESOURCE_ENERGY] > 0,
-    });
+    try {
+      this.initCacheIfNotExist();
+
+      if (!Memory.cache.containers) {
+        Memory.cache.containers = {};
+      }
+
+      if (!Memory.cache.containers[creep.room.name]) {
+        Memory.cache.containers[creep.room.name] = [];
+      }
+
+      // Try to get from the cache.
+      const cachedIds = Memory.cache.containers[creep.room.name];
+
+      if (cachedIds && cachedIds.length > 0) {
+        const containers = this.getFromCache(cachedIds);
+
+        if (containers) {
+          const availableStructures = containers.filter(
+            (structure: any): structure is StructureContainer =>
+              structure.store[RESOURCE_ENERGY] > 0
+          );
+          if (availableStructures.length > 0) {
+            return availableStructures;
+          } else {
+            return [];
+          }
+        } else {
+          this.cacheContainers(creep.room);
+        }
+      }
+
+      return creep.room.find(FIND_STRUCTURES, {
+        filter: (structure) =>
+          structure.structureType === STRUCTURE_CONTAINER &&
+          structure.store[RESOURCE_ENERGY] > 0,
+      });
+    } catch (error: any) {
+      console.log(`Error in findContainers: ${error.message}`);
+      return [];
+    }
   }
 
   private initCacheIfNotExist(): void {
     if (!Memory.cache) {
       Memory.cache = {
         sources: {},
+        storages: {},
+        droppedResources: {},
+        containers: {},
       };
     }
   }

@@ -100,6 +100,15 @@ interface Memory {
     sources: {
       [roomName: string]: Id<Source>[];
     };
+    droppedResources: {
+      [roomName: string]: Id<Resource>[];
+    };
+    storages: {
+      [roomName: string]: Id<Structure>[];
+    };
+    containers: {
+      [roomName: string]: Id<StructureContainer>[];
+    };
   };
 }
 

@@ -82,6 +82,8 @@ export class RoomService {
     for (let roomName in Game.rooms) {
       const room = Game.rooms[roomName];
       this.cacheService.cacheSources(room);
+      this.cacheService.cacheStorages(room);
+      this.cacheService.cacheContainers(room);
     }
   }
 

@@ -158,8 +158,20 @@ export class CacheService {
   //   Memory.cache.ramparts[room.name] = ids;
   // }
 
+  /////// TODO: fix, not working. CONTAINER inside
+  // cacheSources(room: Room): void {
+  //   this.cacheStructures(room, STRUCTURE_CONTAINER, "sources");
+  // }
+
   cacheSources(room: Room): void {
-    this.cacheStructures(room, STRUCTURE_CONTAINER, "sources");
+    if (!Memory.cache.sources[room.name]) {
+      Memory.cache.sources[room.name] = [];
+    }
+
+    const sources = room.find(FIND_SOURCES);
+    const sourceIds = sources.map((source) => source.id);
+
+    Memory.cache.sources[room.name] = sourceIds;
   }
 
   cacheStorages(room: Room): void {

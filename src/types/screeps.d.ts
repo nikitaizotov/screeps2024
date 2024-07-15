@@ -98,7 +98,7 @@ interface Memory {
   duration?: any;
   cache: {
     [cacheKey: string]: {
-      [roomName: string]: Id<Structure>[];
+      [roomName: string]: Id<Structure>[] | Id;
     };
     // sources: {
     //   [roomName: string]: Id<Source>[];

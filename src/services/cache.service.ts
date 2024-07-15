@@ -44,88 +44,150 @@ export class CacheService {
    * Will cache sources for a given room.
    * @param room
    */
+  // cacheSources(room: Room): void {
+  //   if (!Memory.cache.sources[room.name]) {
+  //     Memory.cache.sources[room.name] = [];
+  //   }
+
+  //   const sources = room.find(FIND_SOURCES);
+  //   const sourceIds = sources.map((source) => source.id);
+
+  //   Memory.cache.sources[room.name] = sourceIds;
+  // }
+
+  // cacheStorages(room: Room): void {
+  //   if (!Memory.cache.storages[room.name]) {
+  //     Memory.cache.storages[room.name] = [];
+  //   }
+
+  //   const storages = room.find(FIND_STRUCTURES, {
+  //     filter: (structure) => structure.structureType === STRUCTURE_STORAGE,
+  //   });
+
+  //   const ids = storages.map((storage) => storage.id);
+
+  //   Memory.cache.storages[room.name] = ids;
+  // }
+
+  // cacheContainers(room: Room): void {
+  //   if (!Memory.cache.containers[room.name]) {
+  //     Memory.cache.containers[room.name] = [];
+  //   }
+
+  //   const containers = room.find(FIND_STRUCTURES, {
+  //     filter: (structure) => structure.structureType === STRUCTURE_CONTAINER,
+  //   });
+
+  //   const ids = containers.map((container) => container.id);
+
+  //   Memory.cache.containers[room.name] = ids;
+  // }
+
+  // cacheSpawns(room: Room): void {
+  //   if (!Memory.cache.spawns[room.name]) {
+  //     Memory.cache.spawns[room.name] = [];
+  //   }
+
+  //   const targets = room.find(FIND_STRUCTURES, {
+  //     filter: (structure: StructureSpawn) => {
+  //       return structure.structureType === STRUCTURE_SPAWN;
+  //     },
+  //   });
+
+  //   const ids = targets.map((targets) => targets.id);
+  //   Memory.cache.spawns[room.name] = ids;
+  // }
+
+  // cacheTowers(room: Room): void {
+  //   if (!Memory.cache.towers[room.name]) {
+  //     Memory.cache.towers[room.name] = [];
+  //   }
+
+  //   const targets = room.find(FIND_STRUCTURES, {
+  //     filter: (structure: StructureTower) => {
+  //       return structure.structureType === STRUCTURE_TOWER;
+  //     },
+  //   });
+
+  //   const ids = targets.map((targets) => targets.id);
+  //   Memory.cache.towers[room.name] = ids;
+  // }
+
+  // cacheExtensions(room: Room): void {
+  //   if (!Memory.cache.extensions[room.name]) {
+  //     Memory.cache.extensions[room.name] = [];
+  //   }
+
+  //   const targets = room.find(FIND_STRUCTURES, {
+  //     filter: (structure: StructureExtension) => {
+  //       return structure.structureType === STRUCTURE_EXTENSION;
+  //     },
+  //   });
+
+  //   const ids = targets.map((targets) => targets.id);
+  //   Memory.cache.extensions[room.name] = ids;
+  // }
+
+  // cacheWalls(room: Room): void {
+  //   if (!Memory.cache.walls[room.name]) {
+  //     Memory.cache.walls[room.name] = [];
+  //   }
+
+  //   const targets = room.find(FIND_STRUCTURES, {
+  //     filter: (structure: StructureWall) => {
+  //       return structure.structureType === STRUCTURE_WALL;
+  //     },
+  //   });
+
+  //   const ids = targets.map((targets) => targets.id);
+  //   Memory.cache.walls[room.name] = ids;
+  // }
+
+  // cacheRamparts(room: Room): void {
+  //   if (!Memory.cache.ramparts[room.name]) {
+  //     Memory.cache.ramparts[room.name] = [];
+  //   }
+
+  //   const targets = room.find(FIND_STRUCTURES, {
+  //     filter: (structure: StructureRampart) => {
+  //       return structure.structureType === STRUCTURE_RAMPART;
+  //     },
+  //   });
+
+  //   const ids = targets.map((targets) => targets.id);
+  //   Memory.cache.ramparts[room.name] = ids;
+  // }
+
   cacheSources(room: Room): void {
-    if (!Memory.cache.sources[room.name]) {
-      Memory.cache.sources[room.name] = [];
-    }
-
-    const sources = room.find(FIND_SOURCES);
-    const sourceIds = sources.map((source) => source.id);
-
-    Memory.cache.sources[room.name] = sourceIds;
+    this.cacheStructures(room, STRUCTURE_CONTAINER, "sources");
   }
 
   cacheStorages(room: Room): void {
-    if (!Memory.cache.storages[room.name]) {
-      Memory.cache.storages[room.name] = [];
-    }
-
-    const storages = room.find(FIND_STRUCTURES, {
-      filter: (structure) => structure.structureType === STRUCTURE_STORAGE,
-    });
-
-    const ids = storages.map((storage) => storage.id);
-
-    Memory.cache.storages[room.name] = ids;
+    this.cacheStructures(room, STRUCTURE_STORAGE, "storages");
   }
 
   cacheContainers(room: Room): void {
-    if (!Memory.cache.containers[room.name]) {
-      Memory.cache.containers[room.name] = [];
-    }
-
-    const containers = room.find(FIND_STRUCTURES, {
-      filter: (structure) => structure.structureType === STRUCTURE_CONTAINER,
-    });
-
-    const ids = containers.map((container) => container.id);
-
-    Memory.cache.containers[room.name] = ids;
+    this.cacheStructures(room, STRUCTURE_CONTAINER, "containers");
   }
 
   cacheSpawns(room: Room): void {
-    if (!Memory.cache.spawns[room.name]) {
-      Memory.cache.spawns[room.name] = [];
-    }
-
-    const targets = room.find(FIND_STRUCTURES, {
-      filter: (structure: StructureSpawn) => {
-        return structure.structureType === STRUCTURE_SPAWN;
-      },
-    });
-
-    const ids = targets.map((targets) => targets.id);
-    Memory.cache.spawns[room.name] = ids;
+    this.cacheStructures(room, STRUCTURE_SPAWN, "spawns");
   }
 
   cacheTowers(room: Room): void {
-    if (!Memory.cache.towers[room.name]) {
-      Memory.cache.towers[room.name] = [];
-    }
-
-    const targets = room.find(FIND_STRUCTURES, {
-      filter: (structure: StructureTower) => {
-        return structure.structureType === STRUCTURE_TOWER;
-      },
-    });
-
-    const ids = targets.map((targets) => targets.id);
-    Memory.cache.towers[room.name] = ids;
+    this.cacheStructures(room, STRUCTURE_TOWER, "towers");
   }
 
   cacheExtensions(room: Room): void {
-    if (!Memory.cache.extensions[room.name]) {
-      Memory.cache.extensions[room.name] = [];
-    }
+    this.cacheStructures(room, STRUCTURE_EXTENSION, "extensions");
+  }
 
-    const targets = room.find(FIND_STRUCTURES, {
-      filter: (structure: StructureExtension) => {
-        return structure.structureType === STRUCTURE_EXTENSION;
-      },
-    });
+  cacheWalls(room: Room): void {
+    this.cacheStructures(room, STRUCTURE_WALL, "walls");
+  }
 
-    const ids = targets.map((targets) => targets.id);
-    Memory.cache.extensions[room.name] = ids;
+  cacheRamparts(room: Room): void {
+    this.cacheStructures(room, STRUCTURE_RAMPART, "ramparts");
   }
 
   getFromCache<T extends _HasId>(ids: Id<T>[]): (T | null)[] | null {
@@ -266,6 +328,88 @@ export class CacheService {
     }
   }
 
+  findWalls(room: Room): StructureWall[] {
+    try {
+      this.initCacheIfNotExist();
+      if (!Memory.cache.walls) {
+        Memory.cache.walls = {};
+      }
+
+      if (!Memory.cache.walls[room.name]) {
+        this.cacheWalls(room);
+      }
+
+      const cachedIds = Memory.cache.walls[room.name];
+
+      if (cachedIds && cachedIds.length > 0) {
+        const targets = this.getFromCache(cachedIds);
+
+        if (targets) {
+          return targets.filter(
+            (target): target is StructureWall => target !== null
+          );
+        } else {
+          this.cacheWalls(room);
+        }
+      }
+
+      return room.find(FIND_STRUCTURES, {
+        filter: (structure: AnyStructure) => {
+          return structure.structureType === STRUCTURE_WALL;
+        },
+      });
+    } catch (error: any) {
+      console.log(`Error in findWalls: ${error.message}`);
+
+      return room.find(FIND_STRUCTURES, {
+        filter: (structure: AnyStructure) => {
+          return structure.structureType === STRUCTURE_WALL;
+        },
+      });
+    }
+  }
+
+  findRamparts(room: Room): StructureRampart[] {
+    try {
+      this.initCacheIfNotExist();
+      if (!Memory.cache.ramparts) {
+        Memory.cache.ramparts = {};
+      }
+
+      if (!Memory.cache.ramparts[room.name]) {
+        this.cacheRamparts(room);
+      }
+
+      const cachedIds = Memory.cache.ramparts[room.name];
+
+      if (cachedIds && cachedIds.length > 0) {
+        const targets = this.getFromCache(cachedIds);
+
+        if (targets) {
+          return targets.filter(
+            (target): target is StructureRampart => target !== null
+          );
+        } else {
+          this.cacheRamparts(room);
+        }
+      }
+
+      return room.find(FIND_STRUCTURES, {
+        filter: (structure: AnyStructure) => {
+          return structure.structureType === STRUCTURE_RAMPART;
+        },
+      });
+    } catch (error: any) {
+      console.log(`Error in findRamparts: ${error.message}`);
+
+      return room.find(FIND_STRUCTURES, {
+        filter: (structure: AnyStructure) => {
+          return structure.structureType === STRUCTURE_RAMPART;
+        },
+      });
+    }
+  }
+
   findSources(room: Room): Source[] {
     try {
       this.initCacheIfNotExist();
@@ -282,7 +426,7 @@ export class CacheService {
       const cachedIds = Memory.cache.sources[room.name];
 
       if (cachedIds && cachedIds.length > 0) {
-        const sources = this.getFromCache(cachedIds);
+        const sources = this.getFromCache<Source>(cachedIds as any);
 
         if (sources) {
           const availableSources = sources.filter(
@@ -413,7 +557,30 @@ export class CacheService {
         spawns: {},
         towers: {},
         extensions: {},
+        walls: {},
+        ramparts: {},
       };
     }
+  }
+
+  private cacheStructures(
+    room: Room,
+    structureType: StructureConstant,
+    cacheKey: string
+  ): void {
+    if (!Memory.cache[cacheKey]) {
+      Memory.cache[cacheKey] = {};
+    }
+
+    if (!Memory.cache[cacheKey][room.name]) {
+      Memory.cache[cacheKey][room.name] = [];
+    }
+
+    const structures = room.find(FIND_STRUCTURES, {
+      filter: (structure) => structure.structureType === structureType,
+    });
+
+    const ids = structures.map((structure) => structure.id);
+    Memory.cache[cacheKey][room.name] = ids;
   }
 }

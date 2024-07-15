@@ -149,21 +149,26 @@ export class WorkerService {
   }
 
   ifWallsAndRampartFixingNeeded(spawn: StructureSpawn): boolean {
-    const targets = spawn.room.find(FIND_STRUCTURES, {
-      filter: (structure: AnyStructure) => {
-        return (
-          (structure.structureType === STRUCTURE_WALL ||
-            structure.structureType === STRUCTURE_RAMPART) &&
-          structure.hits < structure.hitsMax
-        );
-      },
-    });
-    console.log("FIND NOT MIGRATED YET ifWallsAndRampartFixingNeeded");
-    if (targets.length > 0) {
-      return true;
-    }
+    try {
+      const walls = this.cacheService.findWalls(spawn.room);
+      const ramparts = this.cacheService.findRamparts(spawn.room);
 
-    return false;
+      const targets = [...walls, ...ramparts].filter(
+        (structure): structure is StructureWall | StructureRampart =>
+          (structure instanceof StructureWall ||
+            structure instanceof StructureRampart) &&
+          structure.hits < structure.hitsMax
+      );
+
+      if (targets.length > 0) {
+        return true;
+      }
+
+      return false;
+    } catch (error: any) {
+      console.log(`Error in ifWallsAndRampartFixingNeeded: ${error.message}`);
+      return false;
+    }
   }
 
   // isFixingRampartsAndWallsNeeded(room: Room): boolean {

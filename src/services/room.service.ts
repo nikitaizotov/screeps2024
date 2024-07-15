@@ -95,6 +95,12 @@ export class RoomService {
     if (Game.time % checkEveryNTicks !== 0) {
       return;
     }
+
+    for (let roomName in Game.rooms) {
+      const room = Game.rooms[roomName];
+      this.cacheService.cacheWalls(room);
+      this.cacheService.cacheRamparts(room);
+    }
   }
 
   private cleanMemory(): void {
@@ -373,10 +379,7 @@ export class RoomService {
           console.log("FIND NOT MIGRATED YET");
 
           // Filter and handle towers.
-          const towers = structures.filter(
-            (structure): structure is StructureTower =>
-              structure.structureType === STRUCTURE_TOWER
-          );
+          const towers = this.cacheService.findTowers(room);
 
           towers.forEach((tower: StructureTower) => {
             this.towerManager.work(tower);

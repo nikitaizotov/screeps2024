@@ -78,6 +78,7 @@ export class RoleMiner implements CreepRole {
           filter: (structure) =>
             structure.structureType === STRUCTURE_CONTAINER,
         }) as any[]);
+    console.log("FIND NOT MIGRATED YET findContainerAndSource");
 
     for (let target of targets) {
       const miners = target.pos

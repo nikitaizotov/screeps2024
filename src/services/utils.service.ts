@@ -1,4 +1,8 @@
+import { CacheService } from "./cache.service";
+
 export class UtilsService {
+  private cacheService = new CacheService();
+
   repeatArray(array: any[], times: number) {
     try {
       let repeatedArray: any[] = [];
@@ -17,7 +21,7 @@ export class UtilsService {
       const extensions: any[] = room.find(FIND_MY_STRUCTURES, {
         filter: { structureType: STRUCTURE_EXTENSION },
       });
-
+      console.log("FIND NOT MIGRATED YET");
       const totalEnergy = extensions.reduce(
         (sum, extension) => sum + extension.energy,
         0
@@ -46,6 +50,7 @@ export class UtilsService {
             structure.structureType !== STRUCTURE_ROAD &&
             structure.structureType !== STRUCTURE_CONTAINER,
         });
+        console.log("FIND NOT MIGRATED YET");
 
         // Check, if structure were attacked.
         const structuresDamaged = structures.some(
@@ -53,6 +58,7 @@ export class UtilsService {
         );
 
         const hostiles = room.find(FIND_HOSTILE_CREEPS);
+        console.log("FIND NOT MIGRATED YET");
 
         if (structuresDamaged && hostiles.length > 0) {
           // Check, if there is a Safe Modes available.
@@ -89,8 +95,7 @@ export class UtilsService {
         const controller = room.controller;
 
         if (controller?.my && !Memory.roomData.sourcePositions[roomName]) {
-          const sources = room.find(FIND_SOURCES);
-
+          const sources = this.cacheService.findSources(room);
           let totalCount = 0;
 
           for (let source of sources) {

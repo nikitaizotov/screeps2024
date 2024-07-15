@@ -83,6 +83,51 @@ export class CacheService {
     Memory.cache.containers[room.name] = ids;
   }
 
+  cacheSpawns(room: Room): void {
+    if (!Memory.cache.spawns[room.name]) {
+      Memory.cache.spawns[room.name] = [];
+    }
+
+    const targets = room.find(FIND_STRUCTURES, {
+      filter: (structure: StructureSpawn) => {
+        return structure.structureType === STRUCTURE_SPAWN;
+      },
+    });
+
+    const ids = targets.map((targets) => targets.id);
+    Memory.cache.spawns[room.name] = ids;
+  }
+
+  cacheTowers(room: Room): void {
+    if (!Memory.cache.towers[room.name]) {
+      Memory.cache.towers[room.name] = [];
+    }
+
+    const targets = room.find(FIND_STRUCTURES, {
+      filter: (structure: StructureTower) => {
+        return structure.structureType === STRUCTURE_TOWER;
+      },
+    });
+
+    const ids = targets.map((targets) => targets.id);
+    Memory.cache.towers[room.name] = ids;
+  }
+
+  cacheExtensions(room: Room): void {
+    if (!Memory.cache.extensions[room.name]) {
+      Memory.cache.extensions[room.name] = [];
+    }
+
+    const targets = room.find(FIND_STRUCTURES, {
+      filter: (structure: StructureExtension) => {
+        return structure.structureType === STRUCTURE_EXTENSION;
+      },
+    });
+
+    const ids = targets.map((targets) => targets.id);
+    Memory.cache.extensions[room.name] = ids;
+  }
+
   getFromCache<T extends _HasId>(ids: Id<T>[]): (T | null)[] | null {
     try {
       const objects = ids.map((id) => Game.getObjectById(id));
@@ -98,7 +143,130 @@ export class CacheService {
     }
   }
 
-  findSources(creep: Creep): Source[] {
+  findSpawns(room: Room): StructureSpawn[] {
+    try {
+      this.initCacheIfNotExist();
+      if (!Memory.cache.spawns) {
+        Memory.cache.spawns = {};
+      }
+
+      if (!Memory.cache.spawns[room.name]) {
+        this.cacheSpawns(room);
+      }
+
+      const cachedIds = Memory.cache.spawns[room.name];
+
+      if (cachedIds && cachedIds.length > 0) {
+        const spawns = this.getFromCache(cachedIds);
+
+        if (spawns) {
+          return spawns.filter(
+            (spawn): spawn is StructureSpawn => spawn !== null
+          );
+        } else {
+          this.cacheSpawns(room);
+        }
+      }
+
+      return room.find(FIND_STRUCTURES, {
+        filter: (structure: AnyStructure) => {
+          return structure.structureType === STRUCTURE_SPAWN;
+        },
+      });
+    } catch (error: any) {
+      console.log(`Error in findSpawns: ${error.message}`);
+
+      return room.find(FIND_STRUCTURES, {
+        filter: (structure: AnyStructure) => {
+          return structure.structureType === STRUCTURE_SPAWN;
+        },
+      });
+    }
+  }
+
+  findTowers(room: Room): StructureTower[] {
+    try {
+      this.initCacheIfNotExist();
+      if (!Memory.cache.towers) {
+        Memory.cache.towers = {};
+      }
+
+      if (!Memory.cache.towers[room.name]) {
+        this.cacheTowers(room);
+      }
+
+      const cachedIds = Memory.cache.towers[room.name];
+
+      if (cachedIds && cachedIds.length > 0) {
+        const targets = this.getFromCache(cachedIds);
+
+        if (targets) {
+          return targets.filter(
+            (target): target is StructureTower => target !== null
+          );
+        } else {
+          this.cacheTowers(room);
+        }
+      }
+
+      return room.find(FIND_STRUCTURES, {
+        filter: (structure: AnyStructure) => {
+          return structure.structureType === STRUCTURE_TOWER;
+        },
+      });
+    } catch (error: any) {
+      console.log(`Error in findTowers: ${error.message}`);
+
+      return room.find(FIND_STRUCTURES, {
+        filter: (structure: AnyStructure) => {
+          return structure.structureType === STRUCTURE_TOWER;
+        },
+      });
+    }
+  }
+
+  findExtensions(room: Room): StructureExtension[] {
+    try {
+      this.initCacheIfNotExist();
+      if (!Memory.cache.extensions) {
+        Memory.cache.extensions = {};
+      }
+
+      if (!Memory.cache.extensions[room.name]) {
+        this.cacheExtensions(room);
+      }
+
+      const cachedIds = Memory.cache.towers[room.name];
+
+      if (cachedIds && cachedIds.length > 0) {
+        const targets = this.getFromCache(cachedIds);
+
+        if (targets) {
+          return targets.filter(
+            (target): target is StructureExtension => target !== null
+          );
+        } else {
+          this.cacheTowers(room);
+        }
+      }
+
+      return room.find(FIND_STRUCTURES, {
+        filter: (structure: AnyStructure) => {
+          return structure.structureType === STRUCTURE_EXTENSION;
+        },
+      });
+    } catch (error: any) {
+      console.log(`Error in findExtensions: ${error.message}`);
+
+      return room.find(FIND_STRUCTURES, {
+        filter: (structure: AnyStructure) => {
+          return structure.structureType === STRUCTURE_EXTENSION;
+        },
+      });
+    }
+  }
+
+  findSources(room: Room): Source[] {
     try {
       this.initCacheIfNotExist();
 
@@ -106,12 +274,12 @@ export class CacheService {
         Memory.cache.sources = {};
       }
 
-      if (!Memory.cache.sources[creep.room.name]) {
-        Memory.cache.sources[creep.room.name] = [];
+      if (!Memory.cache.sources[room.name]) {
+        this.cacheSources(room);
       }
 
       // Try to get from the cache.
-      const cachedIds = Memory.cache.sources[creep.room.name];
+      const cachedIds = Memory.cache.sources[room.name];
 
       if (cachedIds && cachedIds.length > 0) {
         const sources = this.getFromCache(cachedIds);
@@ -126,12 +294,12 @@ export class CacheService {
             return [];
           }
         } else {
-          this.cacheSources(creep.room);
+          this.cacheSources(room);
         }
       }
 
       // Maybe there is no cache, let's do it in an old manner.
-      return creep.room.find(FIND_SOURCES, {
+      return room.find(FIND_SOURCES, {
         filter: (source) => source.energy > 0,
       });
     } catch (error: any) {
@@ -156,7 +324,7 @@ export class CacheService {
       }
 
       if (!Memory.cache.storages[creep.room.name]) {
-        Memory.cache.storages[creep.room.name] = [];
+        this.cacheStorages(creep.room);
       }
 
       // Try to get from the cache.
@@ -242,6 +410,9 @@ export class CacheService {
         storages: {},
         droppedResources: {},
         containers: {},
+        spawns: {},
+        towers: {},
+        extensions: {},
       };
     }
   }

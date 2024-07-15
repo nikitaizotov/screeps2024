@@ -106,6 +106,15 @@ interface Memory {
     storages: {
       [roomName: string]: Id<Structure>[];
     };
+    spawns: {
+      [roomName: string]: Id<Structure>[];
+    };
+    towers: {
+      [roomName: string]: Id<Structure>[];
+    };
+    extensions: {
+      [roomName: string]: Id<Structure>[];
+    };
     containers: {
       [roomName: string]: Id<StructureContainer>[];
     };

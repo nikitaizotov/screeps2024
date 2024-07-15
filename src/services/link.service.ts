@@ -1,4 +1,7 @@
+import { CacheService } from "./cache.service";
+
 export class LinkService {
+  private cacheService = new CacheService();
   isLinksAvailable(room: Room): boolean {
     if (room.controller && room.controller.level >= 5) {
       const links = room.find(FIND_STRUCTURES, {
@@ -26,7 +29,7 @@ export class LinkService {
     const storages = room.find(FIND_STRUCTURES, {
       filter: (structure) => structure.structureType === STRUCTURE_STORAGE,
     }) as StructureStorage[];
-
+    console.log("FIND NOT MIGRATED YET");
     if (storages.length === 0) {
       return false;
     }
@@ -240,7 +243,7 @@ export class LinkService {
     const storages = room.find(FIND_STRUCTURES, {
       filter: (structure) => structure.structureType === STRUCTURE_STORAGE,
     }) as StructureStorage[];
-
+    console.log("FIND NOT MIGRATED YET");
     if (storages.length === 0) {
       return;
     }
@@ -264,7 +267,7 @@ export class LinkService {
     }
 
     // Link sources.
-    const sources = room.find(FIND_SOURCES);
+    const sources = this.cacheService.findSources(room);
 
     for (let source of sources) {
       const bestSourcePosition = this.findBestLinkPosition(room, source.pos);
@@ -295,7 +298,7 @@ export class LinkService {
     const links = room.find(FIND_STRUCTURES, {
       filter: (structure) => structure.structureType === STRUCTURE_LINK,
     }) as StructureLink[];
-
+    console.log("FIND NOT MIGRATED YET");
     for (let link of links) {
       if (!Memory.roomData.links[room.name][link.id]) {
         Memory.roomData.links[room.name][link.id] = {

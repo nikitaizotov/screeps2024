@@ -57,6 +57,7 @@ export class RoomService {
       this.roomRoutines();
       this.cacheService.clearCreepPathCache();
       this.cacheStructures(1000);
+      this.shortCache(25);
       if (Game.time % 500 === 0) {
         this.isFixingWallsNeeded();
       }
@@ -74,7 +75,7 @@ export class RoomService {
     }
   }
 
-  private cacheStructures(checkEveryNTicks: number = 100): void {
+  private cacheStructures(checkEveryNTicks: number = 1000): void {
     if (Game.time % checkEveryNTicks !== 0) {
       return;
     }
@@ -84,6 +85,15 @@ export class RoomService {
       this.cacheService.cacheSources(room);
       this.cacheService.cacheStorages(room);
       this.cacheService.cacheContainers(room);
+      this.cacheService.cacheSpawns(room);
+      this.cacheService.cacheTowers(room);
+      this.cacheService.cacheExtensions(room);
+    }
+  }
+
+  private shortCache(checkEveryNTicks: number = 100): void {
+    if (Game.time % checkEveryNTicks !== 0) {
+      return;
     }
   }
 
@@ -168,6 +178,7 @@ export class RoomService {
               filter: (structure) =>
                 structure.structureType === STRUCTURE_CONTAINER,
             });
+            console.log("FIND NOT MIGRATED YET spawnCreeps");
 
             // Calculate the needed count of miners.
             const neededCount = linkedStorage
@@ -359,6 +370,7 @@ export class RoomService {
               structure.structureType === STRUCTURE_TOWER ||
               structure.structureType === STRUCTURE_LINK,
           });
+          console.log("FIND NOT MIGRATED YET");
 
           // Filter and handle towers.
           const towers = structures.filter(
@@ -426,7 +438,7 @@ export class RoomService {
             (structure.structureType === STRUCTURE_WALL ||
               structure.structureType === STRUCTURE_RAMPART),
         });
-
+        console.log("FIND NOT MIGRATED YET");
         Memory.roomData.fixingWallsRampartsEnabled[room.name] = fixingNeeded
           ? targets.length === 0
           : targets.length > 0;

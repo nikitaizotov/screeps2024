@@ -1,4 +1,7 @@
+import { CacheService } from "../cache.service";
+
 export class BuildRoadsService {
+  private cacheService = new CacheService();
   planRoads(room: Room): void {
     try {
       if (!Memory.cachedPaths) Memory.cachedPaths = [];
@@ -7,6 +10,7 @@ export class BuildRoadsService {
       let allSpawns: RoomPosition[] = [];
 
       let spawns = room.find(FIND_MY_SPAWNS);
+      console.log("FIND NOT MIGRATED YET");
       for (let spawn of spawns) allSpawns.push(spawn.pos);
 
       const hashPos = (pos: RoomPosition): string =>
@@ -84,6 +88,7 @@ export class BuildRoadsService {
                 )
                   costs.set(struct.pos.x, struct.pos.y, 0xff);
               });
+              console.log("FIND NOT MIGRATED YET");
 
               return costs;
             },
@@ -113,7 +118,7 @@ export class BuildRoadsService {
 
       for (let spawn of spawns) keyPoints.push(spawn.pos);
 
-      let sources = room.find(FIND_SOURCES);
+      let sources = this.cacheService.findSources(room);
       for (let source of sources) keyPoints.push(source.pos);
 
       let controller = room.controller;
@@ -142,6 +147,7 @@ export class BuildRoadsService {
           );
         },
       });
+      console.log("FIND NOT MIGRATED YET");
 
       structures.forEach((structure) => {
         let x = structure.pos.x;
@@ -193,7 +199,7 @@ export class BuildRoadsService {
 
   buildRoadsFromFirstStructure(room: Room, startPos: RoomPosition): void {
     try {
-      let sources = room.find(FIND_SOURCES);
+      let sources = this.cacheService.findSources(room);
       let controller = room.controller;
 
       let targets = sources.map((source) => source.pos);
@@ -223,6 +229,8 @@ export class BuildRoadsService {
                 )
                   costs.set(struct.pos.x, struct.pos.y, 0xff);
               });
+
+              console.log("FIND NOT MIGRATED YET");
 
               return costs;
             },

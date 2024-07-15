@@ -1,7 +1,11 @@
+import { CacheService } from "./cache.service";
+
 export class ContainerService {
+  cacheService = new CacheService();
   buildContainers(room: Room) {
     if (room.controller && room.controller.my) {
-      const sources = room.find(FIND_SOURCES);
+      const sources = this.cacheService.findSources(room);
+      console.log("FIND NOT MIGRATED YET");
 
       for (let source of sources) {
         const bestPosition = this.findBestContainerPosition(room, source.pos);

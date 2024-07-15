@@ -50,7 +50,7 @@ export class CreepService {
       return;
     }
 
-    const sources = this.cacheService.findSources(creep);
+    const sources = this.cacheService.findSources(creep.room);
 
     const closest = creep.pos.findClosestByPath(sources);
 
@@ -63,6 +63,7 @@ export class CreepService {
 
   findConstructionSite(creep: Creep): void {
     const constructionSites = creep.room.find(FIND_CONSTRUCTION_SITES);
+    console.log("FIND NOT MIGRATED YET");
     if (constructionSites.length > 0) {
       let closestSite = creep.pos.findClosestByPath(constructionSites);
 
@@ -83,6 +84,7 @@ export class CreepService {
         );
       },
     });
+    console.log("FIND NOT MIGRATED YET");
 
     if (targets.length > 0) {
       let closestSite = creep.pos.findClosestByPath(targets);
@@ -170,10 +172,11 @@ export class CreepService {
                 costs.set(struct.pos.x, struct.pos.y, 0xff);
               }
             });
-
+            console.log("FIND NOT MIGRATED YET ^^");
             room.find(FIND_CREEPS).forEach(function (creep) {
               costs.set(creep.pos.x, creep.pos.y, 0xff);
             });
+            console.log("FIND NOT MIGRATED YET ^^");
 
             return costs;
           },
@@ -394,6 +397,7 @@ export class CreepService {
           const creepsHeading = creep.room.find(FIND_MY_CREEPS, {
             filter: (c) => c.memory.targetId === (resource.id as any),
           }).length;
+          console.log("FIND NOT MIGRATED YET");
 
           // Check if it makes sense to pick up this resource and if it is not already occupied by another creep.
           if (resource.amount > creepsHeading * freeCapacity) {
@@ -461,7 +465,6 @@ export class CreepService {
 
       let target: AnyStoreStructure | null = null;
 
-      console.log("FIND NOT MIGRATED YET");
       const targets = room.find(FIND_STRUCTURES, {
         filter: (structure: AnyStoreStructure) => {
           return (
@@ -476,6 +479,8 @@ export class CreepService {
         },
       });
 
+      console.log("FIND NOT MIGRATED YET");
+
       if (targets.length > 0) {
         target = creep.pos.findClosestByPath(targets) as any;
       }
@@ -489,6 +494,7 @@ export class CreepService {
             );
           },
         });
+        console.log("FIND NOT MIGRATED YET");
 
         if (towers.length > 0) {
           target = creep.pos.findClosestByPath(towers) as any;
@@ -643,6 +649,7 @@ export class CreepService {
           );
         },
       });
+      console.log("FIND NOT MIGRATED YET");
 
       if (targets.length > 0) {
         targets.sort(

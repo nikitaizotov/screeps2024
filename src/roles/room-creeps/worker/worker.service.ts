@@ -2,9 +2,12 @@ import _ from "lodash";
 import roleWorker from "./role.worker";
 import { WorkerTask } from "./worker.const";
 import { WORKER_MEMORY_KEY } from "./worker.const";
+import { CacheService } from "../../../services/cache.service";
 // const profiler = require("./../../screeps-profiler");
 
 export class WorkerService {
+  private cacheService = new CacheService();
+
   manageWorkers(): void {
     for (let spawnName in Game.spawns) {
       const spawn = Game.spawns[spawnName];
@@ -99,18 +102,27 @@ export class WorkerService {
   }
 
   isTransferNeeded(spawn: StructureSpawn): boolean {
-    const targets = spawn.room.find(FIND_STRUCTURES, {
-      filter: (structure: AnyStructure) => {
-        return (
-          (structure.structureType === STRUCTURE_SPAWN ||
-            structure.structureType === STRUCTURE_TOWER ||
-            structure.structureType === STRUCTURE_EXTENSION) &&
+    try {
+      const spawns = this.cacheService.findSpawns(spawn.room);
+      const towers = this.cacheService.findTowers(spawn.room);
+      const extensions = this.cacheService.findExtensions(spawn.room);
+
+      const targets = [...spawns, ...towers, ...extensions].filter(
+        (
+          structure
+        ): structure is StructureSpawn | StructureTower | StructureExtension =>
+          (structure instanceof StructureSpawn ||
+            structure instanceof StructureTower ||
+            structure instanceof StructureExtension) &&
           structure.store &&
           structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
-        );
-      },
-    });
-    return targets.length !== 0;
+      );
+
+      return targets.length !== 0;
+    } catch (error: any) {
+      console.log(`Error in isTransferNeeded: ${error.message}`);
+      return false;
+    }
   }
 
   isBuildNeeded(spawn: StructureSpawn): boolean {
@@ -146,7 +158,7 @@ export class WorkerService {
         );
       },
     });
-
+    console.log("FIND NOT MIGRATED YET ifWallsAndRampartFixingNeeded");
     if (targets.length > 0) {
       return true;
     }

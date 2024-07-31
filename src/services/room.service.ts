@@ -57,6 +57,7 @@ export class RoomService {
       this.roomRoutines();
       this.cacheService.clearCreepPathCache();
       this.cacheStructures(1000);
+      this.cacheFast(10);
       this.shortCache(25);
       if (Game.time % 500 === 0) {
         this.isFixingWallsNeeded();
@@ -88,6 +89,18 @@ export class RoomService {
       this.cacheService.cacheSpawns(room);
       this.cacheService.cacheTowers(room);
       this.cacheService.cacheExtensions(room);
+      this.cacheService.cacheTerminals(room);
+    }
+  }
+
+  private cacheFast(checkEveryNTicks: number = 10): void {
+    if (Game.time % checkEveryNTicks !== 0) {
+      return;
+    }
+
+    for (let roomName in Game.rooms) {
+      const room = Game.rooms[roomName];
+      this.cacheService.cacheConstructionSites(room);
     }
   }
 
@@ -376,7 +389,7 @@ export class RoomService {
               structure.structureType === STRUCTURE_TOWER ||
               structure.structureType === STRUCTURE_LINK,
           });
-          console.log("FIND NOT MIGRATED YET");
+          console.log("FIND NOT MIGRATED YET manageStructures");
 
           // Filter and handle towers.
           const towers = this.cacheService.findTowers(room);
@@ -441,7 +454,7 @@ export class RoomService {
             (structure.structureType === STRUCTURE_WALL ||
               structure.structureType === STRUCTURE_RAMPART),
         });
-        console.log("FIND NOT MIGRATED YET");
+        console.log("FIND NOT MIGRATED YET isFixingWallsNeeded");
         Memory.roomData.fixingWallsRampartsEnabled[room.name] = fixingNeeded
           ? targets.length === 0
           : targets.length > 0;

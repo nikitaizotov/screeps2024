@@ -100,33 +100,6 @@ interface Memory {
     [cacheKey: string]: {
       [roomName: string]: Id<Structure>[] | Id;
     };
-    // sources: {
-    //   [roomName: string]: Id<Source>[];
-    // };
-    // droppedResources: {
-    //   [roomName: string]: Id<Resource>[];
-    // };
-    // storages: {
-    //   [roomName: string]: Id<Structure>[];
-    // };
-    // spawns: {
-    //   [roomName: string]: Id<Structure>[];
-    // };
-    // towers: {
-    //   [roomName: string]: Id<Structure>[];
-    // };
-    // extensions: {
-    //   [roomName: string]: Id<Structure>[];
-    // };
-    // walls: {
-    //   [roomName: string]: Id<Structure>[];
-    // };
-    // ramparts: {
-    //   [roomName: string]: Id<Structure>[];
-    // };
-    // containers: {
-    //   [roomName: string]: Id<StructureContainer>[];
-    // };
   };
 }
 

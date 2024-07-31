@@ -1,3 +1,4 @@
+import { CacheService } from "../cache.service";
 import { ContainerService } from "../container.service";
 import LinkService from "../link.service";
 import { BuildRoadsService } from "./build-roads.service";
@@ -46,6 +47,7 @@ export class BuildService {
   private linkService = new LinkService();
   private containerService = new ContainerService();
   private buildRoadsService = new BuildRoadsService();
+  private cacheService = new CacheService();
 
   build(): void {
     try {
@@ -248,7 +250,7 @@ export class BuildService {
           room.find(FIND_MY_STRUCTURES)
         );
       }
-      console.log("FIND NOT MIGRATED YET");
+      console.log("FIND NOT MIGRATED YET buildSpawn");
     } catch (error: any) {
       console.log(`Error in buildSpawn: ${error.message}`);
     }
@@ -452,7 +454,7 @@ export class BuildService {
           });
         }
       }
-      console.log("FIND NOT MIGRATED YET");
+      console.log("FIND NOT MIGRATED YET getExitZones");
 
       return exitZones;
     } catch (error: any) {
@@ -493,8 +495,9 @@ export class BuildService {
    */
   checkConstructionSites(room: Room, max: number): boolean {
     try {
-      const constructionSites = room.find(FIND_CONSTRUCTION_SITES);
-      console.log("FIND NOT MIGRATED YET");
+      // const constructionSites = room.find(FIND_CONSTRUCTION_SITES);
+      // console.log("FIND NOT MIGRATED YET checkConstructionSites");
+      const constructionSites = this.cacheService.findConstructionSites(room);
       return constructionSites.length > max;
     } catch (error: any) {
       console.log(`Error in checkConstructionSites: ${error.message}`);
@@ -510,7 +513,7 @@ export class BuildService {
   isThereSomethingToBuild(room: Room): boolean {
     try {
       const constructionSites = room.find(FIND_CONSTRUCTION_SITES);
-      console.log("FIND NOT MIGRATED YET");
+      console.log("FIND NOT MIGRATED YET isThereSomethingToBuild");
       return constructionSites.length > 0;
     } catch (error: any) {
       console.log(`Error in isThereSomethingToBuild: ${error.message}`);
@@ -521,7 +524,7 @@ export class BuildService {
   blockExits(room: Room): void {
     try {
       const spawns = room.find(FIND_MY_SPAWNS);
-      console.log("FIND NOT MIGRATED YET");
+      console.log("FIND NOT MIGRATED YET blockExits");
       if (!spawns) {
         return;
       }
@@ -566,7 +569,7 @@ export class BuildService {
 
       for (const exitType of exitTypes) {
         const exitPositions = room.find(exitType);
-        console.log("FIND NOT MIGRATED YET");
+        console.log("FIND NOT MIGRATED YET blockExits2");
 
         if (exitPositions.length > 0) {
           let clusters: RoomPosition[][] = [];
@@ -680,7 +683,7 @@ export class BuildService {
   ): PathStep[] {
     const returnData: PathStep[] = [];
     const exitPositions = room.find(exitType);
-    console.log("FIND NOT MIGRATED YET");
+    console.log("FIND NOT MIGRATED YET getExitRampPoint");
     // Array to store segments of exit positions.
     const segments: PositionSegment[][] = [];
     // Array to store the current segment.

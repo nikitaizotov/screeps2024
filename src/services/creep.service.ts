@@ -63,7 +63,7 @@ export class CreepService {
 
   findConstructionSite(creep: Creep): void {
     const constructionSites = creep.room.find(FIND_CONSTRUCTION_SITES);
-    console.log("FIND NOT MIGRATED YET");
+    console.log("FIND NOT MIGRATED YET findConstructionSite");
     if (constructionSites.length > 0) {
       let closestSite = creep.pos.findClosestByPath(constructionSites);
 
@@ -84,7 +84,7 @@ export class CreepService {
         );
       },
     });
-    console.log("FIND NOT MIGRATED YET");
+    console.log("FIND NOT MIGRATED YET getDamagedStructures");
 
     if (targets.length > 0) {
       let closestSite = creep.pos.findClosestByPath(targets);
@@ -397,7 +397,7 @@ export class CreepService {
           const creepsHeading = creep.room.find(FIND_MY_CREEPS, {
             filter: (c) => c.memory.targetId === (resource.id as any),
           }).length;
-          console.log("FIND NOT MIGRATED YET");
+          console.log("FIND NOT MIGRATED YET taskHarvest");
 
           // Check if it makes sense to pick up this resource and if it is not already occupied by another creep.
           if (resource.amount > creepsHeading * freeCapacity) {
@@ -479,7 +479,7 @@ export class CreepService {
         },
       });
 
-      console.log("FIND NOT MIGRATED YET");
+      console.log("FIND NOT MIGRATED YET taskTransfer");
 
       if (targets.length > 0) {
         target = creep.pos.findClosestByPath(targets) as any;
@@ -494,7 +494,7 @@ export class CreepService {
             );
           },
         });
-        console.log("FIND NOT MIGRATED YET");
+        console.log("FIND NOT MIGRATED YET taskTransfer2");
 
         if (towers.length > 0) {
           target = creep.pos.findClosestByPath(towers) as any;
@@ -649,7 +649,7 @@ export class CreepService {
           );
         },
       });
-      console.log("FIND NOT MIGRATED YET");
+      console.log("FIND NOT MIGRATED YET taskFixingWallsAndRamparts");
 
       if (targets.length > 0) {
         targets.sort(

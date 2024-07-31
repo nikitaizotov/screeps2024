@@ -178,6 +178,10 @@ export class CacheService {
     this.cacheStructures(room, STRUCTURE_STORAGE, "storages");
   }
 
+  cacheTerminals(room: Room): void {
+    this.cacheStructures(room, STRUCTURE_TERMINAL, "terminals");
+  }
+
   cacheContainers(room: Room): void {
     this.cacheStructures(room, STRUCTURE_CONTAINER, "containers");
   }
@@ -200,6 +204,21 @@ export class CacheService {
 
   cacheRamparts(room: Room): void {
     this.cacheStructures(room, STRUCTURE_RAMPART, "ramparts");
+  }
+
+  cacheConstructionSites(room: Room): void {
+    if (!Memory.cache.constructionSites) {
+      Memory.cache.constructionSites = {};
+    }
+
+    if (!Memory.cache.constructionSites[room.name]) {
+      Memory.cache.constructionSites[room.name] = [];
+    }
+
+    const sites = room.find(FIND_CONSTRUCTION_SITES);
+
+    const ids = sites.map((site) => site.id);
+    Memory.cache.constructionSites[room.name] = ids;
   }
 
   getFromCache<T extends _HasId>(ids: Id<T>[]): (T | null)[] | null {
@@ -464,6 +483,72 @@ export class CacheService {
     }
   }
 
+  findTerminals(room: Room): StructureTerminal[] {
+    try {
+      this.initCacheIfNotExist();
+
+      if (!Memory.cache.terminals) {
+        Memory.cache.terminals = {};
+      }
+
+      if (!Memory.cache.terminals[room.name]) {
+        this.cacheTerminals(room);
+      }
+
+      // Try to get from the cache.
+      const cachedIds = Memory.cache.terminals[room.name];
+
+      if (cachedIds && cachedIds.length > 0) {
+        const terminals = this.getFromCache<StructureTerminal>(
+          cachedIds as any
+        );
+
+        if (terminals?.length) {
+          return terminals as StructureTerminal[];
+        } else {
+          this.cacheTerminals(room);
+        }
+      }
+
+      return [];
+    } catch (error: any) {
+      console.log(`Error in findTerminals: ${error.message}`);
+      return [];
+    }
+  }
+
+  findConstructionSites(room: Room): ConstructionSite[] {
+    try {
+      this.initCacheIfNotExist();
+
+      if (!Memory.cache.constructionSites) {
+        Memory.cache.constructionSites = {};
+      }
+
+      if (!Memory.cache.constructionSites[room.name]) {
+        this.cacheConstructionSites(room);
+      }
+
+      // Try to get from the cache.
+      const cachedIds = Memory.cache.constructionSites[room.name];
+
+      if (cachedIds && cachedIds.length > 0) {
+        const sites = this.getFromCache<ConstructionSite>(cachedIds as any);
+
+        if (sites?.length) {
+          return sites as ConstructionSite[];
+        } else {
+          this.cacheTerminals(room);
+        }
+      }
+
+      return [];
+    } catch (error: any) {
+      console.log(`Error in findConstructionSites: ${error.message}`);
+      return [];
+    }
+  }
+
   findDroppedResources(creep: Creep): Resource[] {
     console.log("FIND: Resource");
     return creep.room.find(FIND_DROPPED_RESOURCES, {
@@ -571,6 +656,8 @@ export class CacheService {
         extensions: {},
         walls: {},
         ramparts: {},
+        terminals: {},
+        constructionSites: {},
       };
     }
   }

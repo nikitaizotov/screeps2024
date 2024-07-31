@@ -18,12 +18,12 @@ export class UtilsService {
 
   getTotalEnergyInExtensions(room: any) {
     try {
-      const extensions: any[] = room.find(FIND_MY_STRUCTURES, {
-        filter: { structureType: STRUCTURE_EXTENSION },
-      });
-      console.log("FIND NOT MIGRATED YET");
+      const extensions: StructureExtension[] =
+        this.cacheService.findExtensions(room);
+
       const totalEnergy = extensions.reduce(
-        (sum, extension) => sum + extension.energy,
+        (sum, extension: StructureExtension) =>
+          sum + extension.store[RESOURCE_ENERGY],
         0
       );
 
@@ -50,7 +50,7 @@ export class UtilsService {
             structure.structureType !== STRUCTURE_ROAD &&
             structure.structureType !== STRUCTURE_CONTAINER,
         });
-        console.log("FIND NOT MIGRATED YET");
+        console.log("FIND NOT MIGRATED YET isSafeModeNeeded");
 
         // Check, if structure were attacked.
         const structuresDamaged = structures.some(
@@ -58,7 +58,7 @@ export class UtilsService {
         );
 
         const hostiles = room.find(FIND_HOSTILE_CREEPS);
-        console.log("FIND NOT MIGRATED YET");
+        console.log("FIND NOT MIGRATED YET isSafeModeNeeded2");
 
         if (structuresDamaged && hostiles.length > 0) {
           // Check, if there is a Safe Modes available.

@@ -35,6 +35,9 @@ interface CreepMemory {
   job?: scoutJobs;
   task?: WorkerTask;
   pathName: string;
+  // For workers.
+  prevRoom?: string;
+  roomChangedTicksAgo?: number;
   // Used by scouts.
   route?:
     | Array<{

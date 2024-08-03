@@ -601,34 +601,82 @@ export class CreepService {
     }
   }
 
+  // taskReturnHome(creep: Creep): void {
+  //   if (!creep.memory.spawnRoom) {
+  //     return;
+  //   }
+
+  //   if (!creep.memory.path) {
+  //     const room = Game.rooms[creep.memory.spawnRoom];
+  //     const controller = room.controller;
+  //     if (controller) {
+  //       creep.memory.path = this.getPath(creep, controller.pos);
+  //       creep.memory.targetId = controller.id;
+  //     }
+  //   } else {
+  //     const moveResult = creep.moveByPath(creep.memory.path as PathStep[]);
+
+  //     if (moveResult !== OK && moveResult !== ERR_TIRED) {
+  //       creep.memory.path = undefined;
+  //       creep.memory.targetId = null;
+  //     }
+
+  //     if (
+  //       creep.room.name === creep.memory.spawnRoom &&
+  //       creep.pos.x > 2 &&
+  //       creep.pos.x < 48 &&
+  //       creep.pos.y > 2 &&
+  //       creep.pos.y < 48
+  //     ) {
+  //       this.setTask(creep, WorkerTask.Idling);
+  //     }
+  //   }
+  // }
+
+  // TODO: not working properly
   taskReturnHome(creep: Creep): void {
     if (!creep.memory.spawnRoom) {
       return;
     }
 
-    if (!creep.memory.path) {
+    if (!creep.memory.targetId) {
+      console.log(1111);
       const room = Game.rooms[creep.memory.spawnRoom];
       const controller = room.controller;
       if (controller) {
-        creep.memory.path = this.getPath(creep, controller.pos);
         creep.memory.targetId = controller.id;
       }
     } else {
-      const moveResult = creep.moveByPath(creep.memory.path as PathStep[]);
+      const target = Game.getObjectById(
+        creep.memory.targetId
+      ) as StructureController;
 
-      if (moveResult !== OK && moveResult !== ERR_TIRED) {
-        creep.memory.path = undefined;
+      if (target) {
+        const moveResult = creep.moveTo(target, {
+          reusePath: 5, // Переиспользование пути в течение 5 тиков
+          ignoreCreeps: false, // Крип будет учитывать других крипов
+          visualizePathStyle: { stroke: "#ffffff" }, // Визуализация пути
+        });
+
+        console.log(2222, moveResult);
+
+        if (moveResult !== OK && moveResult !== ERR_TIRED) {
+          creep.memory.targetId = null;
+        }
+
+        if (
+          creep.room.name === creep.memory.spawnRoom &&
+          creep.pos.x > 2 &&
+          creep.pos.x < 48 &&
+          creep.pos.y > 2 &&
+          creep.pos.y < 48
+        ) {
+          console.log("R E S E T");
+          this.setTask(creep, WorkerTask.Idling);
+        }
+      } else {
+        // Если target не найден, сбросим targetId
         creep.memory.targetId = null;
-      }
-
-      if (
-        creep.room.name === creep.memory.spawnRoom &&
-        creep.pos.x > 2 &&
-        creep.pos.x < 48 &&
-        creep.pos.y > 2 &&
-        creep.pos.y < 48
-      ) {
-        this.setTask(creep, WorkerTask.Idling);
       }
     }
   }

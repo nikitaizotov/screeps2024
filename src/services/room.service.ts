@@ -90,6 +90,7 @@ export class RoomService {
       this.cacheService.cacheTowers(room);
       this.cacheService.cacheExtensions(room);
       this.cacheService.cacheTerminals(room);
+      this.cacheService.cacheLinks(room);
     }
   }
 
@@ -200,9 +201,15 @@ export class RoomService {
             console.log("FIND NOT MIGRATED YET spawnCreeps");
 
             // Calculate the needed count of miners.
-            const neededCount = linkedStorage
+            let neededCount = linkedStorage
               ? Object.keys(Memory?.roomData?.links[spawn.room.name]).length - 1
               : containers.length;
+
+            const roomSources = this.cacheService.findSources(spawn.room);
+
+            if (neededCount > roomSources.length) {
+              neededCount = roomSources.length;
+            }
 
             // Skip if the current count of miners is sufficient.
             if (neededCount <= selectedCreeps.length) {
@@ -316,6 +323,17 @@ export class RoomService {
               ...baseBodyParts,
               ...this.utilsService.repeatArray(bodyParts, bodyPartsMultiplier),
             ];
+
+            // Testing, REMOVE.
+            if (role.memoryKey === roleWorker.memoryKey) {
+              console.log(
+                "WORKER LOG:",
+                totalEnergyInRoom,
+                bodyPartsMultiplier,
+                finalBodyParts
+              );
+            }
+
             const spawnAttempt = spawn.spawnCreep(finalBodyParts, newName, {
               memory: {
                 role: role.memoryKey,
@@ -383,26 +401,12 @@ export class RoomService {
         const room = Game.rooms[roomName];
 
         if (room?.controller && room.controller?.my) {
-          // Find all towers and links in the room in a single search.
-          const structures = room.find(FIND_MY_STRUCTURES, {
-            filter: (structure) =>
-              structure.structureType === STRUCTURE_TOWER ||
-              structure.structureType === STRUCTURE_LINK,
-          });
-          console.log("FIND NOT MIGRATED YET manageStructures");
-
-          // Filter and handle towers.
+          const links = this.cacheService.findLinks(room);
           const towers = this.cacheService.findTowers(room);
 
           towers.forEach((tower: StructureTower) => {
             this.towerManager.work(tower);
           });
-
-          // Filter and handle links.
-          const links = structures.filter(
-            (structure): structure is StructureLink =>
-              structure.structureType === STRUCTURE_LINK
-          );
 
           links.forEach((link: StructureLink) => {
             this.linkManager.work(link);

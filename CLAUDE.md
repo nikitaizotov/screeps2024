@@ -8,8 +8,8 @@ A bot (AI) for the game [Screeps](https://screeps.com/), written in TypeScript. 
 
 ## Commands
 
-- `npm run local` — compile: clears `dist/`, runs `tsc`, then flattens to `dist-flat/`. Use this to verify a change builds.
-- `npm run build` — build the deploy artifact: same as `local` but also clears `dist-flat/` first, producing the committed flat JS in `dist-flat/` that Screeps deploys (see Deploy below). No upload step — deploy is via git push.
+- `npm run local` — compile: clears `dist/`, runs `tsc`, then flattens to `dist-flat/`. Use this to verify a change builds. Does **not** deploy.
+- `npm run build` — full deploy: same as `local` (clearing `dist-flat/` first) then `grunt screeps`, which uploads `dist-flat/*.js` to the Screeps account. Requires a local `Gruntfile.js` (see Deploy below).
 
 There is no test suite, linter, or test runner configured. The only correctness check available locally is `tsc` (via `npm run local`). Behavior is verified by deploying and watching the in-game console (the bot logs heavily via `console.log`).
 
@@ -20,7 +20,7 @@ The deploy is a three-stage transform, and the middle stage is non-obvious:
 1. `tsc` compiles `src/**/*` → `dist/`, **preserving the directory structure**.
 2. `flattenDist.js` copies every file from `dist/` into a single flat `dist-flat/` directory (via `path.basename`) and rewrites every `require("..../foo")` to `require("./foo")`.
 
-`dist-flat/` is **committed** (not gitignored) — Screeps runs flat JS, so this folder is the deploy artifact that gets synced to the game.
+`dist-flat/` holds the flat, runnable modules that `grunt screeps` uploads. It is currently still committed (a leftover from a brief GitHub-sync experiment); with grunt it does not need to be in git and can be re-gitignored once the old sync is fully retired.
 
 Screeps does not support subdirectories or relative path imports — every module must sit in one flat namespace. This has two consequences you must respect:
 
@@ -29,9 +29,15 @@ Screeps does not support subdirectories or relative path imports — every modul
 
 ### Deploy
 
-Deployment is via **Screeps GitHub auto-sync** (Account → GitHub, repo `screeps2024`), not grunt. Screeps pulls the committed `dist-flat/` folder from the **`stable`** git branch into the in-game `stable` branch, so **pushing `stable` = deploying to live**.
+Deployment is via **`grunt-screeps`** (`npm run build` runs `grunt screeps` after the flatten step). It needs a local **`Gruntfile.js`** (gitignored). The repo includes one that reads credentials from the environment so no secret is committed:
 
-Workflow: develop TS on `default`; to ship a completed step → `npm run build` (regenerates `dist-flat/`) → commit `dist-flat/` (+ source) → merge into `stable` and push. The old grunt path is retired; `Gruntfile.js` stays gitignored and unused.
+```
+export SCREEPS_EMAIL="you@example.com"
+export SCREEPS_TOKEN="<auth token from screeps.com/a/#!/account/auth-tokens>"
+npm run build
+```
+
+It uploads `dist-flat/*.js` to branch `default` (override with `SCREEPS_BRANCH`). The working branch is `default`. Git push is *not* a deploy — `npm run build` is.
 
 ## Runtime architecture
 

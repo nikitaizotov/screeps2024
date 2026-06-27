@@ -126,6 +126,9 @@ export interface KernelTaskMemory {
   roomName: string;
   /** Hauler state: true = delivering, false = collecting. */
   deliver?: boolean;
+  /** Cached current pickup/dropoff target id (resolved via getObjectById,
+   *  re-found only when null/invalid — avoids a find every tick). */
+  targetId?: string;
 }
 
 /** Persisted kernel control state (Memory.kernel). */
@@ -133,4 +136,17 @@ export interface KernelMemory {
   enabled?: boolean;
   mode?: KernelMode;
   lastPlanTick?: number;
+  /**
+   * Per-room, per-concern handoff. When a flag is set the kernel owns that
+   * concern for that room and the old roles stand down — one flag = atomic
+   * takeover with instant (flag-flip) rollback, no redeploy.
+   */
+  takeover?: {
+    [roomName: string]: {
+      logistics?: boolean;
+      mining?: boolean;
+      upgrade?: boolean;
+      build?: boolean;
+    };
+  };
 }

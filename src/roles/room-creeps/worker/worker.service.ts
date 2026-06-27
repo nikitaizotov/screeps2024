@@ -35,7 +35,7 @@ export class WorkerService {
 
         if (
           enabledTask === WorkerTask.Transferring &&
-          !this.isTransferNeeded(spawn)
+          (this.kernelOwnsLogistics(room) || !this.isTransferNeeded(spawn))
         ) {
           continue;
         }
@@ -99,6 +99,31 @@ export class WorkerService {
         }
       }
     }
+  }
+
+  /**
+   * True when the kernel has taken over logistics for this room AND a kernel
+   * hauler actually exists — only then do workers stand down from Transferring.
+   * The live-hauler check is a self-healing fallback: if haulers die off,
+   * workers resume delivery, so the colony cannot death-spiral.
+   */
+  private kernelOwnsLogistics(room: Room): boolean {
+    const km: any = Memory.kernel;
+    if (
+      !km ||
+      !km.takeover ||
+      !km.takeover[room.name] ||
+      !km.takeover[room.name].logistics
+    ) {
+      return false;
+    }
+    return _.some(
+      Game.creeps,
+      (c: Creep) =>
+        c.memory.kernelTask &&
+        c.memory.kernelTask.role === "hauler" &&
+        c.room.name === room.name
+    );
   }
 
   isTransferNeeded(spawn: StructureSpawn): boolean {

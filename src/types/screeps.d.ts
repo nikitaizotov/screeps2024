@@ -35,6 +35,8 @@ interface CreepMemory {
   job?: scoutJobs;
   task?: WorkerTask;
   pathName: string;
+  // Kernel-owned creeps (new architecture).
+  kernelTask?: any;
   // For workers.
   prevRoom?: string;
   roomChangedTicksAgo?: number;

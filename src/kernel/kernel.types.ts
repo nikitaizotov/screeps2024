@@ -59,12 +59,34 @@ export interface Task {
 
 export type ObjectiveKind =
   | "economy"
+  | "logistics"
   | "upgrade"
   | "build"
   | "defend"
   | "expand"
   | "remoteMine"
   | "raid";
+
+/**
+ * A standing demand for N creeps of a kernel role doing a continuous task
+ * (e.g. "keep 2 haulers running in W1N1"). Modelled separately from discrete
+ * one-shot tasks: the kernel maintains the population and runs each member's
+ * executor loop every tick.
+ */
+export interface CrewRequest {
+  /** Kernel role id, e.g. "hauler". */
+  role: string;
+  roomName: string;
+  /** Desired number alive. */
+  count: number;
+  /** Capability used for matching/validation. */
+  needs: CapabilityProfile;
+  /** Repeatable body unit, scaled to available energy at spawn time. */
+  unitBody: BodyPartConstant[];
+  /** What each member does. */
+  taskKind: TaskKind;
+  priority: Priority;
+}
 
 /** A high-level empire goal that decomposes into tasks. */
 export interface Objective {
@@ -76,6 +98,8 @@ export interface Objective {
   value: number;
   priority: Priority;
   tasks: Task[];
+  /** Optional standing crew this objective wants maintained. */
+  crew?: CrewRequest;
 }
 
 /** A demand-driven request to spawn a creep matching a capability profile. */
@@ -93,6 +117,15 @@ export interface AllocationPlan {
   assignments: Array<{ creep: string; task: string }>;
   spawnRequests: SpawnRequest[];
   unassignedTasks: number;
+}
+
+/** Stored on a kernel-owned creep (creep.memory.kernelTask) — its assignment. */
+export interface KernelTaskMemory {
+  role: string;
+  kind: TaskKind;
+  roomName: string;
+  /** Hauler state: true = delivering, false = collecting. */
+  deliver?: boolean;
 }
 
 /** Persisted kernel control state (Memory.kernel). */

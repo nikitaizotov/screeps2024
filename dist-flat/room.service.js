@@ -296,6 +296,9 @@ class RoomService {
         try {
             for (const name in Game.creeps) {
                 const creep = Game.creeps[name];
+                // Kernel-owned creeps are driven by the kernel, not the old roles.
+                if (creep.memory.kernelTask)
+                    continue;
                 this.creepService.drawPath(creep);
                 let timeToCheck = creep.memory.role === this.roleMiner.memoryKey ||
                     creep.memory.role === this.roleLinkManager.memoryKey

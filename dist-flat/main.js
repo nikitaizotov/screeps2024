@@ -19,4 +19,14 @@ module.exports.loop = function () {
     roomService.creepRoutines();
     roomService.structureRoutines();
     // });
+    // Phase 0 kernel (dormant): loads and runs only when explicitly enabled via
+    // Memory.kernel.enabled. Live behavior is unchanged until we turn it on.
+    if (Memory.kernel && Memory.kernel.enabled) {
+        try {
+            require("./kernel").runKernel();
+        }
+        catch (e) {
+            console.log(`Kernel error: ${e.message}`);
+        }
+    }
 };

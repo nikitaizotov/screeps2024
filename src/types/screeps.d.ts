@@ -88,6 +88,7 @@ interface Memory {
   buildOrderPosition: { [roomName: string]: number };
   cachedPaths: { [roomName: string]: number };
   roomData: RoomData;
+  kernel?: any;
   cacheCreepPaths: {
     [roomName: string]: {
       [key: string]: CachedCreepPath;

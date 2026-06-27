@@ -74,6 +74,18 @@ The `Memory` shape is declared in `src/types/screeps.d.ts` (`CreepMemory`, `Room
 
 `Memory.roomData` is initialized in `main.ts`; `Memory.cache` is lazily initialized by `CacheService.initCacheIfNotExist`. When adding a new `Memory` field, declare it in `screeps.d.ts` and guard reads with existence checks (Memory may be empty on a fresh server).
 
+## Kernel (`src/kernel/`) — the new architecture, in progress
+
+The long-term direction is to replace the role-fixed, single-room logic with an **empire-wide task scheduler**: one brain that models all rooms, derives value-scored objectives, decomposes them into creep-assignable tasks (the "task tree"), assigns tasks to the best-fit creeps (spawning to demand), and runs it all under a hard CPU budget. The seam files:
+
+- `kernel.types.ts` — `Priority`, `CapabilityProfile`, `Task`, `Objective`, `SpawnRequest`, `KernelMemory`.
+- `cpu.governor.ts` — `CpuGovernor`: per-tick budget that flexes with `Game.cpu.bucket`; `canRun(priority, estCost)` gates non-critical work so the bot degrades gracefully instead of overrunning the ~20 CPU cap.
+- `world.model.ts` — heap-singleton snapshot of owned rooms/creeps, refreshed incrementally and tick-gated.
+- `planner.ts` → `allocator.ts` → (executors, Phase 1+) — model → objectives/tasks → creep assignments.
+- `kernel.ts` — `runKernel()` ties it together as heap singletons.
+
+**It is dormant.** `main.ts` calls `runKernel()` only when `Memory.kernel.enabled === true` (lazy `require`, so when off it never even loads). Default off → the old roles run live, unchanged. Modes: `off` / `observe` (build model + plan + report, command nothing) / `active` (Phase 1+, runs executors). Migration is concern-by-concern (logistics first), each landed dormant on `stable`, enabled behind the flag, verified in-game, then made default. **Do not wire kernel logic into `RoomService`/`enabledRoles`; keep the two systems separate until a concern is fully migrated.**
+
 ## Conventions & in-progress work
 
 - There is an **active migration** from direct `room.find(...)` calls to `CacheService.find*`. These used to be flagged with `console.log("FIND NOT MIGRATED YET ...")` markers; those per-tick logs were removed for CPU, but the migration itself is incomplete — still-direct `room.find` on hot paths (e.g. `creep.service.ts` `taskTransfer`, `worker.service.ts` `isBuildNeeded`) are the next targets. Prefer `CacheService.find*` over `room.find` in new code.

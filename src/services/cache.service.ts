@@ -463,7 +463,6 @@ export class CacheService {
   }
 
   findDroppedResources(creep: Creep): Resource[] {
-    console.log("FIND: Resource");
     return creep.room.find(FIND_DROPPED_RESOURCES, {
       filter: (resource) => resource.resourceType === RESOURCE_ENERGY,
     });

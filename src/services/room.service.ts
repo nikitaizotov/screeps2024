@@ -198,7 +198,6 @@ export class RoomService {
               filter: (structure) =>
                 structure.structureType === STRUCTURE_CONTAINER,
             });
-            console.log("FIND NOT MIGRATED YET spawnCreeps");
 
             // Calculate the needed count of miners.
             let neededCount = linkedStorage
@@ -324,16 +323,6 @@ export class RoomService {
               ...this.utilsService.repeatArray(bodyParts, bodyPartsMultiplier),
             ];
 
-            // Testing, REMOVE.
-            if (role.memoryKey === roleWorker.memoryKey) {
-              console.log(
-                "WORKER LOG:",
-                totalEnergyInRoom,
-                bodyPartsMultiplier,
-                finalBodyParts
-              );
-            }
-
             const spawnAttempt = spawn.spawnCreep(finalBodyParts, newName, {
               memory: {
                 role: role.memoryKey,
@@ -458,7 +447,6 @@ export class RoomService {
             (structure.structureType === STRUCTURE_WALL ||
               structure.structureType === STRUCTURE_RAMPART),
         });
-        console.log("FIND NOT MIGRATED YET isFixingWallsNeeded");
         Memory.roomData.fixingWallsRampartsEnabled[room.name] = fixingNeeded
           ? targets.length === 0
           : targets.length > 0;

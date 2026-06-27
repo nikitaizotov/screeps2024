@@ -29,7 +29,6 @@ export class LinkService {
     const storages = room.find(FIND_STRUCTURES, {
       filter: (structure) => structure.structureType === STRUCTURE_STORAGE,
     }) as StructureStorage[];
-    console.log("FIND NOT MIGRATED YET isStoragesLinked");
     if (storages.length === 0) {
       return false;
     }
@@ -240,7 +239,6 @@ export class LinkService {
     const storages = room.find(FIND_STRUCTURES, {
       filter: (structure) => structure.structureType === STRUCTURE_STORAGE,
     }) as StructureStorage[];
-    console.log("FIND NOT MIGRATED YET buildLinks");
     if (storages.length === 0) {
       return;
     }
@@ -309,7 +307,6 @@ export class LinkService {
     const links = room.find(FIND_STRUCTURES, {
       filter: (structure) => structure.structureType === STRUCTURE_LINK,
     }) as StructureLink[];
-    console.log("FIND NOT MIGRATED YET cacheLinks");
     for (let link of links) {
       if (!Memory.roomData.links[room.name][link.id]) {
         Memory.roomData.links[room.name][link.id] = {

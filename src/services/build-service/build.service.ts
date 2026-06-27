@@ -27,11 +27,23 @@ interface StructureCache {
   existingStructures: AnyOwnedStructure[];
 }
 
+// Terrain never changes, so cache the RoomTerrain object in heap (persists
+// across ticks within a global) instead of serializing a 50x50 grid into
+// Memory every tick. Game.map.getRoomTerrain is cheap and always available.
+const terrainCache: { [roomName: string]: RoomTerrain } = {};
+function getRoomTerrain(roomName: string): RoomTerrain {
+  let terrain = terrainCache[roomName];
+  if (!terrain) {
+    terrain = Game.map.getRoomTerrain(roomName);
+    terrainCache[roomName] = terrain;
+  }
+  return terrain;
+}
+
 export class BuildService {
   structureCache = {} as { [roomName: string]: StructureCache };
   cachedPaths = [] as CachedPath[];
   exitZones = [] as ExitZone[];
-  roomTerrain = {};
   buildOrder = [
     STRUCTURE_EXTENSION,
     STRUCTURE_TOWER,
@@ -54,7 +66,6 @@ export class BuildService {
       if (!Memory.structureCache) Memory.structureCache = {};
       if (!Memory.cachedPaths) Memory.cachedPaths = [];
       if (!Memory.exitZones) Memory.exitZones = [] as any;
-      if (!Memory.roomTerrain) Memory.roomTerrain = {};
 
       const rooms = Game.rooms;
       for (let roomName in rooms) {
@@ -74,9 +85,6 @@ export class BuildService {
           }
           if (!Memory.exitZones[room.name]) {
             Memory.exitZones[room.name] = this.getExitZones(room);
-          }
-          if (!Memory.roomTerrain[room.name]) {
-            Memory.roomTerrain[room.name] = this.cacheRoomTerrain(room.name);
           }
 
           // Plan roads every 15000 ticks.
@@ -122,10 +130,6 @@ export class BuildService {
       if (!Memory.exitZones[room.name] || Game.time % 5000 === 0)
         Memory.exitZones[room.name] = this.getExitZones(room);
       this.exitZones = Memory.exitZones[room.name];
-
-      if (!Memory.roomTerrain[room.name])
-        Memory.roomTerrain[room.name] = this.cacheRoomTerrain(room.name);
-      this.roomTerrain = Memory.roomTerrain[room.name];
 
       if (!Memory.structureCache[room.name] || Game.time % 100 === 0) {
         Memory.structureCache[room.name] = {
@@ -250,7 +254,6 @@ export class BuildService {
           room.find(FIND_MY_STRUCTURES)
         );
       }
-      console.log("FIND NOT MIGRATED YET buildSpawn");
     } catch (error: any) {
       console.log(`Error in buildSpawn: ${error.message}`);
     }
@@ -400,7 +403,7 @@ export class BuildService {
   ): boolean {
     try {
       if (x <= 2 || y <= 2 || x >= 47 || y >= 47) return false;
-      if (Memory.roomTerrain[room.name][x][y] === TERRAIN_MASK_WALL)
+      if (getRoomTerrain(room.name).get(x, y) === TERRAIN_MASK_WALL)
         return false;
       if (existingStructures.some((s) => s.pos.x === x && s.pos.y === y))
         return false;
@@ -411,25 +414,6 @@ export class BuildService {
     } catch (error: any) {
       console.log(`Error in isValidConstructionPosition: ${error.message}`);
       return false;
-    }
-  }
-
-  cacheRoomTerrain(roomName: string): number[][] {
-    try {
-      const terrain = new Room.Terrain(roomName);
-      let terrainData: number[][] = [];
-
-      for (let x = 0; x < 50; x++) {
-        terrainData[x] = [];
-        for (let y = 0; y < 50; y++) {
-          terrainData[x][y] = terrain.get(x, y);
-        }
-      }
-
-      return terrainData;
-    } catch (error: any) {
-      console.log(`Error in cacheRoomTerrain: ${error.message}`);
-      return [];
     }
   }
 
@@ -454,7 +438,6 @@ export class BuildService {
           });
         }
       }
-      console.log("FIND NOT MIGRATED YET getExitZones");
 
       return exitZones;
     } catch (error: any) {
@@ -496,7 +479,6 @@ export class BuildService {
   checkConstructionSites(room: Room, max: number): boolean {
     try {
       // const constructionSites = room.find(FIND_CONSTRUCTION_SITES);
-      // console.log("FIND NOT MIGRATED YET checkConstructionSites");
       const constructionSites = this.cacheService.findConstructionSites(room);
       return constructionSites.length > max;
     } catch (error: any) {
@@ -513,7 +495,6 @@ export class BuildService {
   isThereSomethingToBuild(room: Room): boolean {
     try {
       const constructionSites = room.find(FIND_CONSTRUCTION_SITES);
-      console.log("FIND NOT MIGRATED YET isThereSomethingToBuild");
       return constructionSites.length > 0;
     } catch (error: any) {
       console.log(`Error in isThereSomethingToBuild: ${error.message}`);
@@ -524,7 +505,6 @@ export class BuildService {
   blockExits(room: Room): void {
     try {
       const spawns = room.find(FIND_MY_SPAWNS);
-      console.log("FIND NOT MIGRATED YET blockExits");
       if (!spawns) {
         return;
       }
@@ -569,7 +549,6 @@ export class BuildService {
 
       for (const exitType of exitTypes) {
         const exitPositions = room.find(exitType);
-        console.log("FIND NOT MIGRATED YET blockExits2");
 
         if (exitPositions.length > 0) {
           let clusters: RoomPosition[][] = [];
@@ -683,7 +662,6 @@ export class BuildService {
   ): PathStep[] {
     const returnData: PathStep[] = [];
     const exitPositions = room.find(exitType);
-    console.log("FIND NOT MIGRATED YET getExitRampPoint");
     // Array to store segments of exit positions.
     const segments: PositionSegment[][] = [];
     // Array to store the current segment.

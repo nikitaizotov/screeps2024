@@ -63,7 +63,6 @@ export class CreepService {
 
   findConstructionSite(creep: Creep): void {
     const constructionSites = creep.room.find(FIND_CONSTRUCTION_SITES);
-    console.log("FIND NOT MIGRATED YET findConstructionSite");
     if (constructionSites.length > 0) {
       let closestSite = creep.pos.findClosestByPath(constructionSites);
 
@@ -84,7 +83,6 @@ export class CreepService {
         );
       },
     });
-    console.log("FIND NOT MIGRATED YET getDamagedStructures");
 
     if (targets.length > 0) {
       let closestSite = creep.pos.findClosestByPath(targets);
@@ -172,11 +170,9 @@ export class CreepService {
                 costs.set(struct.pos.x, struct.pos.y, 0xff);
               }
             });
-            console.log("FIND NOT MIGRATED YET ^^");
             room.find(FIND_CREEPS).forEach(function (creep) {
               costs.set(creep.pos.x, creep.pos.y, 0xff);
             });
-            console.log("FIND NOT MIGRATED YET ^^");
 
             return costs;
           },
@@ -393,11 +389,18 @@ export class CreepService {
         let closestResource: Resource | null = null;
         let closestDistance = Infinity;
 
+        // Tally, once, how many of our creeps already head to each target.
+        // Was a room.find(FIND_MY_CREEPS) per dropped resource — O(resources * creeps).
+        const headingCounts: { [id: string]: number } = {};
+        for (const c of creep.room.find(FIND_MY_CREEPS)) {
+          const targetId = c.memory.targetId as string | null | undefined;
+          if (targetId) {
+            headingCounts[targetId] = (headingCounts[targetId] || 0) + 1;
+          }
+        }
+
         for (const resource of droppedResources) {
-          const creepsHeading = creep.room.find(FIND_MY_CREEPS, {
-            filter: (c) => c.memory.targetId === (resource.id as any),
-          }).length;
-          console.log("FIND NOT MIGRATED YET taskHarvest");
+          const creepsHeading = headingCounts[resource.id] || 0;
 
           // Check if it makes sense to pick up this resource and if it is not already occupied by another creep.
           if (resource.amount > creepsHeading * freeCapacity) {
@@ -479,7 +482,6 @@ export class CreepService {
         },
       });
 
-      console.log("FIND NOT MIGRATED YET taskTransfer");
 
       if (targets.length > 0) {
         target = creep.pos.findClosestByPath(targets) as any;
@@ -494,7 +496,6 @@ export class CreepService {
             );
           },
         });
-        console.log("FIND NOT MIGRATED YET taskTransfer2");
 
         if (towers.length > 0) {
           target = creep.pos.findClosestByPath(towers) as any;
@@ -640,7 +641,6 @@ export class CreepService {
     }
 
     if (!creep.memory.targetId) {
-      console.log(1111);
       const room = Game.rooms[creep.memory.spawnRoom];
       const controller = room.controller;
       if (controller) {
@@ -658,8 +658,6 @@ export class CreepService {
           visualizePathStyle: { stroke: "#ffffff" }, // Визуализация пути
         });
 
-        console.log(2222, moveResult);
-
         if (moveResult !== OK && moveResult !== ERR_TIRED) {
           creep.memory.targetId = null;
         }
@@ -671,7 +669,6 @@ export class CreepService {
           creep.pos.y > 2 &&
           creep.pos.y < 48
         ) {
-          console.log("R E S E T");
           this.setTask(creep, WorkerTask.Idling);
         }
       } else {
@@ -697,7 +694,6 @@ export class CreepService {
           );
         },
       });
-      console.log("FIND NOT MIGRATED YET taskFixingWallsAndRamparts");
 
       if (targets.length > 0) {
         targets.sort(
@@ -706,7 +702,6 @@ export class CreepService {
         );
         this.getPathTotargets(creep, [targets[0]]);
       } else {
-        console.log("No targets for repair found");
         this.setTask(creep, WorkerTask.Idling);
       }
     } else {

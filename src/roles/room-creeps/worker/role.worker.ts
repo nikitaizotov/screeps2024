@@ -101,8 +101,6 @@ const roleWorker: CreepRole = {
         if (creep.room.name !== creep.memory.spawnRoom) {
           creepService.setTask(creep, WorkerTask.ReturnHome);
         }
-
-        console.log(`Creep ${creep.name} is idling.`);
         break;
       case WorkerTask.Upgrading:
         creepService.taskUpgrade(creep);

@@ -10,7 +10,6 @@ export class BuildRoadsService {
       let allSpawns: RoomPosition[] = [];
 
       let spawns = room.find(FIND_MY_SPAWNS);
-      console.log("FIND NOT MIGRATED YET planRoads");
       for (let spawn of spawns) allSpawns.push(spawn.pos);
 
       const hashPos = (pos: RoomPosition): string =>
@@ -88,7 +87,6 @@ export class BuildRoadsService {
                 )
                   costs.set(struct.pos.x, struct.pos.y, 0xff);
               });
-              console.log("FIND NOT MIGRATED YET planRoadBetween");
 
               return costs;
             },
@@ -147,7 +145,6 @@ export class BuildRoadsService {
           );
         },
       });
-      console.log("FIND NOT MIGRATED YET buildRoadsAroundStructures");
 
       structures.forEach((structure) => {
         let x = structure.pos.x;
@@ -230,7 +227,6 @@ export class BuildRoadsService {
                   costs.set(struct.pos.x, struct.pos.y, 0xff);
               });
 
-              console.log("FIND NOT MIGRATED YET buildRoadsFromFirstStructure");
 
               return costs;
             },

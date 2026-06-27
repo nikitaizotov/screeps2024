@@ -82,7 +82,6 @@ interface Memory {
   structureCache: { [roomName: string]: StructureCache };
   cachedPaths: CachedPath[];
   exitZones: { [roomName: string]: ExitZone[] };
-  roomTerrain: { [roomName: string]: number[][] };
   connectedPoints: { [key: string]: string[] };
   currentRoomIndex: number;
   currentOperationIndex: number;

@@ -15,7 +15,6 @@ if (!Memory.roomData) {
 }
 
 module.exports.loop = function () {
-  console.log(Game.time);
   // profiler.wrap(function () {
   roomService.cacheRoutines();
   roomService.creepRoutines();

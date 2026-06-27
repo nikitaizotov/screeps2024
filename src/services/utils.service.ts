@@ -50,7 +50,6 @@ export class UtilsService {
             structure.structureType !== STRUCTURE_ROAD &&
             structure.structureType !== STRUCTURE_CONTAINER,
         });
-        console.log("FIND NOT MIGRATED YET isSafeModeNeeded");
 
         // Check, if structure were attacked.
         const structuresDamaged = structures.some(
@@ -58,7 +57,6 @@ export class UtilsService {
         );
 
         const hostiles = room.find(FIND_HOSTILE_CREEPS);
-        console.log("FIND NOT MIGRATED YET isSafeModeNeeded2");
 
         if (structuresDamaged && hostiles.length > 0) {
           // Check, if there is a Safe Modes available.

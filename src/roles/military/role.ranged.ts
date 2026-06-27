@@ -192,7 +192,6 @@ export class RoleRanged implements CreepRole {
         );
       },
     });
-    console.log("FIND NOT MIGRATED YET findStructuralTargets");
 
     hostileStructures.sort((a, b) => {
       if (a.structureType === b.structureType) return 0;

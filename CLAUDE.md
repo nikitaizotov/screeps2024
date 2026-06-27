@@ -8,8 +8,8 @@ A bot (AI) for the game [Screeps](https://screeps.com/), written in TypeScript. 
 
 ## Commands
 
-- `npm run local` — compile only: clears `dist/`, runs `tsc`, then flattens to `dist-flat/`. Use this to verify a change builds. Does **not** deploy.
-- `npm run build` — full deploy: same as above plus `grunt screeps`, which uploads `dist-flat/` to the Screeps server.
+- `npm run local` — compile: clears `dist/`, runs `tsc`, then flattens to `dist-flat/`. Use this to verify a change builds.
+- `npm run build` — build the deploy artifact: same as `local` but also clears `dist-flat/` first, producing the committed flat JS in `dist-flat/` that Screeps deploys (see Deploy below). No upload step — deploy is via git push.
 
 There is no test suite, linter, or test runner configured. The only correctness check available locally is `tsc` (via `npm run local`). Behavior is verified by deploying and watching the in-game console (the bot logs heavily via `console.log`).
 
@@ -19,14 +19,19 @@ The deploy is a three-stage transform, and the middle stage is non-obvious:
 
 1. `tsc` compiles `src/**/*` → `dist/`, **preserving the directory structure**.
 2. `flattenDist.js` copies every file from `dist/` into a single flat `dist-flat/` directory (via `path.basename`) and rewrites every `require("..../foo")` to `require("./foo")`.
-3. `grunt screeps` uploads the flat directory.
+
+`dist-flat/` is **committed** (not gitignored) — Screeps runs flat JS, so this folder is the deploy artifact that gets synced to the game.
 
 Screeps does not support subdirectories or relative path imports — every module must sit in one flat namespace. This has two consequences you must respect:
 
 - **Filenames must be globally unique across the entire `src` tree.** Two files with the same basename collide silently when flattened (the second overwrites the first). There is already a latent collision: `src/roles/role.interface.ts` and `src/roles/interfaces/role.interface.ts`. Don't add more, and be wary when renaming.
 - The flatten regex rewrites imports to `./<basename>`, so deep relative import paths in source are fine — they're normalized at build time.
 
-`Gruntfile.js` is **gitignored** (it holds Screeps deploy credentials/branch config). `npm run build` will fail without a local one; `npm run local` does not need it.
+### Deploy
+
+Deployment is via **Screeps GitHub auto-sync** (Account → GitHub, repo `screeps2024`), not grunt. Screeps pulls the committed `dist-flat/` folder from the **`stable`** git branch into the in-game `stable` branch, so **pushing `stable` = deploying to live**.
+
+Workflow: develop TS on `default`; to ship a completed step → `npm run build` (regenerates `dist-flat/`) → commit `dist-flat/` (+ source) → merge into `stable` and push. The old grunt path is retired; `Gruntfile.js` stays gitignored and unused.
 
 ## Runtime architecture
 
